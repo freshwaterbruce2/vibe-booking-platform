@@ -4,173 +4,237 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a hotel booking web application built with vanilla JavaScript, Express.js, and the LiteAPI travel booking service. The application features an AI-powered search interface using OpenAI GPT-3.5-turbo to parse natural language queries and a sophisticated "passion-based" hotel matching system.
+This is a modern hotel booking platform with a dual architecture: a React/TypeScript frontend with comprehensive backend services, plus a legacy vanilla JavaScript implementation. The application features AI-powered search, passion-based hotel matching, and enterprise-grade deployment capabilities.
 
 ## Architecture
 
-### Backend (Node.js/Express)
+This project has a **dual architecture** with separate modern and legacy implementations:
 
-- **Entry Point**: `build-website-example/server/server.js`
-- **Framework**: Express.js with CORS enabled
-- **APIs Integrated**:
-  - LiteAPI (hotel search and booking)
-  - OpenAI (natural language query processing)
-- **Environment**: Supports both sandbox and production LiteAPI environments
+### Modern Stack (Primary)
+- **Frontend**: React 18 + TypeScript + Vite (`src/`)
+- **Backend**: Express.js + TypeScript (`backend/`)
+- **Database**: Drizzle ORM with PostgreSQL support
+- **State Management**: Zustand with persistence
+- **Styling**: Tailwind CSS + Framer Motion
 
-### Frontend (Vanilla JavaScript)
+### Legacy Stack (Integration)
+- **Location**: `build-website-example/`
+- **Frontend**: Vanilla JavaScript (`client/`)
+- **Backend**: Node.js/Express (`server/server.js`)
+- **Purpose**: Existing API integration and fallback
 
-- **Main Page**: `build-website-example/client/index.html`
-- **Core Scripts**:
-  - `app.js` - Main application logic
-  - `passion-data.js` - Travel passion matching system
-  - `passion-ui.js` - Passion-based UI components
-  - `payment-utils.js` - Payment integration utilities
-- **Styling**: Modern CSS with dual theme system (sky blue/lavender purple)
+### Core Services
+- **LiteAPI**: Hotel search, rates, booking, payments
+- **OpenAI**: Natural language query processing
+- **Stripe**: Payment processing (modern stack)
+- **AI Services**: Custom AI search service (`src/services/aiService.ts`)
 
 ### Key Features
-
-- Natural language hotel search powered by OpenAI
-- Passion-based hotel matching (gourmet foodie, outdoor adventure, etc.)
-- Dual theme system with glass morphism design
-- LiteAPI integration for real hotel booking
-- Payment processing with LiteAPI Payment SDK
+- AI-powered natural language hotel search
+- 7-category passion-based hotel matching system
+- Multi-step booking flow with payment integration
+- Enterprise-grade monitoring and observability
+- Progressive Web App (PWA) capabilities
+- Docker containerization and Kubernetes deployment
 
 ## Common Development Commands
 
-### Project Setup
+### Modern Stack Development (Root Directory)
 
+**Development:**
+```bash
+npm run dev              # Start Vite dev server (port 3000)
+npm run build            # Build TypeScript + Vite for production
+npm run preview          # Preview production build
+```
+
+**Testing:**
+```bash
+npm test                 # Run Vitest unit tests
+npm run test:coverage    # Generate coverage report
+npm run test:e2e         # Run Playwright E2E tests
+npm run test:visual      # Run visual regression tests
+```
+
+**Code Quality:**
+```bash
+npm run lint             # ESLint analysis
+npm run lint:fix         # Auto-fix ESLint issues
+npm run typecheck        # TypeScript type checking
+npm run format           # Prettier formatting
+npm run check:all        # Run all quality checks
+```
+
+**Backend Development:**
+```bash
+cd backend
+npm run dev              # Start TypeScript backend with tsx watch
+npm run build            # Compile TypeScript to dist/
+npm run db:generate      # Generate Drizzle database schema
+npm run db:migrate       # Run database migrations
+```
+
+### Legacy Stack Development (build-website-example/)
+
+**Development:**
 ```bash
 cd build-website-example
-npm install
+npm start                # Start server with nodemon (port 3001)
+npm run build            # Build and optimize assets
 ```
 
-### Environment Configuration
-
+**Testing:**
 ```bash
-cp .env.example .env
-# Edit .env with your API keys:
-# - PROD_API_KEY (LiteAPI production)
-# - SAND_API_KEY (LiteAPI sandbox)
-# - OPEN_API_KEY (OpenAI API key)
+npm run test             # Jest unit tests
+npm run test:e2e         # Playwright E2E tests
+npm run test:all         # Complete test suite
+npm run validate:production # Full production validation
 ```
-
-### Development
-
-```bash
-npm start                # Start server with nodemon (default port 3001)
-```
-
-### API Testing
-
-The server provides these endpoints:
-
-- `GET /api/search-hotels` - Natural language hotel search
-- `GET /search-rates` - Get specific hotel rates
-- `POST /prebook` - Pre-book a hotel reservation
-- `GET /book` - Complete hotel booking
 
 ## Code Architecture Details
 
-### Server Structure (`server/server.js`)
+### Modern Frontend Architecture (`src/`)
 
-- **API Key Management**: Dual environment support (sandbox/production)
-- **OpenAI Integration**: Natural language parsing for search queries
-- **LiteAPI Integration**: Hotel search, rates, prebooking, and booking
-- **Error Handling**: Comprehensive error responses with user-friendly messages
-- **Static File Serving**: Serves the client application
+- **Component Structure**: Organized by feature (booking, hotels, search, payment)
+- **State Management**: Zustand stores with TypeScript (`store/`)
+  - `hotelStore.ts` - Hotel data and search results
+  - `bookingStore.ts` - Booking flow state
+  - `searchStore.ts` - Search filters and preferences
+  - `userStore.ts` - User authentication and preferences
+- **Routing**: React Router v6 with lazy loading
+- **API Layer**: Axios-based services with TypeScript interfaces (`services/`)
 
-### Client Architecture
+### Backend Architecture (`backend/src/`)
 
-- **Modular Design**: Separate files for core logic, passion system, and UI
-- **Passion Matching System**:
-  - 7 predefined travel passions (gourmet foodie, outdoor adventure, etc.)
-  - Algorithmic scoring based on hotel amenities, descriptions, and location
-  - Persistent user preferences via localStorage
-- **Theme System**: CSS variable-based dual theme switching
-- **Progressive Enhancement**: Works without JavaScript for basic functionality
+- **Database Layer**: Drizzle ORM with schema definitions (`database/schema/`)
+- **API Routes**: Express.js with TypeScript (`routes/`)
+  - Admin routes with role-based access
+  - Payment processing with Stripe integration
+  - Hotel search and booking endpoints
+- **Services**: Business logic layer (`services/`)
+  - `aiSearchService.ts` - OpenAI integration
+  - `liteApiService.ts` - Hotel API integration
+  - `paymentService.ts` - Stripe payment processing
+- **Middleware**: Security, validation, rate limiting (`middleware/`)
 
-### Passion System Details
+### Legacy Integration (`build-website-example/`)
 
-The passion matching system (`passion-data.js`) includes:
+- **Vanilla JS Client**: Modular design with passion system
+- **Express Server**: Direct LiteAPI integration (`server/server.js`)
+- **Passion Matching**: 7-category scoring algorithm (`client/passion-data.js`)
+- **Payment Flow**: LiteAPI Payment SDK integration
 
-- **PassionMatcher Class**: Calculates compatibility scores between hotels and user interests
-- **PassionProfile Class**: Manages user's selected travel passions
-- **Scoring Algorithm**: Matches keywords in hotel descriptions, amenities, and location data
-- **7 Passion Categories**: Each with specific keywords, amenity matches, and location indicators
+### Data Flow Architecture
 
-### Payment Integration
-
-- Uses LiteAPI Payment SDK (`liteAPIPayment.js`)
-- Supports voucher codes and transaction tracking
-- Integrated with hotel booking workflow
+1. **Frontend** (React) → **Backend API** (TypeScript) → **External APIs** (LiteAPI/OpenAI)
+2. **Legacy Frontend** (Vanilla JS) → **Legacy Server** → **External APIs**
+3. **Shared Services**: Payment processing, hotel data, user management
 
 ## Environment Variables
 
-Required in `.env` file:
+### Modern Stack (Root `.env`)
+```bash
+VITE_API_URL=http://localhost:3001
+VITE_OPENAI_API_KEY=<OpenAI API key>
+VITE_LITEAPI_KEY=<LiteAPI key>
+VITE_STRIPE_PUBLISHABLE_KEY=<Stripe public key>
+```
 
+### Backend (backend/.env)
+```bash
+DATABASE_URL=<PostgreSQL connection string>
+OPENAI_API_KEY=<OpenAI API key>
+LITEAPI_KEY=<LiteAPI key>
+STRIPE_SECRET_KEY=<Stripe secret key>
+JWT_SECRET=<JWT signing secret>
+REDIS_URL=<Redis connection for caching>
+```
+
+### Legacy Stack (build-website-example/.env)
 ```bash
 PROD_API_KEY=<LiteAPI production key>
 SAND_API_KEY=<LiteAPI sandbox key>
 OPEN_API_KEY=<OpenAI API key>
-PORT=3001                    # Optional, defaults to 3001
+PORT=3001
 ```
 
 ## Key Technical Patterns
 
-### Natural Language Processing
+### AI-Powered Search Architecture
 
-The application uses OpenAI to parse user queries like "hotels in Paris for a romantic getaway next weekend for 2 people" into structured search parameters including city, dates, and guest count.
+The application uses a dual AI approach:
+1. **OpenAI Integration**: Natural language parsing in `aiSearchService.ts`
+2. **Passion-Based Matching**: 7-category algorithmic scoring system
+3. **Hybrid Results**: Combines AI search with passion preferences
 
-### API Response Handling
+### Type-Safe Development
 
-- Graceful degradation when APIs are unavailable
-- User-friendly error messages with technical details logged
-- Fallback responses when OpenAI or LiteAPI calls fail
+- **Frontend**: TypeScript interfaces for all API responses (`types/`)
+- **Backend**: Drizzle ORM with type-safe database operations
+- **Validation**: Zod schemas for runtime type validation
+- **API Contracts**: Shared TypeScript definitions
 
-### Client-Server Communication
+### State Management Patterns
 
-- RESTful API design with query parameters for GET requests
-- JSON request/response format
-- Environment switching for testing vs production
+- **Modern**: Zustand stores with TypeScript and persistence
+- **Legacy**: Vanilla JavaScript with localStorage
+- **Data Flow**: Unidirectional data flow with clear separation of concerns
 
-### State Management
+### Error Handling & Resilience
 
-- Client-side state managed through vanilla JavaScript
-- Persistent user preferences in localStorage
-- Form state preservation during searches
+- Circuit breaker pattern for external API calls
+- Graceful degradation with fallback responses
+- Comprehensive error boundaries in React
+- Structured logging with Winston
 
-## Design System
+## Production & Deployment
 
-The application implements a modern 2025 design aesthetic with:
+### Docker Containerization
+```bash
+npm run docker:build        # Build Docker image
+npm run docker:run          # Run containerized app
+npm run docker:compose      # Full stack with dependencies
+```
 
-- **Dual Themes**: "Serene Escape" (sky blue) and "Tranquil Haven" (lavender purple)
-- **Glass Morphism**: Frosted glass effects on search forms
-- **Typography**: Inter font family with consistent hierarchy
-- **Responsive Design**: Mobile-first approach with adaptive layouts
-- **Accessibility**: WCAG 2.1 AA compliance considerations
+### Kubernetes Deployment
+- **Location**: `deployment/kubernetes/`
+- **Features**: Blue-green deployment, canary releases, auto-scaling
+- **Monitoring**: Prometheus, Grafana dashboards
+- **Security**: Network policies, RBAC, secrets management
 
-## Testing the Application
+### Performance Optimization
+- Vite build optimization with code splitting
+- Bundle analysis with `npm run bundle:analyze`
+- Image optimization and CDN integration
+- Redis caching for API responses
 
-1. Ensure all environment variables are set
-2. Start the server: `npm start`
-3. Navigate to `http://localhost:3001`
-4. Test search with natural language queries
-5. Verify theme switching functionality
-6. Test booking flow in sandbox environment
+### Security & Compliance
+- **ESLint Security Plugin**: Automated security scanning
+- **Helmet.js**: Security headers and CSRF protection
+- **Rate Limiting**: API throttling and DDoS protection
+- **Input Validation**: Zod schemas for all user inputs
+- **Dependency Scanning**: Snyk integration for vulnerability detection
 
-## Security Considerations
+## AI & DevOps Integration
 
-- API keys stored in environment variables (never committed)
-- CORS configured for cross-origin requests
-- Input validation on search parameters
-- Error responses avoid exposing sensitive system details
+### AI-Powered Development (`ai-devops/`)
+- **Performance Optimizer**: Automatic performance tuning
+- **Security Assistant**: Intelligent security monitoring
+- **Deployment Predictor**: ML-based deployment success prediction
+- **Resource Optimizer**: Intelligent resource allocation
+- **Canary Analysis**: AI-driven canary deployment decisions
 
-## Known Dependencies
+### Agent Training System (`agent-training/`)
+- Implementation examples and patterns
+- Dependency management guides
+- Testing templates and best practices
+- Payment integration templates
 
-- **express**: Web server framework
-- **cors**: Cross-origin resource sharing
-- **dotenv**: Environment variable management
-- **body-parser**: Request body parsing
-- **liteapi-node-sdk**: Hotel booking API integration
-- **openai**: AI-powered query processing
-- **nodemon**: Development server with auto-reload
+## Development Workflow
+
+1. **Feature Development**: Use TypeScript for type safety
+2. **Code Quality**: Run `npm run check:all` before commits
+3. **Testing Strategy**: Unit (Vitest) → Integration → E2E (Playwright)
+4. **Security**: Run security scans before deployment
+5. **Performance**: Monitor bundle size and runtime metrics
+6. **Deployment**: Use Kubernetes with monitoring and rollback capabilities

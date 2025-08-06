@@ -1,60 +1,15 @@
 import React, { useState } from 'react';
-
-interface HotelImage {
-  url: string;
-  alt: string;
-  type: 'exterior' | 'interior' | 'room' | 'amenity';
-}
-
-interface HotelAmenity {
-  id: string;
-  name: string;
-  icon: string;
-  category: 'general' | 'room' | 'dining' | 'recreation' | 'business';
-}
-
-interface HotelRoom {
-  id: string;
-  name: string;
-  description: string;
-  maxOccupancy: number;
-  bedType: string;
-  size: number;
-  pricePerNight: number;
-  images: string[];
-  amenities: string[];
-  availability: boolean;
-}
-
-interface Hotel {
-  id: string;
-  name: string;
-  description: string;
-  address: string;
-  city: string;
-  country: string;
-  rating: number;
-  reviewCount: number;
-  priceRange: string;
-  images: HotelImage[];
-  amenities: HotelAmenity[];
-  rooms: HotelRoom[];
-  location: {
-    lat: number;
-    lng: number;
-  };
-  checkInTime: string;
-  checkOutTime: string;
-  policies: string[];
-  nearbyAttractions: Array<{
-    name: string;
-    distance: string;
-    type: string;
-  }>;
-}
+import { ArrowLeft, Star, MapPin, Wifi, Car, Utensils, Dumbbell, Heart, Share2, Calendar, Users, Sparkles, Shield, Leaf, Camera, Play, ChevronLeft, ChevronRight, Clock, Check, X } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { useHotelStore } from '@/store/hotelStore';
+import { useSearchStore } from '@/store/searchStore';
+import type { HotelDetails } from '@/types/hotel';
+import { cn } from '@/utils/cn';
 
 interface HotelDetailsProps {
-  hotel?: Hotel;
+  hotelId?: string;
+  hotel?: HotelDetails;
   isLoading?: boolean;
   onBookRoom?: (roomId: string) => void;
   onBackToResults?: () => void;
@@ -62,204 +17,358 @@ interface HotelDetailsProps {
 }
 
 const HotelDetails: React.FC<HotelDetailsProps> = ({
-  hotel,
+  hotelId,
+  hotel: providedHotel,
   isLoading = false,
   onBookRoom,
   onBackToResults,
   className = '',
 }) => {
+  const { selectedHotel, loading: hotelLoading } = useHotelStore();
+  const { selectedDateRange, guestCount } = useSearchStore();
+  
+  const hotel = providedHotel || selectedHotel;
+  const loading = isLoading || hotelLoading;
+  
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'amenities' | 'location'>('overview');
-
-  // Mock data if no hotel provided
-  const mockHotel: Hotel = {
-    id: '1',
-    name: 'Grand Palace Resort & Spa',
-    description: 'Experience luxury and comfort at our premier resort destination. Nestled in the heart of paradise, our resort offers world-class amenities, exceptional service, and breathtaking views that will make your stay unforgettable.',
-    address: '123 Paradise Avenue',
-    city: 'Tropical Bay',
-    country: 'Paradise Island',
-    rating: 4.8,
-    reviewCount: 1247,
-    priceRange: '$200 - $800',
-    images: [
-      { url: '/hotels/grand-palace-1.jpg', alt: 'Hotel Exterior', type: 'exterior' },
-      { url: '/hotels/grand-palace-2.jpg', alt: 'Lobby', type: 'interior' },
-      { url: '/hotels/grand-palace-3.jpg', alt: 'Deluxe Room', type: 'room' },
-      { url: '/hotels/grand-palace-4.jpg', alt: 'Swimming Pool', type: 'amenity' },
-    ],
-    amenities: [
-      { id: '1', name: 'Free WiFi', icon: '📶', category: 'general' },
-      { id: '2', name: 'Swimming Pool', icon: '🏊', category: 'recreation' },
-      { id: '3', name: 'Fitness Center', icon: '💪', category: 'recreation' },
-      { id: '4', name: 'Spa Services', icon: '💆', category: 'recreation' },
-      { id: '5', name: 'Restaurant', icon: '🍽️', category: 'dining' },
-      { id: '6', name: 'Room Service', icon: '🛎️', category: 'room' },
-      { id: '7', name: 'Business Center', icon: '💼', category: 'business' },
-      { id: '8', name: 'Concierge', icon: '🎩', category: 'general' },
-    ],
-    rooms: [
-      {
-        id: '1',
-        name: 'Deluxe Ocean View',
-        description: 'Spacious room with stunning ocean views and modern amenities',
-        maxOccupancy: 2,
-        bedType: 'King Bed',
-        size: 45,
-        pricePerNight: 299,
-        images: ['/rooms/deluxe-1.jpg', '/rooms/deluxe-2.jpg'],
-        amenities: ['Ocean View', 'Mini Bar', 'Coffee Machine', 'Balcony'],
-        availability: true,
-      },
-      {
-        id: '2',
-        name: 'Family Suite',
-        description: 'Perfect for families with separate living area and two bedrooms',
-        maxOccupancy: 6,
-        bedType: '2 Queen Beds + Sofa Bed',
-        size: 75,
-        pricePerNight: 459,
-        images: ['/rooms/suite-1.jpg', '/rooms/suite-2.jpg'],
-        amenities: ['Living Area', 'Kitchen', 'Two Bathrooms', 'City View'],
-        availability: true,
-      },
-    ],
-    location: { lat: 25.7617, lng: -80.1918 },
-    checkInTime: '3:00 PM',
-    checkOutTime: '11:00 AM',
-    policies: [
-      'Pets are welcome with additional fee',
-      'Smoking is prohibited in all rooms',
-      'Cancellation free up to 24 hours before check-in',
-      'Valid ID required at check-in',
-    ],
-    nearbyAttractions: [
-      { name: 'Paradise Beach', distance: '0.2 km', type: 'Beach' },
-      { name: 'Cultural Museum', distance: '1.5 km', type: 'Museum' },
-      { name: 'Shopping District', distance: '2.0 km', type: 'Shopping' },
-      { name: 'Adventure Park', distance: '3.2 km', type: 'Entertainment' },
-    ],
-  };
-
-  const displayHotel = hotel || mockHotel;
+  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'amenities' | 'location' | 'reviews'>('overview');
+  const [showAllImages, setShowAllImages] = useState(false);
 
   const renderStars = (rating: number) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
     return (
-      <div className="flex items-center">
-        {[...Array(fullStars)].map((_, i) => (
-          <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
+      <div className="flex items-center gap-1">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={cn(
+              'w-5 h-5',
+              i < Math.floor(rating)
+                ? 'text-yellow-400 fill-current'
+                : 'text-gray-300'
+            )}
+          />
         ))}
-        {hasHalfStar && (
-          <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-        )}
-        <span className="ml-2 text-gray-600">
-          {rating} ({displayHotel.reviewCount} reviews)
+        <span className="ml-2 text-lg font-medium text-gray-700 dark:text-gray-300">
+          {rating.toFixed(1)}
         </span>
       </div>
     );
   };
 
-  if (isLoading) {
+  const getPassionScoreColor = (score: number) => {
+    if (score >= 0.8) return 'from-purple-500 to-pink-500';
+    if (score >= 0.6) return 'from-blue-500 to-purple-500';
+    if (score >= 0.4) return 'from-green-500 to-blue-500';
+    return 'from-gray-400 to-gray-500';
+  };
+
+  const formatPrice = (price: number, currency: string = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+    }).format(price);
+  };
+
+  if (!hotel) {
     return (
-      <div className={`animate-pulse ${className}`}>
-        <div className="h-64 bg-gray-300 rounded-lg mb-6"></div>
-        <div className="space-y-4">
-          <div className="h-8 bg-gray-300 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-          <div className="h-32 bg-gray-300 rounded"></div>
+      <div className={cn('text-center py-12', className)}>
+        <div className="max-w-md mx-auto">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <MapPin className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Hotel not found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            The hotel you're looking for doesn't exist or has been removed.
+          </p>
+          <Button onClick={onBackToResults} variant="outline">
+            Back to Results
+          </Button>
         </div>
       </div>
     );
   }
 
+
+  if (loading) {
+    return (
+      <div className={cn('animate-pulse space-y-6', className)}>
+        <div className="h-96 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+        <div className="space-y-4">
+          <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+          <div className="h-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const maxPassionScore = hotel.passionScore ? Math.max(...Object.values(hotel.passionScore)) : 0;
+  const primaryImage = hotel.images?.find(img => img.isPrimary) || hotel.images?.[0];
+  const totalNights = selectedDateRange.checkIn && selectedDateRange.checkOut 
+    ? Math.ceil((new Date(selectedDateRange.checkOut).getTime() - new Date(selectedDateRange.checkIn).getTime()) / (1000 * 60 * 60 * 24))
+    : 1;
+
   return (
-    <div className={`max-w-7xl mx-auto ${className}`}>
-      {/* Back Button */}
-      {onBackToResults && (
-        <button
-          onClick={onBackToResults}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-6 transition-colors"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Results
-        </button>
-      )}
+    <div className={cn('max-w-7xl mx-auto', className)}>
+      {/* Back Button & Actions */}
+      <div className="flex items-center justify-between mb-6">
+        {onBackToResults && (
+          <Button
+            onClick={onBackToResults}
+            variant="ghost"
+            className="text-primary-600 hover:text-primary-800"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Results
+          </Button>
+        )}
+        
+        <div className="flex items-center gap-3">
+          {maxPassionScore > 0.6 && (
+            <div className={cn(
+              'bg-gradient-to-r text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1',
+              getPassionScoreColor(maxPassionScore)
+            )}>
+              <Sparkles className="w-4 h-4" />
+              {Math.round(maxPassionScore * 100)}% Passion Match
+            </div>
+          )}
+          
+          {hotel.sustainabilityScore && hotel.sustainabilityScore > 0.8 && (
+            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+              <Leaf className="w-4 h-4" />
+              Eco-Friendly
+            </div>
+          )}
+          
+          <Button variant="outline" size="icon">
+            <Heart className="w-4 h-4" />
+          </Button>
+          
+          <Button variant="outline" size="icon">
+            <Share2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Hotel Images */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-        <div className="lg:col-span-3">
-          <img
-            src={displayHotel.images[selectedImageIndex]?.url || '/placeholder-hotel.jpg'}
-            alt={displayHotel.images[selectedImageIndex]?.alt || 'Hotel'}
-            className="w-full h-96 object-cover rounded-lg"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
-            }}
-          />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
-          {displayHotel.images.slice(1, 4).map((image, index) => (
-            <img
-              key={index + 1}
-              src={image.url}
-              alt={image.alt}
-              className="w-full h-28 lg:h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setSelectedImageIndex(index + 1)}
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
-              }}
-            />
-          ))}
-        </div>
+      <div className="relative mb-8">
+        {!showAllImages ? (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="lg:col-span-3 relative group">
+              <img
+                src={hotel.images[selectedImageIndex]?.url || '/placeholder-hotel.jpg'}
+                alt={hotel.images[selectedImageIndex]?.alt || hotel.name}
+                className="w-full h-96 object-cover rounded-lg"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
+                }}
+              />
+              
+              {/* Image Navigation */}
+              {hotel.images.length > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setSelectedImageIndex(selectedImageIndex > 0 ? selectedImageIndex - 1 : hotel.images.length - 1)}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setSelectedImageIndex(selectedImageIndex < hotel.images.length - 1 ? selectedImageIndex + 1 : 0)}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </>
+              )}
+              
+              {/* Virtual Tour */}
+              {hotel.virtualTourUrl && (
+                <Button
+                  variant="secondary"
+                  className="absolute bottom-4 left-4 bg-black/50 hover:bg-black/70 text-white"
+                  onClick={() => window.open(hotel.virtualTourUrl, '_blank')}
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Virtual Tour
+                </Button>
+              )}
+              
+              {/* Image Counter */}
+              <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                {selectedImageIndex + 1} / {hotel.images.length}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+              {hotel.images.slice(1, 4).map((image, index) => (
+                <div key={index + 1} className="relative group cursor-pointer">
+                  <img
+                    src={image.url}
+                    alt={image.alt}
+                    className="w-full h-28 lg:h-32 object-cover rounded-lg group-hover:opacity-80 transition-opacity"
+                    onClick={() => setSelectedImageIndex(index + 1)}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
+                    }}
+                  />
+                  {index === 2 && hotel.images.length > 4 && (
+                    <div 
+                      className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white font-medium cursor-pointer"
+                      onClick={() => setShowAllImages(true)}
+                    >
+                      <Camera className="w-5 h-5 mr-2" />
+                      View All {hotel.images.length} Photos
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {hotel.images.map((image, index) => (
+              <div key={index} className="relative group cursor-pointer">
+                <img
+                  src={image.url}
+                  alt={image.alt}
+                  className="w-full h-48 object-cover rounded-lg group-hover:opacity-80 transition-opacity"
+                  onClick={() => {
+                    setSelectedImageIndex(index);
+                    setShowAllImages(false);
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {showAllImages && (
+          <Button
+            onClick={() => setShowAllImages(false)}
+            variant="outline"
+            className="mt-4"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Close Gallery
+          </Button>
+        )}
       </div>
 
       {/* Hotel Header */}
       <div className="mb-8">
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {displayHotel.name}
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+          <div className="flex-1">
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+              {hotel.name}
             </h1>
-            <p className="text-gray-600 mb-2">
-              {displayHotel.address}, {displayHotel.city}, {displayHotel.country}
-            </p>
-            {renderStars(displayHotel.rating)}
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-3">
+              <MapPin className="w-5 h-5" />
+              <span className="text-lg">
+                {hotel.location.address}, {hotel.location.city}, {hotel.location.country}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              {renderStars(hotel.rating)}
+              <span className="text-gray-600 dark:text-gray-400">
+                ({hotel.reviewCount.toLocaleString()} reviews)
+              </span>
+            </div>
+            
+            {/* Quick Info */}
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                Check-in: {hotel.checkInTime}
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                Check-out: {hotel.checkOutTime}
+              </div>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-gray-500">From</div>
-            <div className="text-2xl font-bold text-blue-600">{displayHotel.priceRange}</div>
-            <div className="text-sm text-gray-500">per night</div>
-          </div>
+          
+          {/* Booking Card */}
+          <Card className="w-full lg:w-96 p-6 lg:sticky lg:top-6">
+            <div className="text-center mb-4">
+              <div className="text-sm text-gray-500 dark:text-gray-400">From</div>
+              <div className="text-3xl font-bold text-primary-600">
+                {formatPrice(hotel.priceRange.avgNightly, hotel.priceRange.currency)}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">per night</div>
+              {totalNights > 1 && (
+                <div className="text-lg font-semibold text-gray-900 dark:text-white mt-2">
+                  Total: {formatPrice(hotel.priceRange.avgNightly * totalNights, hotel.priceRange.currency)}
+                </div>
+              )}
+            </div>
+            
+            {/* Date & Guest Info */}
+            {selectedDateRange.checkIn && selectedDateRange.checkOut && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-gray-600 dark:text-gray-400">Check-in</div>
+                    <div className="font-medium">{selectedDateRange.checkIn}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-600 dark:text-gray-400">Check-out</div>
+                    <div className="font-medium">{selectedDateRange.checkOut}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-gray-600 dark:text-gray-400">Guests</div>
+                    <div className="font-medium">
+                      {guestCount.adults} adults{guestCount.children > 0 && `, ${guestCount.children} children`} • {guestCount.rooms} room{guestCount.rooms > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <Button className="w-full mb-3" size="lg">
+              <Calendar className="w-4 h-4 mr-2" />
+              Book Now
+            </Button>
+            
+            <Button variant="outline" className="w-full">
+              <Users className="w-4 h-4 mr-2" />
+              View Rooms
+            </Button>
+          </Card>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200 mb-8">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-8">
+        <nav className="flex space-x-8 overflow-x-auto">
           {[
-            { id: 'overview', label: 'Overview' },
-            { id: 'rooms', label: 'Rooms' },
-            { id: 'amenities', label: 'Amenities' },
-            { id: 'location', label: 'Location' },
+            { id: 'overview', label: 'Overview', icon: null },
+            { id: 'rooms', label: 'Rooms & Rates', icon: null },
+            { id: 'amenities', label: 'Amenities', icon: null },
+            { id: 'location', label: 'Location', icon: MapPin },
+            { id: 'reviews', label: 'Reviews', icon: Star },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={cn(
+                'flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              )}
             >
+              {tab.icon && <tab.icon className="w-4 h-4" />}
               {tab.label}
             </button>
           ))}
@@ -272,42 +381,105 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <h3 className="text-xl font-semibold mb-4">About This Hotel</h3>
-              <p className="text-gray-700 mb-6">{displayHotel.description}</p>
-
-              <h4 className="text-lg font-semibold mb-3">Hotel Policies</h4>
-              <ul className="space-y-2">
-                {displayHotel.policies.map((policy, index) => (
-                  <li key={index} className="flex items-start">
-                    <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-gray-700">{policy}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-lg font-semibold mb-4">Check-in Information</h4>
-                <div className="space-y-3">
-                  <div>
-                    <span className="font-medium text-gray-700">Check-in:</span>
-                    <span className="ml-2 text-gray-600">{displayHotel.checkInTime}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Check-out:</span>
-                    <span className="ml-2 text-gray-600">{displayHotel.checkOutTime}</span>
+              <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+                {hotel.fullDescription || hotel.description}
+              </p>
+              
+              {/* Passion Scores */}
+              {hotel.passionScore && Object.keys(hotel.passionScore).length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Perfect For</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Object.entries(hotel.passionScore)
+                      .filter(([_, score]) => score > 0.3)
+                      .sort(([_, a], [__, b]) => b - a)
+                      .map(([passion, score]) => (
+                        <div key={passion} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <span className="font-medium text-gray-900 dark:text-white capitalize">
+                            {passion.replace(/([A-Z])/g, ' $1').trim()}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                              <div 
+                                className={cn(
+                                  'h-full bg-gradient-to-r transition-all duration-500',
+                                  getPassionScoreColor(score)
+                                )}
+                                style={{ width: `${score * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                              {Math.round(score * 100)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 </div>
+              )}
+
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Hotel Policies</h4>
+              <div className="space-y-3">
+                {hotel.policies.map((policy, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    {policy.type === 'cancellation' ? (
+                      <Shield className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <Check className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    )}
+                    <div>
+                      <div className="font-medium text-gray-900 dark:text-white">{policy.title}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{policy.description}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
+            </div>
+
+            <div className="space-y-6">
+              <Card className="p-6">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Check-in Information</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Check-in:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{hotel.checkInTime}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Check-out:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{hotel.checkOutTime}</span>
+                  </div>
+                </div>
+              </Card>
+              
+              {hotel.sustainabilityScore && hotel.sustainabilityScore > 0.5 && (
+                <Card className="p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Leaf className="w-6 h-6 text-green-500" />
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Sustainability</h4>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-green-500 transition-all duration-500"
+                        style={{ width: `${hotel.sustainabilityScore * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      {Math.round(hotel.sustainabilityScore * 100)}%
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    This hotel has green certifications and follows sustainable practices.
+                  </p>
+                </Card>
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'rooms' && (
           <div className="grid gap-6">
-            {displayHotel.rooms.map((room) => (
+            {hotel.rooms.map((room) => (
               <div key={room.id} className="border border-gray-200 rounded-lg p-6">
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="lg:w-1/3">
@@ -327,14 +499,13 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                         <h4 className="text-xl font-semibold mb-2">{room.name}</h4>
                         <p className="text-gray-600 mb-2">{room.description}</p>
                         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                          <span>👥 Up to {room.maxOccupancy} guests</span>
-                          <span>🛏️ {room.bedType}</span>
-                          <span>📐 {room.size} m²</span>
+                          <span>👥 Up to {room.capacity} guests</span>
+                          <span>🛏️ {room.type}</span>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-600">
-                          ${room.pricePerNight}
+                          {formatPrice(room.price, room.currency)}
                         </div>
                         <div className="text-sm text-gray-500">per night</div>
                       </div>
@@ -371,7 +542,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
         {activeTab === 'amenities' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(
-              displayHotel.amenities.reduce((acc, amenity) => {
+              hotel.amenities.reduce((acc, amenity) => {
                 if (!acc[amenity.category]) {
 acc[amenity.category] = [];
 }
@@ -401,7 +572,7 @@ acc[amenity.category] = [];
             <div>
               <h4 className="text-lg font-semibold mb-4">Nearby Attractions</h4>
               <div className="space-y-3">
-                {displayHotel.nearbyAttractions.map((attraction, index) => (
+                {hotel.nearbyAttractions.map((attraction, index) => (
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium text-gray-900">{attraction.name}</div>
@@ -421,7 +592,7 @@ acc[amenity.category] = [];
                 <span className="text-gray-500">Interactive Map Coming Soon</span>
               </div>
               <div className="mt-4 text-sm text-gray-600">
-                <strong>Address:</strong> {displayHotel.address}, {displayHotel.city}, {displayHotel.country}
+                <strong>Address:</strong> {hotel.address}, {hotel.city}, {hotel.country}
               </div>
             </div>
           </div>

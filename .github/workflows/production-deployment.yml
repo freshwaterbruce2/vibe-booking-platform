@@ -1,0 +1,538 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deployment_strategy:
+        description: 'Deployment strategy'
+        required: true
+        default: 'canary'
+        type: choice
+        options:
+          - canary
+          - blue-green
+          - rolling
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+          - development
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: hotel-booking
+  EKS_CLUSTER_NAME: hotel-booking-production
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  SONARQUBE_URL: ${{ secrets.SONARQUBE_URL }}
+  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+jobs:
+  # Security scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --fail-on=all
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run OWASP dependency check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'hotel-booking'
+          path: '.'
+          format: 'HTML'
+          args: >
+            --enableRetired
+            --enableExperimental
+
+  # Code quality analysis
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint -- --format json --output-file eslint-report.json
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage --coverageReporters=lcov
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=hotel-booking
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.eslint.reportPaths=eslint-report.json
+
+      - name: Quality Gate check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # Build and test
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: [security-scan, code-quality]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test -- --run
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          REDIS_URL: ${{ secrets.TEST_REDIS_URL }}
+
+      - name: Run E2E tests
+        uses: cypress-io/github-action@v5
+        with:
+          build: npm run build
+          start: npm run preview
+          wait-on: 'http://localhost:4173'
+          wait-on-timeout: 120
+          record: true
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_API_URL: ${{ secrets.API_URL }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value={{date 'YYYYMMDD-HHmmss'}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'sarif'
+          output: 'docker-scan-results.sarif'
+
+      - name: Upload scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'docker-scan-results.sarif'
+
+  # Compliance checks
+  compliance-check:
+    name: Compliance Validation
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run SOC2 compliance checks
+        run: |
+          kubectl apply -f deployment/compliance/compliance-automation.yaml --dry-run=client
+          
+      - name: Run PCI-DSS compliance scan
+        uses: ./.github/actions/pci-compliance
+        with:
+          api-endpoint: ${{ secrets.COMPLIANCE_API_ENDPOINT }}
+          api-key: ${{ secrets.COMPLIANCE_API_KEY }}
+
+      - name: Generate compliance report
+        run: |
+          docker run --rm \
+            -v $(pwd):/workspace \
+            compliance-scanner:latest \
+            --output /workspace/compliance-report.json
+
+      - name: Upload compliance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: compliance-report
+          path: compliance-report.json
+
+  # Database migration
+  database-migration:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    needs: build-test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Run database migrations
+        run: |
+          kubectl apply -f deployment/kubernetes/database-migration-job.yaml
+          kubectl wait --for=condition=complete job/database-migration-${GITHUB_RUN_ID} -n hotel-booking-${{ github.event.inputs.environment || 'staging' }} --timeout=600s
+
+      - name: Verify migration
+        run: |
+          kubectl logs job/database-migration-${GITHUB_RUN_ID} -n hotel-booking-${{ github.event.inputs.environment || 'staging' }}
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-test, database-migration, compliance-check]
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Deploy to staging
+        run: |
+          # Update image tag
+          kubectl set image deployment/hotel-booking \
+            hotel-booking-app=${{ needs.build-test.outputs.image-tag }} \
+            -n hotel-booking-staging
+          
+          # Wait for rollout
+          kubectl rollout status deployment/hotel-booking -n hotel-booking-staging --timeout=600s
+
+      - name: Run smoke tests
+        run: |
+          ./deployment/scripts/smoke-tests.sh staging
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Staging deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Integration tests on staging
+  staging-integration-tests:
+    name: Staging Integration Tests
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run API tests
+        uses: matt-ball/newman-action@master
+        with:
+          collection: tests/postman/hotel-booking-api.json
+          environment: tests/postman/staging-env.json
+
+      - name: Run load tests
+        run: |
+          docker run --rm \
+            -v $(pwd)/tests/k6:/scripts \
+            grafana/k6 run /scripts/load-test.js \
+            --env BASE_URL=https://staging.hotelbooking.com
+
+      - name: Run security tests
+        run: |
+          docker run --rm \
+            -v $(pwd):/zap/wrk/:rw \
+            owasp/zap2docker-stable zap-baseline.py \
+            -t https://staging.hotelbooking.com \
+            -r zap-report.html
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [staging-integration-tests]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
+    environment: 
+      name: production
+      url: https://hotelbooking.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Create backup before deployment
+        run: |
+          ./deployment/scripts/backup-restore.sh backup
+
+      - name: Deploy using selected strategy
+        run: |
+          STRATEGY=${{ github.event.inputs.deployment_strategy || 'canary' }}
+          IMAGE_TAG=${{ needs.build-test.outputs.image-tag }}
+          
+          case $STRATEGY in
+            canary)
+              kubectl apply -f deployment/kubernetes/canary-deployment.yaml
+              kubectl set image deployment/hotel-booking \
+                hotel-booking-app=$IMAGE_TAG \
+                -n hotel-booking-production
+              ;;
+            blue-green)
+              ./deployment/scripts/blue-green-deploy.sh \
+                --namespace hotel-booking-production \
+                --image-tag $IMAGE_TAG
+              ;;
+            rolling)
+              kubectl set image deployment/hotel-booking \
+                hotel-booking-app=$IMAGE_TAG \
+                -n hotel-booking-production
+              kubectl rollout status deployment/hotel-booking \
+                -n hotel-booking-production \
+                --timeout=600s
+              ;;
+          esac
+
+      - name: Monitor deployment
+        run: |
+          # Monitor key metrics during deployment
+          ./deployment/scripts/monitor-deployment.sh \
+            --duration 300 \
+            --threshold-error-rate 0.01 \
+            --threshold-response-time 500
+
+      - name: Run production smoke tests
+        run: |
+          ./deployment/scripts/smoke-tests.sh production
+
+      - name: Update status page
+        run: |
+          curl -X POST https://status.hotelbooking.com/api/deployments \
+            -H "Authorization: Bearer ${{ secrets.STATUS_PAGE_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "${{ needs.build-test.outputs.image-tag }}",
+              "status": "completed",
+              "environment": "production"
+            }'
+
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            ## Changes in this Release
+            - Image: ${{ needs.build-test.outputs.image-tag }}
+            - Deployment Strategy: ${{ github.event.inputs.deployment_strategy || 'canary' }}
+            - Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+  # Post-deployment validation
+  post-deployment-validation:
+    name: Post-Deployment Validation
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: success()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run synthetic monitoring
+        run: |
+          # Run synthetic user journeys
+          npm run test:synthetic -- --env production
+
+      - name: Validate SSL certificates
+        run: |
+          ./deployment/scripts/validate-ssl.sh hotelbooking.com
+
+      - name: Check performance metrics
+        run: |
+          # Query Prometheus for key metrics
+          ./deployment/scripts/check-metrics.sh \
+            --metric response_time_p95 \
+            --threshold 500 \
+            --duration 10m
+
+      - name: Generate deployment report
+        run: |
+          ./deployment/scripts/generate-report.sh \
+            --deployment-id ${{ github.run_id }} \
+            --output deployment-report.html
+
+      - name: Upload deployment report
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-report
+          path: deployment-report.html
+
+  # Rollback on failure
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-production, post-deployment-validation]
+    if: failure()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Trigger rollback
+        run: |
+          kubectl rollout undo deployment/hotel-booking -n hotel-booking-production
+          kubectl rollout status deployment/hotel-booking -n hotel-booking-production
+
+      - name: Notify team
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: 'CRITICAL: Production deployment failed and was rolled back!'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Create incident
+        run: |
+          curl -X POST https://api.pagerduty.com/incidents \
+            -H "Authorization: Token token=${{ secrets.PAGERDUTY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "incident": {
+                "type": "incident",
+                "title": "Production deployment rollback",
+                "service": {
+                  "id": "${{ secrets.PAGERDUTY_SERVICE_ID }}",
+                  "type": "service_reference"
+                },
+                "urgency": "high"
+              }
+            }'

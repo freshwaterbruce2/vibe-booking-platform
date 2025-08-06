@@ -1,0 +1,260 @@
+name: Advanced CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+      
+      - name: Run custom security scan
+        run: |
+          npm ci
+          node scripts/security-scan.js
+      
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'hotel-booking'
+          path: '.'
+          format: 'ALL'
+          args: >
+            --enableRetired
+            --enableExperimental
+      
+      - name: Upload dependency check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports/
+
+  performance-monitoring:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+      
+      - name: Bundle size analysis
+        run: node scripts/bundle-analyzer.js
+      
+      - name: Upload bundle analysis report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis-report
+          path: bundle-analysis-report.json
+
+  visual-regression:
+    name: Visual Regression Testing
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Run visual regression tests
+        run: npx playwright test --config=playwright-visual.config.ts --project=${{ matrix.browser }}
+      
+      - name: Upload visual regression results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-${{ matrix.browser }}
+          path: |
+            playwright-report/visual/
+            test-results/
+
+  dependency-updates:
+    name: Dependency Updates Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for outdated dependencies
+        run: |
+          npm outdated --json > outdated.json || true
+          
+      - name: Create dependency update report
+        run: |
+          node -e "
+          const outdated = require('./outdated.json');
+          const report = Object.entries(outdated).map(([name, info]) => ({
+            name,
+            current: info.current,
+            wanted: info.wanted,
+            latest: info.latest,
+            type: info.type
+          }));
+          console.log(JSON.stringify(report, null, 2));
+          " > dependency-report.json
+      
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-update-report
+          path: dependency-report.json
+
+  docker-build:
+    name: Docker Build & Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: hotel-booking:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/hotel-booking.tar
+      
+      - name: Run Trivy on Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: /tmp/hotel-booking.tar
+          format: 'sarif'
+          output: 'docker-trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Docker scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'docker-trivy-results.sarif'
+      
+      - name: Run Docker Bench Security
+        run: |
+          docker run --rm --net host --pid host --userns host --cap-add audit_control \
+            -v /var/lib:/var/lib:ro \
+            -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v /etc:/etc:ro \
+            docker/docker-bench-security
+
+  release-readiness:
+    name: Release Readiness Check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [security-scan, performance-monitoring, visual-regression]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run pre-release checks
+        run: npm run pre-release
+      
+      - name: Generate release notes
+        run: |
+          echo "## Release Candidate: $(date +%Y-%m-%d)" > release-notes.md
+          echo "" >> release-notes.md
+          echo "### Security Scan: ✅ Passed" >> release-notes.md
+          echo "### Performance: ✅ Passed" >> release-notes.md
+          echo "### Visual Tests: ✅ Passed" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "### Commits since last release:" >> release-notes.md
+          git log --oneline --no-merges $(git describe --tags --abbrev=0)..HEAD >> release-notes.md
+      
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  notify:
+    name: Notification
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [security-scan, performance-monitoring, visual-regression, docker-build]
+    steps:
+      - name: Send notification
+        run: |
+          echo "Pipeline completed for ${{ github.event_name }} on ${{ github.ref }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+          echo "Performance: ${{ needs.performance-monitoring.result }}"
+          echo "Visual Tests: ${{ needs.visual-regression.result }}"
+          echo "Docker Build: ${{ needs.docker-build.result }}"

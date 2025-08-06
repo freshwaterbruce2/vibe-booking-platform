@@ -1,563 +1,658 @@
-import { useState } from 'react';
-
-interface Guest {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  isMainGuest: boolean;
-}
-
-interface BookingData {
-  hotelId: string;
-  roomId: string;
-  checkIn: string;
-  checkOut: string;
-  guests: Guest[];
-  specialRequests: string;
-  totalAmount: number;
-  paymentMethod: 'credit_card' | 'debit_card' | 'paypal';
-  cardDetails?: {
-    cardNumber: string;
-    expiryDate: string;
-    cvv: string;
-    cardholderName: string;
-  };
-}
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Check, AlertCircle, CreditCard, User, Calendar, ShieldCheck, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { useBookingStore } from '@/store/bookingStore';
+import { useSearchStore } from '@/store/searchStore';
+import { useHotelStore } from '@/store/hotelStore';
+import type { Room } from '@/types/hotel';
+import { cn } from '@/utils/cn';
 
 interface BookingFlowProps {
-  initialData?: Partial<BookingData>;
-  onBookingComplete?: (bookingData: BookingData) => void;
+  selectedRoom?: Room;
+  onBookingComplete?: (bookingId: string) => void;
   onCancel?: () => void;
   className?: string;
 }
 
-type BookingStep = 'guest-details' | 'preferences' | 'payment' | 'confirmation';
+type BookingStep = 'room-selection' | 'guest-details' | 'payment' | 'confirmation';
 
 const BookingFlow: React.FC<BookingFlowProps> = ({
-  initialData = {},
+  selectedRoom: propSelectedRoom,
   onBookingComplete,
   onCancel,
   className = '',
 }) => {
-  const [currentStep, setCurrentStep] = useState<BookingStep>('guest-details');
-  const [bookingData, setBookingData] = useState<Partial<BookingData>>({
-    hotelId: 'sample-hotel-id',
-    roomId: 'sample-room-id',
-    checkIn: '2024-08-10',
-    checkOut: '2024-08-15',
-    totalAmount: 1495,
-    guests: [
-      {
-        id: '1',
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        isMainGuest: true,
-      },
-    ],
-    specialRequests: '',
-    paymentMethod: 'credit_card',
-    ...initialData,
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const {
+    currentStep,
+    guestDetails,
+    selectedRoom,
+    paymentInfo,
+    confirmation,
+    errors,
+    loading,
+    setCurrentStep,
+    setGuestDetails,
+    setSelectedRoom,
+    setPaymentInfo,
+    nextStep,
+    previousStep,
+    validateCurrentStep,
+    setLoading,
+    clearBooking,
+  } = useBookingStore();
+  
+  const { selectedDateRange, guestCount } = useSearchStore();
+  const { selectedHotel } = useHotelStore();
+  
+  const [cardNumberFormatted, setCardNumberFormatted] = useState('');
+  const [expiryFormatted, setExpiryFormatted] = useState('');
+  
+  useEffect(() => {
+    if (propSelectedRoom && !selectedRoom) {
+      setSelectedRoom(propSelectedRoom);
+    }
+  }, [propSelectedRoom, selectedRoom, setSelectedRoom]);
 
-  const steps: Array<{ id: BookingStep; title: string; description: string }> = [
-    { id: 'guest-details', title: 'Guest Details', description: 'Enter guest information' },
-    { id: 'preferences', title: 'Preferences', description: 'Special requests and preferences' },
-    { id: 'payment', title: 'Payment', description: 'Payment information' },
-    { id: 'confirmation', title: 'Confirmation', description: 'Review and confirm booking' },
+  const steps: Array<{ id: BookingStep; title: string; description: string; icon: any }> = [
+    { id: 'room-selection', title: 'Room Selection', description: 'Choose your room', icon: Calendar },
+    { id: 'guest-details', title: 'Guest Details', description: 'Enter guest information', icon: User },
+    { id: 'payment', title: 'Payment', description: 'Payment information', icon: CreditCard },
+    { id: 'confirmation', title: 'Confirmation', description: 'Review and confirm booking', icon: ShieldCheck },
   ];
-
-  const updateBookingData = (updates: Partial<BookingData>) => {
-    setBookingData((prev) => ({ ...prev, ...updates }));
+  
+  const formatPrice = (price: number, currency: string = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+    }).format(price);
   };
-
-  const updateGuest = (guestId: string, updates: Partial<Guest>) => {
-    const updatedGuests = bookingData.guests?.map((guest) =>
-      guest.id === guestId ? { ...guest, ...updates } : guest,
-    ) || [];
-    updateBookingData({ guests: updatedGuests });
-  };
-
-  const addGuest = () => {
-    const newGuest: Guest = {
-      id: Date.now().toString(),
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      isMainGuest: false,
-    };
-    updateBookingData({ guests: [...(bookingData.guests || []), newGuest] });
-  };
-
-  const removeGuest = (guestId: string) => {
-    const updatedGuests = bookingData.guests?.filter((guest) => guest.id !== guestId) || [];
-    updateBookingData({ guests: updatedGuests });
-  };
-
-  const validateCurrentStep = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (currentStep === 'guest-details') {
-      bookingData.guests?.forEach((guest, index) => {
-        if (!guest.firstName) {
-newErrors[`guest-${index}-firstName`] = 'First name is required';
-}
-        if (!guest.lastName) {
-newErrors[`guest-${index}-lastName`] = 'Last name is required';
-}
-        if (guest.isMainGuest) {
-          if (!guest.email) {
-newErrors[`guest-${index}-email`] = 'Email is required';
-}
-          if (!guest.phone) {
-newErrors[`guest-${index}-phone`] = 'Phone is required';
-}
-        }
-      });
+  
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
     }
-
-    if (currentStep === 'payment') {
-      if (!bookingData.paymentMethod) {
-newErrors.paymentMethod = 'Payment method is required';
-}
-      if (bookingData.paymentMethod === 'credit_card' || bookingData.paymentMethod === 'debit_card') {
-        if (!bookingData.cardDetails?.cardNumber) {
-newErrors.cardNumber = 'Card number is required';
-}
-        if (!bookingData.cardDetails?.expiryDate) {
-newErrors.expiryDate = 'Expiry date is required';
-}
-        if (!bookingData.cardDetails?.cvv) {
-newErrors.cvv = 'CVV is required';
-}
-        if (!bookingData.cardDetails?.cardholderName) {
-newErrors.cardholderName = 'Cardholder name is required';
-}
-      }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
+  
+  const formatExpiry = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{2})(\d)/, '$1/$2')
+      .substr(0, 5);
+  };
+  
+  const totalNights = selectedDateRange.checkIn && selectedDateRange.checkOut
+    ? Math.ceil((new Date(selectedDateRange.checkOut).getTime() - new Date(selectedDateRange.checkIn).getTime()) / (1000 * 60 * 60 * 24))
+    : 1;
+  
+  const totalAmount = selectedRoom ? selectedRoom.price * totalNights : 0;
 
-  const nextStep = () => {
+  const handleCardNumberChange = (value: string) => {
+    const formatted = formatCardNumber(value);
+    setCardNumberFormatted(formatted);
+    setPaymentInfo({ cardNumber: formatted.replace(/\s/g, '') });
+  };
+  
+  const handleExpiryChange = (value: string) => {
+    const formatted = formatExpiry(value);
+    setExpiryFormatted(formatted);
+    setPaymentInfo({ expiryDate: formatted });
+  };
+  
+  const handleNextStep = () => {
     if (validateCurrentStep()) {
-      const currentIndex = steps.findIndex((step) => step.id === currentStep);
-      if (currentIndex < steps.length - 1) {
-        setCurrentStep(steps[currentIndex + 1].id);
-      }
+      nextStep();
     }
+  };
+  
+  const handlePreviousStep = () => {
+    previousStep();
   };
 
-  const prevStep = () => {
-    const currentIndex = steps.findIndex((step) => step.id === currentStep);
-    if (currentIndex > 0) {
-      setCurrentStep(steps[currentIndex - 1].id);
-    }
-  };
 
   const handleCompleteBooking = async () => {
     if (!validateCurrentStep()) {
-return;
-}
+      return;
+    }
 
-    setIsProcessing(true);
+    setLoading(true);
     try {
-      // Simulate API call
+      // Simulate API call to create booking
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      onBookingComplete && onBookingComplete(bookingData as BookingData);
+      
+      const bookingId = `BK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      onBookingComplete && onBookingComplete(bookingId);
     } catch (error) {
       console.error('Booking failed:', error);
     } finally {
-      setIsProcessing(false);
+      setLoading(false);
     }
   };
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-between mb-8">
-      {steps.map((step, index) => {
-        const isActive = step.id === currentStep;
-        const isCompleted = steps.findIndex((s) => s.id === currentStep) > index;
+  const renderStepIndicator = () => {
+    const currentIndex = steps.findIndex((s) => s.id === currentStep);
+    
+    return (
+      <div className="flex items-center justify-between mb-8">
+        {steps.map((step, index) => {
+          const isActive = step.id === currentStep;
+          const isCompleted = currentIndex > index;
+          const IconComponent = step.icon;
 
-        return (
-          <div key={step.id} className="flex items-center">
-            <div className={`
-              flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
-              ${isActive ? 'border-blue-600 bg-blue-600 text-white' :
-                isCompleted ? 'border-green-600 bg-green-600 text-white' :
-                'border-gray-300 bg-white text-gray-400'}
-            `}>
-              {isCompleted ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <span className="text-sm font-medium">{index + 1}</span>
+          return (
+            <div key={step.id} className="flex items-center">
+              <div className={cn(
+                'flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300',
+                isActive 
+                  ? 'border-primary-600 bg-primary-600 text-white shadow-lg scale-110' 
+                  : isCompleted 
+                    ? 'border-green-600 bg-green-600 text-white' 
+                    : 'border-gray-300 bg-white text-gray-400'
+              )}>
+                {isCompleted ? (
+                  <Check className="w-6 h-6" />
+                ) : (
+                  <IconComponent className="w-6 h-6" />
+                )}
+              </div>
+
+              <div className="ml-4 hidden sm:block">
+                <div className={cn(
+                  'text-sm font-medium transition-colors',
+                  isActive ? 'text-primary-600' : 'text-gray-900 dark:text-white'
+                )}>
+                  {step.title}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{step.description}</div>
+              </div>
+
+              {index < steps.length - 1 && (
+                <div className={cn(
+                  'w-12 sm:w-24 h-0.5 mx-6 transition-colors duration-300',
+                  isCompleted ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
+                )} />
               )}
             </div>
+          );
+        })}
+      </div>
+    );
+  };
 
-            <div className="ml-3 hidden sm:block">
-              <div className={`text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-900'}`}>
-                {step.title}
-              </div>
-              <div className="text-xs text-gray-500">{step.description}</div>
+  const renderRoomSelectionStep = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Room Selection</h3>
+      
+      {selectedRoom ? (
+        <Card className="p-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="lg:w-1/3">
+              <img
+                src={selectedRoom.images[0] || '/placeholder-room.jpg'}
+                alt={selectedRoom.name}
+                className="w-full h-48 object-cover rounded-lg"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/placeholder-room.jpg';
+                }}
+              />
             </div>
-
-            {index < steps.length - 1 && (
-              <div className={`
-                w-12 sm:w-24 h-0.5 mx-4 transition-colors
-                ${isCompleted ? 'bg-green-600' : 'bg-gray-300'}
-              `} />
-            )}
+            
+            <div className="lg:w-2/3">
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                {selectedRoom.name}
+              </h4>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {selectedRoom.description}
+              </p>
+              
+              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <span>👥 Up to {selectedRoom.capacity} guests</span>
+                <span>🛏️ {selectedRoom.type}</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedRoom.amenities.map((amenity, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-primary-100 dark:bg-primary-900/20 text-primary-800 dark:text-primary-300 text-sm rounded-full"
+                  >
+                    {amenity}
+                  </span>
+                ))}
+              </div>
+              
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                  <div className="text-2xl font-bold text-primary-600">
+                    {formatPrice(selectedRoom.price, selectedRoom.currency)}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">per night</div>
+                </div>
+                
+                <div className="text-right">
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Total: {formatPrice(totalAmount, selectedRoom.currency)}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {totalNights} night{totalNights > 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        );
-      })}
+        </Card>
+      ) : (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <Calendar className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-gray-600 dark:text-gray-400">No room selected. Please select a room first.</p>
+        </div>
+      )}
     </div>
   );
-
+  
   const renderGuestDetailsStep = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold mb-4">Guest Information</h3>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Guest Information</h3>
 
-      {bookingData.guests?.map((guest, index) => (
-        <div key={guest.id} className="border border-gray-200 rounded-lg p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-lg font-medium">
-              {guest.isMainGuest ? 'Main Guest' : `Guest ${index + 1}`}
-            </h4>
-            {!guest.isMainGuest && (
-              <button
-                onClick={() => removeGuest(guest.id)}
-                className="text-red-600 hover:text-red-800 text-sm"
-              >
-                Remove
-              </button>
+      <Card className="p-6">
+        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Main Guest</h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              First Name *
+            </label>
+            <Input
+              value={guestDetails.firstName}
+              onChange={(e) => setGuestDetails({ firstName: e.target.value })}
+              className={errors.firstName ? 'border-red-500' : ''}
+              placeholder="Enter first name"
+            />
+            {errors.firstName && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.firstName}
+              </p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                First Name *
-              </label>
-              <input
-                type="text"
-                value={guest.firstName}
-                onChange={(e) => updateGuest(guest.id, { firstName: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors[`guest-${index}-firstName`] ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter first name"
-              />
-              {errors[`guest-${index}-firstName`] && (
-                <p className="text-red-500 text-xs mt-1">{errors[`guest-${index}-firstName`]}</p>
-              )}
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Last Name *
+            </label>
+            <Input
+              value={guestDetails.lastName}
+              onChange={(e) => setGuestDetails({ lastName: e.target.value })}
+              className={errors.lastName ? 'border-red-500' : ''}
+              placeholder="Enter last name"
+            />
+            {errors.lastName && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.lastName}
+              </p>
+            )}
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name *
-              </label>
-              <input
-                type="text"
-                value={guest.lastName}
-                onChange={(e) => updateGuest(guest.id, { lastName: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors[`guest-${index}-lastName`] ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter last name"
-              />
-              {errors[`guest-${index}-lastName`] && (
-                <p className="text-red-500 text-xs mt-1">{errors[`guest-${index}-lastName`]}</p>
-              )}
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email *
+            </label>
+            <Input
+              type="email"
+              value={guestDetails.email}
+              onChange={(e) => setGuestDetails({ email: e.target.value })}
+              className={errors.email ? 'border-red-500' : ''}
+              placeholder="Enter email address"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.email}
+              </p>
+            )}
+          </div>
 
-            {guest.isMainGuest && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={guest.email}
-                    onChange={(e) => updateGuest(guest.id, { email: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors[`guest-${index}-email`] ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Enter email address"
-                  />
-                  {errors[`guest-${index}-email`] && (
-                    <p className="text-red-500 text-xs mt-1">{errors[`guest-${index}-email`]}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    value={guest.phone}
-                    onChange={(e) => updateGuest(guest.id, { phone: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors[`guest-${index}-phone`] ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Enter phone number"
-                  />
-                  {errors[`guest-${index}-phone`] && (
-                    <p className="text-red-500 text-xs mt-1">{errors[`guest-${index}-phone`]}</p>
-                  )}
-                </div>
-              </>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Phone *
+            </label>
+            <Input
+              type="tel"
+              value={guestDetails.phone}
+              onChange={(e) => setGuestDetails({ phone: e.target.value })}
+              className={errors.phone ? 'border-red-500' : ''}
+              placeholder="Enter phone number"
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.phone}
+              </p>
             )}
           </div>
         </div>
-      ))}
-
-      <button
-        onClick={addGuest}
-        className="flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-      >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-        Add Another Guest
-      </button>
-    </div>
-  );
-
-  const renderPreferencesStep = () => (
-    <div className="space-y-6">
-      <h3 className="text-xl font-semibold mb-4">Special Requests & Preferences</h3>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Special Requests (Optional)
-        </label>
-        <textarea
-          value={bookingData.specialRequests || ''}
-          onChange={(e) => updateBookingData({ specialRequests: e.target.value })}
-          rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Any special requests or preferences? (e.g., high floor, quiet room, early check-in)"
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          Special requests are subject to availability and may incur additional charges.
-        </p>
-      </div>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">Booking Summary</h4>
-        <div className="space-y-1 text-sm text-blue-800">
-          <div>Check-in: {bookingData.checkIn}</div>
-          <div>Check-out: {bookingData.checkOut}</div>
-          <div>Guests: {bookingData.guests?.length || 0}</div>
-          <div className="font-semibold">Total: ${bookingData.totalAmount}</div>
+        
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Special Requests (Optional)
+          </label>
+          <textarea
+            value={guestDetails.specialRequests}
+            onChange={(e) => setGuestDetails({ specialRequests: e.target.value })}
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="Any special requests or preferences?"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Special requests are subject to availability and may incur additional charges.
+          </p>
         </div>
-      </div>
+      </Card>
     </div>
   );
+
 
   const renderPaymentStep = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold mb-4">Payment Information</h3>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Payment Information</h3>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Payment Method *
-        </label>
-        <div className="space-y-2">
-          {[
-            { id: 'credit_card', label: 'Credit Card', icon: '💳' },
-            { id: 'debit_card', label: 'Debit Card', icon: '💳' },
-            { id: 'paypal', label: 'PayPal', icon: '💰' },
-          ].map((method) => (
-            <label key={method.id} className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value={method.id}
-                checked={bookingData.paymentMethod === method.id}
-                onChange={(e) => updateBookingData({ paymentMethod: e.target.value as any })}
-                className="mr-3"
-              />
-              <span className="mr-2">{method.icon}</span>
-              <span>{method.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {(bookingData.paymentMethod === 'credit_card' || bookingData.paymentMethod === 'debit_card') && (
-        <div className="space-y-4">
+      <Card className="p-6">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Cardholder Name *
             </label>
-            <input
-              type="text"
-              value={bookingData.cardDetails?.cardholderName || ''}
-              onChange={(e) => updateBookingData({
-                cardDetails: {
-                  cardNumber: bookingData.cardDetails?.cardNumber || '',
-                  expiryDate: bookingData.cardDetails?.expiryDate || '',
-                  cvv: bookingData.cardDetails?.cvv || '',
-                  cardholderName: e.target.value,
-                },
-              })}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.cardholderName ? 'border-red-500' : 'border-gray-300'
-              }`}
+            <Input
+              value={paymentInfo.cardholderName}
+              onChange={(e) => setPaymentInfo({ cardholderName: e.target.value })}
+              className={errors.cardholderName ? 'border-red-500' : ''}
               placeholder="Name on card"
             />
             {errors.cardholderName && (
-              <p className="text-red-500 text-xs mt-1">{errors.cardholderName}</p>
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.cardholderName}
+              </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Card Number *
             </label>
-            <input
-              type="text"
-              value={bookingData.cardDetails?.cardNumber || ''}
-              onChange={(e) => updateBookingData({
-                cardDetails: {
-                  cardNumber: e.target.value,
-                  expiryDate: bookingData.cardDetails?.expiryDate || '',
-                  cvv: bookingData.cardDetails?.cvv || '',
-                  cardholderName: bookingData.cardDetails?.cardholderName || '',
-                },
-              })}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.cardNumber ? 'border-red-500' : 'border-gray-300'
-              }`}
+            <Input
+              value={cardNumberFormatted}
+              onChange={(e) => handleCardNumberChange(e.target.value)}
+              className={errors.cardNumber ? 'border-red-500' : ''}
               placeholder="1234 5678 9012 3456"
+              maxLength={19}
             />
             {errors.cardNumber && (
-              <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.cardNumber}
+              </p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Expiry Date *
               </label>
-              <input
-                type="text"
-                value={bookingData.cardDetails?.expiryDate || ''}
-                onChange={(e) => updateBookingData({
-                  cardDetails: {
-                    cardNumber: bookingData.cardDetails?.cardNumber || '',
-                    expiryDate: e.target.value,
-                    cvv: bookingData.cardDetails?.cvv || '',
-                    cardholderName: bookingData.cardDetails?.cardholderName || '',
-                  },
-                })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.expiryDate ? 'border-red-500' : 'border-gray-300'
-                }`}
+              <Input
+                value={expiryFormatted}
+                onChange={(e) => handleExpiryChange(e.target.value)}
+                className={errors.expiryDate ? 'border-red-500' : ''}
                 placeholder="MM/YY"
+                maxLength={5}
               />
               {errors.expiryDate && (
-                <p className="text-red-500 text-xs mt-1">{errors.expiryDate}</p>
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.expiryDate}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 CVV *
               </label>
-              <input
-                type="text"
-                value={bookingData.cardDetails?.cvv || ''}
-                onChange={(e) => updateBookingData({
-                  cardDetails: {
-                    cardNumber: bookingData.cardDetails?.cardNumber || '',
-                    expiryDate: bookingData.cardDetails?.expiryDate || '',
-                    cvv: e.target.value,
-                    cardholderName: bookingData.cardDetails?.cardholderName || '',
-                  },
-                })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.cvv ? 'border-red-500' : 'border-gray-300'
-                }`}
+              <Input
+                value={paymentInfo.cvv}
+                onChange={(e) => setPaymentInfo({ cvv: e.target.value.replace(/\D/g, '').substr(0, 4) })}
+                className={errors.cvv ? 'border-red-500' : ''}
                 placeholder="123"
+                maxLength={4}
               />
               {errors.cvv && (
-                <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.cvv}
+                </p>
               )}
             </div>
           </div>
+          
+          {/* Billing Address */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Billing Address</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Street Address
+                </label>
+                <Input
+                  value={paymentInfo.billingAddress.street}
+                  onChange={(e) => setPaymentInfo({ 
+                    billingAddress: { ...paymentInfo.billingAddress, street: e.target.value } 
+                  })}
+                  placeholder="123 Main Street"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  City
+                </label>
+                <Input
+                  value={paymentInfo.billingAddress.city}
+                  onChange={(e) => setPaymentInfo({ 
+                    billingAddress: { ...paymentInfo.billingAddress, city: e.target.value } 
+                  })}
+                  placeholder="New York"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  ZIP Code
+                </label>
+                <Input
+                  value={paymentInfo.billingAddress.zipCode}
+                  onChange={(e) => setPaymentInfo({ 
+                    billingAddress: { ...paymentInfo.billingAddress, zipCode: e.target.value } 
+                  })}
+                  placeholder="10001"
+                />
+              </div>
+            </div>
+          </div>
         </div>
+      </Card>
+      
+      {/* Payment Summary */}
+      {selectedRoom && (
+        <Card className="p-6 bg-primary-50 dark:bg-primary-900/20">
+          <h4 className="font-medium text-primary-900 dark:text-primary-300 mb-3 flex items-center gap-2">
+            <Sparkles className="w-5 h-5" />
+            Payment Summary
+          </h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-primary-800 dark:text-primary-400">Room Rate ({totalNights} nights)</span>
+              <span className="font-medium">{formatPrice(selectedRoom.price * totalNights, selectedRoom.currency)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-primary-800 dark:text-primary-400">Taxes & Fees</span>
+              <span className="font-medium">{formatPrice(totalAmount * 0.15, selectedRoom.currency)}</span>
+            </div>
+            <div className="border-t border-primary-200 dark:border-primary-700 pt-2 mt-2">
+              <div className="flex justify-between text-lg font-semibold text-primary-900 dark:text-primary-300">
+                <span>Total</span>
+                <span>{formatPrice(totalAmount * 1.15, selectedRoom.currency)}</span>
+              </div>
+            </div>
+          </div>
+        </Card>
       )}
     </div>
   );
 
   const renderConfirmationStep = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold mb-4">Booking Confirmation</h3>
-
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <h4 className="font-semibold mb-4">Booking Details</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="font-medium">Check-in:</span> {bookingData.checkIn}
-          </div>
-          <div>
-            <span className="font-medium">Check-out:</span> {bookingData.checkOut}
-          </div>
-          <div>
-            <span className="font-medium">Guests:</span> {bookingData.guests?.length || 0}
-          </div>
-          <div>
-            <span className="font-medium">Total Amount:</span> ${bookingData.totalAmount}
-          </div>
+      <div className="text-center py-8">
+        <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+          <Check className="w-8 h-8 text-green-600" />
         </div>
-      </div>
-
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <h4 className="font-semibold mb-4">Guest Information</h4>
-        {bookingData.guests?.map((guest) => (
-          <div key={guest.id} className="mb-2 text-sm">
-            {guest.firstName} {guest.lastName}
-            {guest.isMainGuest && (
-              <span className="ml-2 text-blue-600">(Main Guest)</span>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {bookingData.specialRequests && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <h4 className="font-semibold mb-2">Special Requests</h4>
-          <p className="text-sm text-gray-700">{bookingData.specialRequests}</p>
-        </div>
-      )}
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
-          By completing this booking, you agree to our terms and conditions and privacy policy.
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Review Your Booking
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400">
+          Please review all details before confirming your reservation
         </p>
       </div>
+
+      {/* Hotel & Room Details */}
+      {selectedHotel && selectedRoom && (
+        <Card className="p-6">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Hotel & Room Details</h4>
+          <div className="flex gap-4 mb-4">
+            <img
+              src={selectedRoom.images[0] || '/placeholder-room.jpg'}
+              alt={selectedRoom.name}
+              className="w-20 h-20 object-cover rounded-lg"
+            />
+            <div className="flex-1">
+              <h5 className="font-medium text-gray-900 dark:text-white">{selectedHotel.name}</h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{selectedRoom.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                {selectedHotel.location.city}, {selectedHotel.location.country}
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Check-in:</span>
+              <div>{selectedDateRange.checkIn}</div>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Check-out:</span>
+              <div>{selectedDateRange.checkOut}</div>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Guests:</span>
+              <div>{guestCount.adults} adults{guestCount.children > 0 && `, ${guestCount.children} children`}</div>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Duration:</span>
+              <div>{totalNights} night{totalNights > 1 ? 's' : ''}</div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Guest Information */}
+      <Card className="p-6">
+        <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Guest Information</h4>
+        <div className="text-sm">
+          <div className="mb-2">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Name:</span> {guestDetails.firstName} {guestDetails.lastName}
+          </div>
+          <div className="mb-2">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span> {guestDetails.email}
+          </div>
+          <div className="mb-2">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Phone:</span> {guestDetails.phone}
+          </div>
+          {guestDetails.specialRequests && (
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Special Requests:</span>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">{guestDetails.specialRequests}</p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Payment Summary */}
+      {selectedRoom && (
+        <Card className="p-6">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Payment Summary</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Room Rate ({totalNights} nights)</span>
+              <span>{formatPrice(selectedRoom.price * totalNights, selectedRoom.currency)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Taxes & Fees</span>
+              <span>{formatPrice(totalAmount * 0.15, selectedRoom.currency)}</span>
+            </div>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+              <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
+                <span>Total Amount</span>
+                <span>{formatPrice(totalAmount * 1.15, selectedRoom.currency)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <CreditCard className="w-4 h-4" />
+              <span>Payment will be charged to card ending in ****{paymentInfo.cardNumber.slice(-4)}</span>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Terms */}
+      <Card className="p-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-800 dark:text-blue-300">
+            <p className="font-medium mb-1">Terms & Conditions</p>
+            <p>
+              By completing this booking, you agree to our terms and conditions and privacy policy. 
+              Your booking is protected by our secure payment system.
+            </p>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 
   const renderStepContent = () => {
     switch (currentStep) {
+      case 'room-selection':
+        return renderRoomSelectionStep();
       case 'guest-details':
         return renderGuestDetailsStep();
-      case 'preferences':
-        return renderPreferencesStep();
       case 'payment':
         return renderPaymentStep();
       case 'confirmation':
@@ -568,57 +663,68 @@ return;
   };
 
   return (
-    <div className={`max-w-4xl mx-auto ${className}`}>
-      <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className={cn('max-w-4xl mx-auto', className)}>
+      <Card className="p-8">
         {renderStepIndicator()}
 
-        <div className="min-h-[400px]">
+        <div className="min-h-[500px]">
           {renderStepContent()}
         </div>
 
-        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+        {/* Navigation */}
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
           <div>
-            {currentStep !== 'guest-details' && (
-              <button
-                onClick={prevStep}
-                className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            {currentStep !== 'room-selection' && (
+              <Button
+                onClick={handlePreviousStep}
+                variant="outline"
+                className="flex items-center gap-2"
               >
+                <ChevronLeft className="w-4 h-4" />
                 Previous
-              </button>
+              </Button>
             )}
           </div>
 
           <div className="flex gap-3">
             {onCancel && (
-              <button
-                onClick={onCancel}
-                className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              <Button
+                onClick={() => {
+                  clearBooking();
+                  onCancel();
+                }}
+                variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             )}
 
             {currentStep === 'confirmation' ? (
-              <button
+              <Button
                 onClick={handleCompleteBooking}
-                disabled={isProcessing}
-                className="px-8 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                disabled={loading}
+                loading={loading}
+                className="bg-green-600 hover:bg-green-700 px-8"
+                size="lg"
               >
-                {isProcessing ? 'Processing...' : 'Complete Booking'}
-              </button>
+                {loading ? 'Processing...' : 'Complete Booking'}
+              </Button>
             ) : (
-              <button
-                onClick={nextStep}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              <Button
+                onClick={handleNextStep}
+                className="flex items-center gap-2 px-6"
+                size="lg"
               >
-                Next
-              </button>
+                Continue
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             )}
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
 
+export { BookingFlow };
 export default BookingFlow;
