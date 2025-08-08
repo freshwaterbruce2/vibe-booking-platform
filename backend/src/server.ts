@@ -5,7 +5,6 @@ import compression from 'compression';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
 import { requestLogger } from './middleware/requestLogger';
@@ -15,15 +14,28 @@ import { initializeCache } from './cache';
 import { initializeWebSocket } from './websocket';
 import { logger } from './utils/logger';
 
+// Conditionally load config based on LOCAL_SQLITE environment variable
+const loadConfig = async () => {
+  if (process.env.LOCAL_SQLITE === 'true') {
+    const { sqliteConfig } = await import('./config/sqlite');
+    return sqliteConfig;
+  } else {
+    const { config } = await import('./config');
+    return config;
+  }
+};
+
 export class HotelBookingServer {
   private app: Express;
   private httpServer: ReturnType<typeof createServer>;
   private io: SocketIOServer;
   private port: number;
+  private config: any;
 
-  constructor() {
+  constructor(config: any) {
     this.app = express();
     this.httpServer = createServer(this.app);
+    this.config = config;
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
         origin: config.cors.origin,
@@ -49,7 +61,7 @@ export class HotelBookingServer {
 
     // CORS configuration
     this.app.use(cors({
-      origin: config.cors.origin,
+      origin: this.config.cors.origin,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
@@ -63,7 +75,7 @@ export class HotelBookingServer {
     this.app.use(compression());
 
     // Logging
-    if (config.environment !== 'test') {
+    if (this.config.environment !== 'test') {
       this.app.use(morgan('combined', {
         stream: { write: (message) => logger.info(message.trim()) },
       }));
@@ -79,8 +91,8 @@ export class HotelBookingServer {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        environment: config.environment,
-        version: config.version,
+        environment: this.config.environment,
+        version: this.config.version,
       });
     });
 
@@ -94,12 +106,21 @@ export class HotelBookingServer {
   private async initializeServices(): Promise<void> {
     try {
       // Initialize database
-      await initializeDatabase();
-      logger.info('Database initialized successfully');
+      if (process.env.LOCAL_SQLITE === 'true') {
+        logger.info('Using SQLite database for local development');
+        // SQLite is already initialized during setup
+      } else {
+        await initializeDatabase();
+        logger.info('Database initialized successfully');
+      }
 
-      // Initialize cache
-      await initializeCache();
-      logger.info('Cache initialized successfully');
+      // Initialize cache (skip for local SQLite development)
+      if (process.env.LOCAL_SQLITE !== 'true') {
+        await initializeCache();
+        logger.info('Cache initialized successfully');
+      } else {
+        logger.info('Skipping cache initialization for local development');
+      }
 
       // Initialize WebSocket
       initializeWebSocket(this.io);
@@ -117,9 +138,9 @@ export class HotelBookingServer {
       await this.initializeServices();
 
       this.httpServer.listen(this.port, () => {
-        logger.info(`Hotel Booking API server running on port ${this.port}`);
-        logger.info(`Environment: ${config.environment}`);
-        logger.info(`API Base URL: ${config.server.baseUrl}`);
+        logger.info(`Vibe Booking API server running on port ${this.port}`);
+        logger.info(`Environment: ${this.config.environment}`);
+        logger.info(`API Base URL: ${this.config.server.baseUrl}`);
       });
 
       // Graceful shutdown
@@ -148,7 +169,19 @@ export class HotelBookingServer {
 }
 
 // Start server if this file is run directly
-if (require.main === module) {
-  const server = new HotelBookingServer();
-  server.start();
+// For ES modules, we need to check if this is the main module differently
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+
+if (isMainModule) {
+  (async () => {
+    try {
+      const config = await loadConfig();
+      const server = new HotelBookingServer(config);
+      await server.start();
+    } catch (error) {
+      logger.error('Failed to start server:', error);
+      process.exit(1);
+    }
+  })();
 }
+

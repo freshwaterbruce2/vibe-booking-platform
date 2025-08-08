@@ -46,11 +46,11 @@ const sqliteConfigSchema = z.object({
     baseUrl: z.string().url(),
     timeout: z.number(),
   }),
-  stripe: z.object({
-    secretKey: z.string(),
-    publishableKey: z.string(),
-    webhookSecret: z.string().optional(),
-    environment: z.enum(['test', 'live']),
+  square: z.object({
+    accessToken: z.string(),
+    applicationId: z.string(),
+    environment: z.enum(['sandbox', 'production']),
+    locationId: z.string().optional(),
   }),
   email: z.object({
     provider: z.enum(['sendgrid', 'aws-ses', 'smtp']),
@@ -139,11 +139,11 @@ const rawSqliteConfig = {
     baseUrl: process.env.LITEAPI_BASE_URL || 'https://api.liteapi.travel/v1',
     timeout: parseInt(process.env.LITEAPI_TIMEOUT || '30000', 10),
   },
-  stripe: {
-    secretKey: process.env.STRIPE_SECRET_KEY || '',
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-    environment: (process.env.STRIPE_ENVIRONMENT || 'test') as 'test' | 'live',
+  square: {
+    accessToken: process.env.SQUARE_ACCESS_TOKEN || '',
+    applicationId: process.env.SQUARE_APPLICATION_ID || '',
+    environment: (process.env.SQUARE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production',
+    locationId: process.env.SQUARE_LOCATION_ID,
   },
   email: {
     provider: (process.env.EMAIL_PROVIDER || 'smtp') as 'sendgrid' | 'aws-ses' | 'smtp',
