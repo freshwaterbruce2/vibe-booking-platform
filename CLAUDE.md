@@ -11,6 +11,7 @@ This is a modern hotel booking platform with a dual architecture: a React/TypeSc
 This project has a **dual architecture** with separate modern and legacy implementations:
 
 ### Modern Stack (Primary)
+
 - **Frontend**: React 18 + TypeScript + Vite (`src/`)
 - **Backend**: Express.js + TypeScript (`backend/`)
 - **Database**: Drizzle ORM with PostgreSQL support
@@ -18,18 +19,21 @@ This project has a **dual architecture** with separate modern and legacy impleme
 - **Styling**: Tailwind CSS + Framer Motion
 
 ### Legacy Stack (Integration)
+
 - **Location**: `build-website-example/`
 - **Frontend**: Vanilla JavaScript (`client/`)
 - **Backend**: Node.js/Express (`server/server.js`)
 - **Purpose**: Existing API integration and fallback
 
 ### Core Services
+
 - **LiteAPI**: Hotel search, rates, booking, payments
 - **OpenAI**: Natural language query processing
 - **Stripe**: Payment processing (modern stack)
 - **AI Services**: Custom AI search service (`src/services/aiService.ts`)
 
 ### Key Features
+
 - AI-powered natural language hotel search
 - 7-category passion-based hotel matching system
 - Multi-step booking flow with payment integration
@@ -42,6 +46,7 @@ This project has a **dual architecture** with separate modern and legacy impleme
 ### Modern Stack Development (Root Directory)
 
 **Development:**
+
 ```bash
 npm run dev              # Start Vite dev server (port 3000)
 npm run build            # Build TypeScript + Vite for production
@@ -49,6 +54,7 @@ npm run preview          # Preview production build
 ```
 
 **Testing:**
+
 ```bash
 npm test                 # Run Vitest unit tests
 npm run test:coverage    # Generate coverage report
@@ -57,6 +63,7 @@ npm run test:visual      # Run visual regression tests
 ```
 
 **Code Quality:**
+
 ```bash
 npm run lint             # ESLint analysis
 npm run lint:fix         # Auto-fix ESLint issues
@@ -66,6 +73,7 @@ npm run check:all        # Run all quality checks
 ```
 
 **Backend Development:**
+
 ```bash
 cd backend
 npm run dev              # Start TypeScript backend with tsx watch
@@ -77,6 +85,7 @@ npm run db:migrate       # Run database migrations
 ### Legacy Stack Development (build-website-example/)
 
 **Development:**
+
 ```bash
 cd build-website-example
 npm start                # Start server with nodemon (port 3001)
@@ -84,6 +93,7 @@ npm run build            # Build and optimize assets
 ```
 
 **Testing:**
+
 ```bash
 npm run test             # Jest unit tests
 npm run test:e2e         # Playwright E2E tests
@@ -133,6 +143,7 @@ npm run validate:production # Full production validation
 ## Environment Variables
 
 ### Modern Stack (Root `.env`)
+
 ```bash
 VITE_API_URL=http://localhost:3001
 VITE_OPENAI_API_KEY=<OpenAI API key>
@@ -141,6 +152,7 @@ VITE_STRIPE_PUBLISHABLE_KEY=<Stripe public key>
 ```
 
 ### Backend (backend/.env)
+
 ```bash
 DATABASE_URL=<PostgreSQL connection string>
 OPENAI_API_KEY=<OpenAI API key>
@@ -151,6 +163,7 @@ REDIS_URL=<Redis connection for caching>
 ```
 
 ### Legacy Stack (build-website-example/.env)
+
 ```bash
 PROD_API_KEY=<LiteAPI production key>
 SAND_API_KEY=<LiteAPI sandbox key>
@@ -163,6 +176,7 @@ PORT=3001
 ### AI-Powered Search Architecture
 
 The application uses a dual AI approach:
+
 1. **OpenAI Integration**: Natural language parsing in `aiSearchService.ts`
 2. **Passion-Based Matching**: 7-category algorithmic scoring system
 3. **Hybrid Results**: Combines AI search with passion preferences
@@ -190,6 +204,7 @@ The application uses a dual AI approach:
 ## Production & Deployment
 
 ### Docker Containerization
+
 ```bash
 npm run docker:build        # Build Docker image
 npm run docker:run          # Run containerized app
@@ -197,18 +212,21 @@ npm run docker:compose      # Full stack with dependencies
 ```
 
 ### Kubernetes Deployment
+
 - **Location**: `deployment/kubernetes/`
 - **Features**: Blue-green deployment, canary releases, auto-scaling
 - **Monitoring**: Prometheus, Grafana dashboards
 - **Security**: Network policies, RBAC, secrets management
 
 ### Performance Optimization
+
 - Vite build optimization with code splitting
 - Bundle analysis with `npm run bundle:analyze`
 - Image optimization and CDN integration
 - Redis caching for API responses
 
 ### Security & Compliance
+
 - **ESLint Security Plugin**: Automated security scanning
 - **Helmet.js**: Security headers and CSRF protection
 - **Rate Limiting**: API throttling and DDoS protection
@@ -218,6 +236,7 @@ npm run docker:compose      # Full stack with dependencies
 ## AI & DevOps Integration
 
 ### AI-Powered Development (`ai-devops/`)
+
 - **Performance Optimizer**: Automatic performance tuning
 - **Security Assistant**: Intelligent security monitoring
 - **Deployment Predictor**: ML-based deployment success prediction
@@ -225,6 +244,7 @@ npm run docker:compose      # Full stack with dependencies
 - **Canary Analysis**: AI-driven canary deployment decisions
 
 ### Agent Training System (`agent-training/`)
+
 - Implementation examples and patterns
 - Dependency management guides
 - Testing templates and best practices

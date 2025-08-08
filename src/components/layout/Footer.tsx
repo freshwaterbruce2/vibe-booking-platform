@@ -11,11 +11,11 @@ export function Footer() {
           <div className="space-y-4">
             <Link to="/" className="flex items-center space-x-2 text-xl font-bold">
               <Hotel className="h-6 w-6 text-primary-600" />
-              <span className="gradient-text">HotelBooking</span>
+              <span className="gradient-text">Vibe Hotels</span>
             </Link>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              AI-powered hotel booking with passion-based recommendations.
-              Find your perfect stay with intelligent search and personalized suggestions.
+              Find Your Perfect Vibe. AI-powered hotel matching based on your passions.
+              Earn 5% rewards on every booking. Discover hotels that match your unique vibe.
             </p>
           </div>
 
@@ -85,7 +85,7 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                 <Mail className="h-4 w-4" />
-                <span>support@hotelbooking.com</span>
+                <span>support@vibehotels.com</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                 <Phone className="h-4 w-4" />
@@ -128,7 +128,7 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              © 2025 HotelBooking. All rights reserved.
+              © 2025 Vibe Hotels. All rights reserved.
             </div>
             <div className="flex items-center space-x-6 text-sm">
               <Link

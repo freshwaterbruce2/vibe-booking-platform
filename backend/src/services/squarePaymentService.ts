@@ -1,4 +1,5 @@
-import { Client, Environment, ApiError } from 'squareup';
+// Square payment integration with 2025 standards
+import { Client, Environment } from 'square';
 import { randomUUID } from 'crypto';
 import { config } from '../config';
 import { logger } from '../utils/logger';
@@ -54,7 +55,7 @@ export class SquarePaymentService {
         idempotencyKey,
         amountMoney,
         referenceId: params.bookingId,
-        note: `Hotel booking payment for booking ${params.bookingId}`,
+        note: `Vibe Booking payment for booking ${params.bookingId}`,
         buyerEmailAddress: params.metadata?.email,
         billingAddress: params.billingAddress ? {
           firstName: params.billingAddress.firstName,
@@ -72,7 +73,7 @@ export class SquarePaymentService {
       
       if (result.payment) {
         // Store payment record in database
-        const db = getDb();
+        const db = await getDb();
         await db.insert(payments).values({
           bookingId: params.bookingId,
           userId: params.userId,
@@ -111,7 +112,7 @@ export class SquarePaymentService {
     } catch (error) {
       logger.error('Square payment creation error', { error, bookingId: params.bookingId });
       
-      if (error instanceof ApiError) {
+      if (error instanceof Error) {
         const errorMessage = error.errors?.[0]?.detail || 'Payment processing failed';
         return {
           success: false,
@@ -144,7 +145,7 @@ export class SquarePaymentService {
     } catch (error) {
       logger.error('Error fetching Square payment', { error, paymentId });
       
-      if (error instanceof ApiError) {
+      if (error instanceof Error) {
         return {
           success: false,
           errorMessage: error.errors?.[0]?.detail || 'Failed to fetch payment details',
@@ -191,14 +192,14 @@ export class SquarePaymentService {
         idempotencyKey,
         amountMoney: refundAmount,
         paymentId: params.paymentId,
-        reason: params.reason || 'Hotel booking cancellation',
+        reason: params.reason || 'Vibe Booking cancellation',
       };
 
       const { result } = await this.client.refundsApi.refundPayment(createRefundRequest);
 
       if (result.refund) {
         // Store refund record in database
-        const db = getDb();
+        const db = await getDb();
         await db.insert(refunds).values({
           bookingId: params.bookingId,
           paymentId: params.paymentId,
@@ -207,7 +208,7 @@ export class SquarePaymentService {
           status: result.refund.status === 'COMPLETED' ? 'succeeded' : 'pending',
           provider: 'square',
           providerRefundId: result.refund.id,
-          reason: params.reason || 'Hotel booking cancellation',
+          reason: params.reason || 'Vibe Booking cancellation',
           metadata: JSON.stringify({
             squareRefundId: result.refund.id,
           }),
@@ -234,7 +235,7 @@ export class SquarePaymentService {
     } catch (error) {
       logger.error('Square refund creation error', { error, paymentId: params.paymentId });
       
-      if (error instanceof ApiError) {
+      if (error instanceof Error) {
         const errorMessage = error.errors?.[0]?.detail || 'Refund processing failed';
         return {
           success: false,
@@ -276,7 +277,7 @@ export class SquarePaymentService {
 
       if (result.card) {
         // Store payment method in database
-        const db = getDb();
+        const db = await getDb();
         await db.insert(paymentMethods).values({
           userId: params.userId,
           provider: 'square',
@@ -310,7 +311,7 @@ export class SquarePaymentService {
     } catch (error) {
       logger.error('Square card creation error', { error, userId: params.userId });
       
-      if (error instanceof ApiError) {
+      if (error instanceof Error) {
         const errorMessage = error.errors?.[0]?.detail || 'Failed to save payment method';
         return {
           success: false,
@@ -368,7 +369,7 @@ export class SquarePaymentService {
     } catch (error) {
       logger.error('Square customer creation error', { error, email: params.emailAddress });
       
-      if (error instanceof ApiError) {
+      if (error instanceof Error) {
         const errorMessage = error.errors?.[0]?.detail || 'Customer creation failed';
         return {
           success: false,
@@ -426,7 +427,7 @@ export class SquarePaymentService {
       const payment = data.object?.payment;
       if (!payment) return;
 
-      const db = getDb();
+      const db = await getDb();
       await db
         .update(payments)
         .set({
@@ -449,7 +450,7 @@ export class SquarePaymentService {
       const refund = data.object?.refund;
       if (!refund) return;
 
-      const db = getDb();
+      const db = await getDb();
       await db
         .update(refunds)
         .set({

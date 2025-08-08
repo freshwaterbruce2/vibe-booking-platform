@@ -77,7 +77,7 @@
             "label": "JavaScript bundles"
           },
           {
-            "path": "dist/**/*.css", 
+            "path": "dist/**/*.css",
             "label": "CSS bundles"
           },
           {

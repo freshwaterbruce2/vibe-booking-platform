@@ -1,7 +1,7 @@
 {
-  "name": "hotel-booking-modern",
+  "name": "vibe-booking",
   "version": "2.0.0",
-  "description": "Modern hotel booking application with React, TypeScript, and AI-powered search",
+  "description": "Vibe Booking - Modern hotel booking platform with AI-powered search and Square payment integration.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -26,12 +26,14 @@
     "bundle:analyze": "node scripts/bundle-analyzer.js",
     "security:scan": "node scripts/security-scan.js",
     "lighthouse:ci": "lhci autorun",
-    "docker:build": "docker build -t hotel-booking:latest .",
-    "docker:run": "docker run -p 3000:3000 hotel-booking:latest",
+    "docker:build": "docker build -t vibe-hotels:latest .",
+    "docker:run": "docker run -p 3000:3000 vibe-hotels:latest .",
+    "build:prod": "npm run check:all && npm run build && npm run bundle:analyze",
     "docker:compose": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "release": "semantic-release",
-    "check:all": "npm run lint && npm run typecheck && npm test -- --run && npm run security:scan"
+    "check:all": "npm run lint && npm run typecheck && npm test -- --run && npm run security:scan",
+    "deploy:prep": "npm run clean && npm install && npm run build:prod"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
@@ -49,9 +51,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.2",
-    "react-image-gallery": "^1.3.0",
     "react-intersection-observer": "^9.5.3",
-    "react-query": "^3.39.3",
     "react-router-dom": "^6.20.1",
     "sonner": "^1.2.4",
     "tailwind-merge": "^2.1.0",

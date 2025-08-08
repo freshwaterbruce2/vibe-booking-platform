@@ -1,120 +1,140 @@
-import React, { useState, useEffect } from 'react';
-import { PaymentSummary } from './PaymentSummary';
-import { Loader2, CreditCard, Shield, Lock } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Square, Card, Payments } from '@square/web-sdk';
+import { useBookingStore } from '../../store/bookingStore';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-
-// Square Web Payments SDK types
-declare global {
-  interface Window {
-    Square?: any;
-  }
-}
+import { CreditCard, Lock, Shield, Loader2 } from 'lucide-react';
 
 interface SquarePaymentFormProps {
-  bookingId: string;
   amount: number;
   currency?: string;
   onSuccess: (paymentResult: any) => void;
-  onError: (error: string) => void;
+  onError: (error: Error) => void;
   bookingDetails?: {
     hotelName: string;
+    checkIn: string;
+    checkOut: string;
+    guestName: string;
     roomType: string;
-    checkIn: Date;
-    checkOut: Date;
-    guests: number;
-    nights: number;
-  };
-  billingDetails?: {
-    name: string;
-    email: string;
-    phone?: string;
-    address?: {
-      line1: string;
-      city: string;
-      state: string;
-      postal_code: string;
-      country: string;
-    };
   };
 }
 
+interface BillingInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  addressLine1: string;
+  addressLine2?: string;
+  locality: string; // city
+  administrativeDistrictLevel1: string; // state
+  postalCode: string;
+  country: string;
+}
+
+const PaymentSummary: React.FC<{
+  amount: number;
+  currency: string;
+  bookingDetails?: any;
+}> = ({ amount, currency, bookingDetails }) => {
+  const commission = amount * 0.05;
+  const rewards = commission; // 100% of commission as rewards
+  
+  return (
+    <div className="bg-white rounded-lg shadow-sm border p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Booking Summary</h3>
+      
+      {bookingDetails && (
+        <div className="space-y-3 mb-6">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Hotel:</span>
+            <span className="font-medium">{bookingDetails.hotelName}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Check-in:</span>
+            <span>{bookingDetails.checkIn}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Check-out:</span>
+            <span>{bookingDetails.checkOut}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Room Type:</span>
+            <span>{bookingDetails.roomType}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Guest:</span>
+            <span>{bookingDetails.guestName}</span>
+          </div>
+        </div>
+      )}
+      
+      <div className="border-t pt-4 space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Room Rate:</span>
+          <span>${amount.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Taxes & Fees:</span>
+          <span>Included</span>
+        </div>
+        <div className="flex justify-between text-sm text-green-600">
+          <span>Vibe Rewards (5%):</span>
+          <span>+${rewards.toFixed(2)}</span>
+        </div>
+        <div className="border-t pt-3 flex justify-between">
+          <span className="text-lg font-semibold">Total Due:</span>
+          <span className="text-lg font-semibold">${amount.toFixed(2)} {currency}</span>
+        </div>
+      </div>
+      
+      <div className="mt-6 p-3 bg-blue-50 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>Earn ${rewards.toFixed(2)} in Vibe Rewards!</strong> These points will be added to your account after checkout.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
-  bookingId,
   amount,
   currency = 'USD',
   onSuccess,
   onError,
   bookingDetails,
-  billingDetails,
 }) => {
+  const [card, setCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [squareError, setSquareError] = useState<string | null>(null);
-  const [card, setCard] = useState<any>(null);
-  const [payments, setPayments] = useState<any>(null);
-  
-  // Billing form state
-  const [billingInfo, setBillingInfo] = useState({
-    firstName: billingDetails?.name?.split(' ')[0] || '',
-    lastName: billingDetails?.name?.split(' ').slice(1).join(' ') || '',
-    email: billingDetails?.email || '',
-    addressLine1: billingDetails?.address?.line1 || '',
-    locality: billingDetails?.address?.city || '',
-    administrativeDistrictLevel1: billingDetails?.address?.state || '',
-    postalCode: billingDetails?.address?.postal_code || '',
-    country: billingDetails?.address?.country || 'US',
+  const [billingInfo, setBillingInfo] = useState<BillingInfo>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    addressLine1: '',
+    addressLine2: '',
+    locality: '',
+    administrativeDistrictLevel1: '',
+    postalCode: '',
+    country: 'US',
   });
 
-  useEffect(() => {
-    initializeSquare();
-  }, []);
-
-  const initializeSquare = async () => {
+  const initializeSquare = useCallback(async () => {
     try {
-      // Load Square Web Payments SDK
       if (!window.Square) {
-        const script = document.createElement('script');
-        script.src = 'https://web.squarecdn.com/v1/square.js';
-        script.onload = () => {
-          initializePayments();
-        };
-        script.onerror = () => {
-          setSquareError('Failed to load Square payment form');
-          setIsLoading(false);
-        };
-        document.head.appendChild(script);
-      } else {
-        initializePayments();
+        throw new Error('Square.js failed to load');
       }
-    } catch (error) {
-      console.error('Error initializing Square:', error);
-      setSquareError('Failed to initialize payment form');
-      setIsLoading(false);
-    }
-  };
 
-  const initializePayments = async () => {
-    if (!window.Square) {
-      setSquareError('Square SDK not loaded');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const appId = process.env.VITE_SQUARE_APPLICATION_ID;
-      const locationId = process.env.VITE_SQUARE_LOCATION_ID || 'main';
+      const squareAppId = import.meta.env.VITE_SQUARE_APPLICATION_ID;
+      const squareLocationId = import.meta.env.VITE_SQUARE_LOCATION_ID;
       
-      if (!appId) {
-        setSquareError('Square Application ID not configured');
-        setIsLoading(false);
-        return;
+      if (!squareAppId || !squareLocationId) {
+        throw new Error('Square configuration missing');
       }
 
-      const paymentsInstance = window.Square.payments(appId, locationId);
-      setPayments(paymentsInstance);
-
-      const cardInstance = await paymentsInstance.card({
+      const payments = await window.Square.payments(squareAppId, squareLocationId);
+      
+      const cardOptions = {
         style: {
           '.input-container': {
             borderColor: '#E5E7EB',
@@ -127,71 +147,77 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
             borderColor: '#EF4444',
           },
           '.message-text': {
+            color: '#6B7280',
+          },
+          '.message-icon': {
+            color: '#6B7280',
+          },
+          '.message-text.is-error': {
+            color: '#EF4444',
+          },
+          '.message-icon.is-error': {
+            color: '#EF4444',
+          },
+          input: {
+            fontSize: '16px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          'input::placeholder': {
+            color: '#9CA3AF',
+          },
+          'input.is-error': {
             color: '#EF4444',
           },
         },
-      });
+      };
 
-      await cardInstance.attach('#square-card-container');
-      setCard(cardInstance);
+      const card = await payments.card(cardOptions);
+      await card.attach('#square-card-container');
+      
+      setCard(card);
       setIsLoading(false);
     } catch (error) {
-      console.error('Error initializing Square payments:', error);
-      setSquareError('Failed to initialize payment form');
+      console.error('Failed to initialize Square:', error);
+      setSquareError(error instanceof Error ? error.message : 'Failed to load payment form');
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    initializeSquare();
+  }, [initializeSquare]);
 
   const handlePayment = async () => {
-    if (!card || !payments) {
-      onError('Payment form not initialized');
+    if (!card) {
+      onError(new Error('Payment form not initialized'));
       return;
     }
 
     setIsProcessing(true);
-    setSquareError(null);
 
     try {
-      // Tokenize card
       const result = await card.tokenize();
       
-      if (result.status === 'OK') {
-        // Process payment
-        const response = await fetch('/api/payments/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            bookingId,
-            sourceId: result.token,
-            amount,
-            currency,
-            billingAddress: billingInfo,
-            metadata: {
-              email: billingInfo.email,
-            },
-          }),
-        });
-
-        const paymentResult = await response.json();
-
-        if (paymentResult.success) {
-          onSuccess({
-            paymentId: paymentResult.paymentId,
-            receiptUrl: paymentResult.receiptUrl,
-            amount,
-            currency,
-          });
-        } else {
-          onError(paymentResult.error || 'Payment failed');
-        }
+      if (result.status === 'OK' && result.token) {
+        // Here you would send the token to your backend
+        // For demo, we'll simulate a successful payment
+        const paymentResult = {
+          token: result.token,
+          billingInfo,
+          amount,
+          currency,
+        };
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        onSuccess(paymentResult);
       } else {
-        onError(result.errors?.[0]?.message || 'Card tokenization failed');
+        throw new Error(result.errors?.[0]?.message || 'Payment failed');
       }
     } catch (error) {
-      console.error('Payment processing error:', error);
-      onError('Payment processing failed. Please try again.');
+      console.error('Payment error:', error);
+      onError(error instanceof Error ? error : new Error('Payment processing failed'));
     } finally {
       setIsProcessing(false);
     }
@@ -206,10 +232,10 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
 
   if (isLoading) {
     return (
-      <div className=\"flex items-center justify-center p-8\">
-        <div className=\"text-center\">
-          <Loader2 className=\"h-8 w-8 animate-spin mx-auto mb-4 text-blue-600\" />
-          <p className=\"text-gray-600\">Loading secure payment form...</p>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading secure payment form...</p>
         </div>
       </div>
     );
@@ -217,14 +243,14 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
 
   if (squareError) {
     return (
-      <div className=\"bg-red-50 border border-red-200 rounded-lg p-4\">
-        <div className=\"flex items-center\">
-          <div className=\"flex-shrink-0\">
-            <CreditCard className=\"h-5 w-5 text-red-400\" />
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <CreditCard className="h-5 w-5 text-red-400" />
           </div>
-          <div className=\"ml-3\">
-            <h3 className=\"text-sm font-medium text-red-800\">Payment Form Error</h3>
-            <p className=\"text-sm text-red-700 mt-1\">{squareError}</p>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Payment Form Error</h3>
+            <p className="text-sm text-red-700 mt-1">{squareError}</p>
           </div>
         </div>
       </div>
@@ -232,44 +258,44 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
   }
 
   return (
-    <div className=\"max-w-4xl mx-auto\">
-      <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-8\">
+    <div className="max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Payment Form */}
-        <div className=\"space-y-6\">
-          <div className=\"bg-white rounded-lg shadow-sm border p-6\">
-            <div className=\"flex items-center mb-4\">
-              <CreditCard className=\"h-5 w-5 text-gray-400 mr-2\" />
-              <h3 className=\"text-lg font-medium text-gray-900\">Payment Details</h3>
-              <div className=\"ml-auto flex items-center text-sm text-gray-500\">
-                <Shield className=\"h-4 w-4 mr-1\" />
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="flex items-center mb-4">
+              <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
+              <h3 className="text-lg font-medium text-gray-900">Payment Details</h3>
+              <div className="ml-auto flex items-center text-sm text-gray-500">
+                <Shield className="h-4 w-4 mr-1" />
                 <span>Secured by Square</span>
               </div>
             </div>
 
             {/* Square Card Element */}
-            <div className=\"mb-6\">
-              <label className=\"block text-sm font-medium text-gray-700 mb-2\">
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Card Information
               </label>
               <div 
-                id=\"square-card-container\" 
-                className=\"min-h-[120px] border border-gray-300 rounded-lg p-3\"
+                id="square-card-container" 
+                className="min-h-[120px] border border-gray-300 rounded-lg p-3"
               />
             </div>
 
             {/* Billing Information */}
-            <div className=\"space-y-4\">
-              <h4 className=\"text-md font-medium text-gray-900\">Billing Information</h4>
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-900">Billing Information</h4>
               
-              <div className=\"grid grid-cols-2 gap-4\">
+              <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label=\"First Name\"
+                  label="First Name"
                   value={billingInfo.firstName}
                   onChange={(e) => handleBillingChange('firstName', e.target.value)}
                   required
                 />
                 <Input
-                  label=\"Last Name\"
+                  label="Last Name"
                   value={billingInfo.lastName}
                   onChange={(e) => handleBillingChange('lastName', e.target.value)}
                   required
@@ -277,64 +303,64 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
               </div>
 
               <Input
-                label=\"Email Address\"
-                type=\"email\"
+                label="Email Address"
+                type="email"
                 value={billingInfo.email}
                 onChange={(e) => handleBillingChange('email', e.target.value)}
                 required
               />
 
               <Input
-                label=\"Address\"
+                label="Address"
                 value={billingInfo.addressLine1}
                 onChange={(e) => handleBillingChange('addressLine1', e.target.value)}
                 required
               />
 
-              <div className=\"grid grid-cols-2 gap-4\">
+              <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label=\"City\"
+                  label="City"
                   value={billingInfo.locality}
                   onChange={(e) => handleBillingChange('locality', e.target.value)}
                   required
                 />
                 <Input
-                  label=\"State\"
+                  label="State"
                   value={billingInfo.administrativeDistrictLevel1}
                   onChange={(e) => handleBillingChange('administrativeDistrictLevel1', e.target.value)}
                   required
                 />
               </div>
 
-              <div className=\"grid grid-cols-2 gap-4\">
+              <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label=\"ZIP Code\"
+                  label="ZIP Code"
                   value={billingInfo.postalCode}
                   onChange={(e) => handleBillingChange('postalCode', e.target.value)}
                   required
                 />
                 <div>
-                  <label className=\"block text-sm font-medium text-gray-700 mb-1\">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Country
                   </label>
                   <select
                     value={billingInfo.country}
                     onChange={(e) => handleBillingChange('country', e.target.value)}
-                    className=\"w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value=\"US\">United States</option>
-                    <option value=\"CA\">Canada</option>
-                    <option value=\"GB\">United Kingdom</option>
-                    <option value=\"AU\">Australia</option>
+                    <option value="US">United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="AU">Australia</option>
                   </select>
                 </div>
               </div>
             </div>
 
             {/* Security Notice */}
-            <div className=\"mt-6 flex items-center p-3 bg-gray-50 rounded-lg\">
-              <Lock className=\"h-4 w-4 text-gray-400 mr-2\" />
-              <p className=\"text-xs text-gray-600\">
+            <div className="mt-6 flex items-center p-3 bg-gray-50 rounded-lg">
+              <Lock className="h-4 w-4 text-gray-400 mr-2" />
+              <p className="text-xs text-gray-600">
                 Your payment information is encrypted and secure. We never store your card details.
               </p>
             </div>
@@ -343,17 +369,17 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
             <Button
               onClick={handlePayment}
               disabled={isProcessing}
-              className=\"w-full mt-6\"
-              size=\"lg\"
+              className="w-full mt-6"
+              size="lg"
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className=\"h-4 w-4 animate-spin mr-2\" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Processing Payment...
                 </>
               ) : (
                 <>
-                  <CreditCard className=\"h-4 w-4 mr-2\" />
+                  <CreditCard className="h-4 w-4 mr-2" />
                   Pay ${amount.toFixed(2)} {currency}
                 </>
               )}

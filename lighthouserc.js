@@ -2,7 +2,11 @@ module.exports = {
   ci: {
     collect: {
       staticDistDir: './dist',
-      url: ['http://localhost:3000', 'http://localhost:3000/search', 'http://localhost:3000/hotel/1'],
+      url: [
+        'http://localhost:3000',
+        'http://localhost:3000/search',
+        'http://localhost:3000/hotel/1',
+      ],
       numberOfRuns: 3,
       settings: {
         preset: 'desktop',

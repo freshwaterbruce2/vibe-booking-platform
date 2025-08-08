@@ -75,4 +75,18 @@ desktop.ini
 server.log
 combined.log
 error.log
-build-website-example/
+
+# Database files (use D: drive in production)
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig
+
+# Legacy implementation (preserved for reference)
+# legacy/vanilla-js-implementation/node_modules/

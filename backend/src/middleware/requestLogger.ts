@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger';
 
 export interface RequestWithId extends Request {
@@ -9,7 +9,7 @@ export interface RequestWithId extends Request {
 
 export const requestLogger = (req: RequestWithId, res: Response, next: NextFunction) => {
   // Add unique request ID
-  req.id = uuidv4();
+  req.id = randomUUID();
   req.startTime = Date.now();
 
   // Add request ID to response headers

@@ -2,14 +2,29 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { config } from '../config';
+import { sqliteConfig } from '../config/sqlite';
 import { logger } from '../utils/logger';
 import * as schema from './schema';
+import { initializeSqliteDatabase, getSqliteDb, closeSqliteDatabase } from './sqlite';
+import * as sqliteSchema from './schema/sqlite';
 
 let pool: Pool;
 let db: ReturnType<typeof drizzle>;
 
+// Check if we should use SQLite
+const useLocalSqlite = process.env.LOCAL_SQLITE === 'true';
+
 export async function initializeDatabase(): Promise<void> {
   try {
+    if (useLocalSqlite) {
+      logger.info('Using SQLite database for local development');
+      await initializeSqliteDatabase();
+      db = getSqliteDb();
+      return;
+    }
+
+    logger.info('Using PostgreSQL database');
+    
     // Create connection pool
     pool = new Pool({
       host: config.database.host,
@@ -25,7 +40,7 @@ export async function initializeDatabase(): Promise<void> {
 
     // Test connection
     await pool.query('SELECT NOW()');
-    logger.info('Database connection established');
+    logger.info('PostgreSQL database connection established');
 
     // Initialize Drizzle ORM
     db = drizzle(pool, { schema });
@@ -50,11 +65,18 @@ export function getDb() {
 }
 
 export async function closeDatabase(): Promise<void> {
-  if (pool) {
-    await pool.end();
-    logger.info('Database connection closed');
+  try {
+    if (useLocalSqlite) {
+      await closeSqliteDatabase();
+    } else if (pool) {
+      await pool.end();
+      logger.info('PostgreSQL database connection closed');
+    }
+  } catch (error) {
+    logger.error('Error closing database connection:', error);
   }
 }
 
-// Export schema for use in other modules
-export { schema };
+// Export appropriate schema based on database type
+export const dbSchema = useLocalSqlite ? sqliteSchema : schema;
+export { schema, sqliteSchema };

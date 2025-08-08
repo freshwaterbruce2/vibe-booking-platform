@@ -1,6 +1,7 @@
 # Hotel Booking Platform - Production Runbook
 
 ## Table of Contents
+
 1. [Overview](#overview)
 2. [Architecture](#architecture)
 3. [Deployment Procedures](#deployment-procedures)
@@ -16,12 +17,12 @@ This runbook provides comprehensive operational procedures for the Hotel Booking
 
 ### Key Contacts
 
-| Role | Name | Contact | Escalation |
-|------|------|---------|------------|
-| On-Call Engineer | Rotation | PagerDuty | Primary |
-| Infrastructure Lead | Team Lead | slack: #infrastructure | Secondary |
-| Security Lead | Security Team | security@hotelbooking.com | Security incidents |
-| Database Admin | DBA Team | slack: #database | Database issues |
+| Role                | Name          | Contact                   | Escalation         |
+| ------------------- | ------------- | ------------------------- | ------------------ |
+| On-Call Engineer    | Rotation      | PagerDuty                 | Primary            |
+| Infrastructure Lead | Team Lead     | slack: #infrastructure    | Secondary          |
+| Security Lead       | Security Team | security@hotelbooking.com | Security incidents |
+| Database Admin      | DBA Team      | slack: #database          | Database issues    |
 
 ### Critical Services
 
@@ -125,7 +126,9 @@ git checkout -b hotfix/critical-fix main
 ### Rollback Procedures
 
 #### Automatic Rollback
+
 Triggered automatically when:
+
 - Error rate > 5% for 5 minutes
 - Response time > 1s for 5 minutes
 - Health checks failing
@@ -149,14 +152,14 @@ kubectl rollout status deployment/hotel-booking \
 
 ### Key Metrics
 
-| Metric | Threshold | Alert Level | Action |
-|--------|-----------|-------------|--------|
-| Error Rate | > 5% | Critical | Immediate rollback |
-| Response Time (p95) | > 500ms | Warning | Investigate |
-| CPU Usage | > 80% | Warning | Scale up |
-| Memory Usage | > 85% | Warning | Scale up |
-| Database Connections | > 80% | Critical | Increase pool |
-| Booking Success Rate | < 95% | Critical | Investigate payments |
+| Metric               | Threshold | Alert Level | Action               |
+| -------------------- | --------- | ----------- | -------------------- |
+| Error Rate           | > 5%      | Critical    | Immediate rollback   |
+| Response Time (p95)  | > 500ms   | Warning     | Investigate          |
+| CPU Usage            | > 80%     | Warning     | Scale up             |
+| Memory Usage         | > 85%     | Warning     | Scale up             |
+| Database Connections | > 80%     | Critical    | Increase pool        |
+| Booking Success Rate | < 95%     | Critical    | Investigate payments |
 
 ### Monitoring Dashboards
 

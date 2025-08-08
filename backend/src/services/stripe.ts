@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { config } from '../config';
 import { logger } from '../utils/logger';
-import { db } from '../database';
+import { getDb } from '../database';
 import { payments, refunds, bookings } from '../database/schema';
 import { eq, and } from 'drizzle-orm';
 
@@ -9,6 +9,12 @@ export class StripeService {
   private stripe: Stripe;
 
   constructor() {
+    // Skip Stripe initialization for local development
+    if (process.env.LOCAL_SQLITE) {
+      logger.info('Stripe service bypassed for local development');
+      return;
+    }
+    
     if (!config.stripe.secretKey) {
       throw new Error('Stripe secret key is required');
     }
@@ -49,12 +55,13 @@ export class StripeService {
           ...metadata,
         },
         receipt_email: metadata.guestEmail,
-        description: `Hotel booking payment for booking #${metadata.confirmationNumber || bookingId}`,
-        statement_descriptor: 'HOTEL BOOKING',
+        description: `Vibe Booking payment for booking #${metadata.confirmationNumber || bookingId}`,
+        statement_descriptor: 'VIBE BOOKING',
         application_fee_amount: Math.round(platformFee * 100), // Platform commission in cents
       });
 
       // Store payment record in database
+      const db = await getDb();
       await db.insert(payments).values({
         bookingId,
         userId,
@@ -170,6 +177,7 @@ export class StripeService {
       const commissionRefund = amount ? Math.round(amount * 0.05) : originalCommission;
 
       // Store refund record in database
+      const db = await getDb();
       await db.insert(refunds).values({
         paymentId: (await db.select().from(payments).where(eq(payments.transactionId, paymentIntentId)))[0]?.id,
         bookingId,
@@ -264,6 +272,7 @@ export class StripeService {
       const bookingId = paymentIntent.metadata.bookingId;
       
       // Update payment status
+      const db = await getDb();
       await db.update(payments)
         .set({
           status: 'completed',
@@ -310,6 +319,7 @@ export class StripeService {
       const bookingId = paymentIntent.metadata.bookingId;
       
       // Update payment status
+      const db = await getDb();
       await db.update(payments)
         .set({
           status: 'failed',
@@ -354,6 +364,7 @@ export class StripeService {
       const bookingId = paymentIntent.metadata.bookingId;
       
       // Update payment status
+      const db = await getDb();
       await db.update(payments)
         .set({
           status: 'canceled',
@@ -414,6 +425,7 @@ export class StripeService {
   private async handleRefundUpdated(refund: Stripe.Refund) {
     try {
       // Update refund status in database
+      const db = await getDb();
       await db.update(refunds)
         .set({
           status: refund.status === 'succeeded' ? 'completed' : refund.status === 'failed' ? 'failed' : 'pending',
@@ -526,4 +538,13 @@ export class StripeService {
   }
 }
 
-export const stripeService = new StripeService();
+// Use mock service for local development, real Stripe for production
+let stripeServiceInstance: any;
+if (process.env.LOCAL_SQLITE) {
+  const MockService = require('./stripeMock').StripeService;
+  stripeServiceInstance = new MockService();
+} else {
+  stripeServiceInstance = new StripeService();
+}
+
+export const stripeService = stripeServiceInstance;

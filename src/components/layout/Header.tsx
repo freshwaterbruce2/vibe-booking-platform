@@ -23,7 +23,7 @@ export function Header() {
           className="flex items-center space-x-2 text-xl font-bold gradient-text"
         >
           <Hotel className="h-6 w-6 text-primary-600" />
-          <span>HotelBooking</span>
+          <span>Vibe Hotels</span>
         </Link>
 
         {/* Desktop Navigation */}

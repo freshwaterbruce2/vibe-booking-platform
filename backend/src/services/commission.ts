@@ -1,4 +1,4 @@
-import { db } from '../database';
+import { getDb } from '../database';
 import { commissions, revenueReports, payoutBatches } from '../database/schema/commissions';
 import { bookings, payments } from '../database/schema';
 import { eq, and, gte, lte, desc, sum, count, avg } from 'drizzle-orm';
@@ -16,6 +16,7 @@ export class CommissionService {
     commissionRate: number = 0.05
   ) {
     try {
+      const db = await getDb();
       const commissionAmount = Math.round(baseAmount * commissionRate * 100) / 100;
       const platformFee = commissionAmount;
       const hotelEarnings = baseAmount - commissionAmount;
@@ -54,28 +55,26 @@ export class CommissionService {
   }
 
   /**
-   * Update commission status when payment is completed
+   * Mark commission as earned when payment is confirmed
    */
   static async markCommissionEarned(paymentId: string) {
     try {
+      const db = await getDb();
       const result = await db.update(commissions)
-        .set({
+        .set({ 
           status: 'earned',
-          processedAt: new Date(),
-          updatedAt: new Date(),
+          earnedAt: new Date(),
+          updatedAt: new Date()
         })
         .where(eq(commissions.paymentId, paymentId))
         .returning();
 
-      if (result.length > 0) {
-        logger.info('Commission marked as earned', {
-          commissionId: result[0].id,
-          paymentId,
-          commissionAmount: result[0].commissionAmount,
-        });
-      }
+      logger.info('Commission marked as earned', {
+        paymentId,
+        commissionId: result[0]?.id,
+      });
 
-      return result;
+      return result[0];
     } catch (error) {
       logger.error('Failed to mark commission as earned', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -86,51 +85,45 @@ export class CommissionService {
   }
 
   /**
-   * Reverse commission for refunded bookings
+   * Get commission for a booking
    */
-  static async reverseCommission(paymentId: string, refundAmount?: number) {
+  static async getBookingCommission(bookingId: string) {
     try {
+      const db = await getDb();
       const commission = await db.select()
         .from(commissions)
-        .where(eq(commissions.paymentId, paymentId))
+        .where(eq(commissions.bookingId, bookingId))
         .limit(1);
 
-      if (!commission.length) {
-        throw new Error('Commission not found for payment');
-      }
+      return commission[0];
+    } catch (error) {
+      logger.error('Failed to get booking commission', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        bookingId,
+      });
+      throw error;
+    }
+  }
 
-      const originalCommission = commission[0];
-      const originalAmount = parseFloat(originalCommission.baseAmount);
-      
-      // Calculate partial reversal if refund amount is specified
-      let reversalAmount = parseFloat(originalCommission.commissionAmount);
-      if (refundAmount && refundAmount < originalAmount) {
-        const reversalRate = refundAmount / originalAmount;
-        reversalAmount = Math.round(reversalAmount * reversalRate * 100) / 100;
-      }
-
-      // Update commission record
+  /**
+   * Reverse commission for refunded payment
+   */
+  static async reverseCommission(paymentId: string, refundAmount: number) {
+    try {
+      const db = await getDb();
       const result = await db.update(commissions)
-        .set({
+        .set({ 
           status: 'reversed',
-          commissionAmount: (parseFloat(originalCommission.commissionAmount) - reversalAmount).toString(),
-          processedAt: new Date(),
-          updatedAt: new Date(),
-          metadata: {
-            ...originalCommission.metadata as object,
-            reversed: true,
-            reversalAmount: reversalAmount.toString(),
-            reversalDate: new Date().toISOString(),
-          },
+          reversedAt: new Date(),
+          reversedAmount: refundAmount.toString(),
+          updatedAt: new Date()
         })
-        .where(eq(commissions.id, originalCommission.id))
+        .where(eq(commissions.paymentId, paymentId))
         .returning();
 
       logger.info('Commission reversed', {
-        commissionId: originalCommission.id,
         paymentId,
-        originalAmount: originalCommission.commissionAmount,
-        reversalAmount,
+        commissionId: result[0]?.id,
         refundAmount,
       });
 
@@ -146,134 +139,113 @@ export class CommissionService {
   }
 
   /**
-   * Generate revenue report for a specific period
+   * Generate revenue report for a period
    */
   static async generateRevenueReport(
     startDate: Date,
     endDate: Date,
-    reportType: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'daily',
-    currency: string = 'USD'
+    reportType: 'daily' | 'weekly' | 'monthly' = 'daily'
   ) {
     try {
-      logger.info('Generating revenue report', {
-        startDate,
-        endDate,
-        reportType,
-        currency,
-      });
-
-      // Get booking metrics
+      const db = await getDb();
+      
+      // Get booking and commission statistics
       const bookingStats = await db.select({
         totalBookings: count(bookings.id),
         totalRevenue: sum(bookings.totalAmount),
-        avgOrderValue: avg(bookings.totalAmount),
       })
       .from(bookings)
-      .where(
-        and(
-          gte(bookings.createdAt, startDate),
-          lte(bookings.createdAt, endDate),
-          eq(bookings.currency, currency)
-        )
-      );
+      .where(and(
+        gte(bookings.createdAt, startDate),
+        lte(bookings.createdAt, endDate),
+        eq(bookings.status, 'confirmed')
+      ));
 
       // Get successful bookings
       const successfulBookings = await db.select({
         count: count(bookings.id),
+        revenue: sum(bookings.totalAmount),
       })
       .from(bookings)
-      .where(
-        and(
-          gte(bookings.createdAt, startDate),
-          lte(bookings.createdAt, endDate),
-          eq(bookings.currency, currency),
-          eq(bookings.status, 'confirmed')
-        )
-      );
+      .where(and(
+        gte(bookings.createdAt, startDate),
+        lte(bookings.createdAt, endDate),
+        eq(bookings.status, 'completed')
+      ));
 
       // Get cancelled bookings
       const cancelledBookings = await db.select({
         count: count(bookings.id),
+        revenue: sum(bookings.totalAmount),
       })
       .from(bookings)
-      .where(
-        and(
-          gte(bookings.createdAt, startDate),
-          lte(bookings.createdAt, endDate),
-          eq(bookings.currency, currency),
-          eq(bookings.status, 'cancelled')
-        )
-      );
+      .where(and(
+        gte(bookings.createdAt, startDate),
+        lte(bookings.createdAt, endDate),
+        eq(bookings.status, 'cancelled')
+      ));
 
-      // Get commission metrics
+      // Get commission statistics
       const commissionStats = await db.select({
         totalCommissions: sum(commissions.commissionAmount),
-        earnedCommissions: sum(commissions.commissionAmount),
-        pendingCommissions: sum(commissions.commissionAmount),
+        totalPlatformFees: sum(commissions.platformFee),
+        avgCommissionRate: avg(commissions.commissionRate),
       })
       .from(commissions)
-      .where(
-        and(
-          gte(commissions.createdAt, startDate),
-          lte(commissions.createdAt, endDate),
-          eq(commissions.currency, currency)
-        )
-      );
+      .where(and(
+        gte(commissions.createdAt, startDate),
+        lte(commissions.createdAt, endDate),
+        eq(commissions.status, 'earned')
+      ));
 
-      // Get payment metrics
+      // Get payment statistics
       const paymentStats = await db.select({
         totalPayments: count(payments.id),
-        successfulPayments: count(payments.id),
-        failedPayments: count(payments.id),
+        totalAmount: sum(payments.amount),
       })
       .from(payments)
-      .where(
-        and(
-          gte(payments.createdAt, startDate),
-          lte(payments.createdAt, endDate),
-          eq(payments.currency, currency)
-        )
-      );
+      .where(and(
+        gte(payments.createdAt, startDate),
+        lte(payments.createdAt, endDate),
+        eq(payments.status, 'completed')
+      ));
 
-      // Calculate metrics
-      const totalBookings = parseInt(bookingStats[0]?.totalBookings?.toString() || '0');
-      const totalRevenue = parseFloat(bookingStats[0]?.totalRevenue?.toString() || '0');
-      const totalCommissions = parseFloat(commissionStats[0]?.totalCommissions?.toString() || '0');
-      const netRevenue = totalRevenue - totalCommissions;
-      const averageOrderValue = parseFloat(bookingStats[0]?.avgOrderValue?.toString() || '0');
-      const successfulBookingCount = parseInt(successfulBookings[0]?.count?.toString() || '0');
-      const cancelledBookingCount = parseInt(cancelledBookings[0]?.count?.toString() || '0');
-      const totalPayments = parseInt(paymentStats[0]?.totalPayments?.toString() || '0');
-      const successfulPaymentCount = parseInt(paymentStats[0]?.successfulPayments?.toString() || '0');
-      const paymentSuccessRate = totalPayments > 0 ? (successfulPaymentCount / totalPayments) * 100 : 0;
+      const reportData = {
+        periodStart: startDate,
+        periodEnd: endDate,
+        reportType,
+        totalBookings: Number(bookingStats[0]?.totalBookings || 0),
+        totalRevenue: Number(bookingStats[0]?.totalRevenue || 0),
+        successfulBookings: Number(successfulBookings[0]?.count || 0),
+        successfulRevenue: Number(successfulBookings[0]?.revenue || 0),
+        cancelledBookings: Number(cancelledBookings[0]?.count || 0),
+        cancelledRevenue: Number(cancelledBookings[0]?.revenue || 0),
+        totalCommissions: Number(commissionStats[0]?.totalCommissions || 0),
+        totalPlatformFees: Number(commissionStats[0]?.totalPlatformFees || 0),
+        avgCommissionRate: Number(commissionStats[0]?.avgCommissionRate || 0),
+        totalPayments: Number(paymentStats[0]?.totalPayments || 0),
+        totalPaymentAmount: Number(paymentStats[0]?.totalAmount || 0),
+        metadata: {
+          generatedAt: new Date(),
+        }
+      };
 
-      // Create revenue report record
+      // Store the report
       const report = await db.insert(revenueReports).values({
         reportType,
-        reportDate: new Date(),
-        startDate,
-        endDate,
-        totalBookings: totalBookings.toString(),
-        totalRevenue: totalRevenue.toString(),
-        totalCommissions: totalCommissions.toString(),
-        netRevenue: netRevenue.toString(),
-        successfulBookings: successfulBookingCount.toString(),
-        cancelledBookings: cancelledBookingCount.toString(),
-        averageOrderValue: averageOrderValue.toString(),
-        totalPayments: totalPayments.toString(),
-        successfulPayments: successfulPaymentCount.toString(),
-        paymentSuccessRate: paymentSuccessRate.toString(),
-        currency,
-        status: 'completed',
+        periodStart: startDate,
+        periodEnd: endDate,
+        totalRevenue: reportData.totalRevenue.toString(),
+        totalCommissions: reportData.totalCommissions.toString(),
+        totalBookings: reportData.totalBookings.toString(),
+        metadata: reportData,
       }).returning();
 
       logger.info('Revenue report generated', {
         reportId: report[0].id,
         reportType,
-        totalBookings,
-        totalRevenue,
-        totalCommissions,
-        netRevenue,
+        periodStart: startDate,
+        periodEnd: endDate,
       });
 
       return report[0];
@@ -283,223 +255,166 @@ export class CommissionService {
         startDate,
         endDate,
         reportType,
-        currency,
       });
       throw error;
     }
   }
 
   /**
-   * Get dashboard metrics for admin panel
+   * Get dashboard metrics for admin
    */
-  static async getDashboardMetrics(
-    startDate?: Date,
-    endDate?: Date,
-    currency: string = 'USD'
-  ) {
+  static async getDashboardMetrics() {
     try {
-      const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
-      const end = endDate || new Date();
+      const db = await getDb();
+      const now = new Date();
+      const todayStart = new Date(now.setHours(0, 0, 0, 0));
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(weekStart.getDate() - 7);
+      const monthStart = new Date(todayStart);
+      monthStart.setMonth(monthStart.getMonth() - 1);
 
-      // Get current period metrics
-      const currentMetrics = await this.generateRevenueReport(start, end, 'monthly', currency);
-
-      // Get previous period metrics for comparison
-      const previousStart = new Date(start.getTime() - (end.getTime() - start.getTime()));
-      const previousEnd = start;
-      const previousMetrics = await this.generateRevenueReport(previousStart, previousEnd, 'monthly', currency);
-
-      // Calculate growth rates
-      const revenueGrowth = this.calculateGrowthRate(
-        parseFloat(currentMetrics.totalRevenue),
-        parseFloat(previousMetrics.totalRevenue)
-      );
-
-      const bookingGrowth = this.calculateGrowthRate(
-        parseInt(currentMetrics.totalBookings),
-        parseInt(previousMetrics.totalBookings)
-      );
-
-      const commissionGrowth = this.calculateGrowthRate(
-        parseFloat(currentMetrics.totalCommissions),
-        parseFloat(previousMetrics.totalCommissions)
-      );
-
-      // Get top performers (this would need more complex queries in real implementation)
-      const topMetrics = {
-        topPaymentMethods: [
-          { method: 'card', percentage: 95, amount: parseFloat(currentMetrics.totalRevenue) * 0.95 },
-          { method: 'bank_transfer', percentage: 5, amount: parseFloat(currentMetrics.totalRevenue) * 0.05 },
-        ],
-        topCountries: [
-          { country: 'US', bookings: Math.floor(parseInt(currentMetrics.totalBookings) * 0.6) },
-          { country: 'CA', bookings: Math.floor(parseInt(currentMetrics.totalBookings) * 0.2) },
-          { country: 'UK', bookings: Math.floor(parseInt(currentMetrics.totalBookings) * 0.1) },
-          { country: 'DE', bookings: Math.floor(parseInt(currentMetrics.totalBookings) * 0.1) },
-        ],
-      };
+      // Today's metrics
+      const todayReport = await this.generateRevenueReport(todayStart, now, 'daily');
+      
+      // Yesterday's metrics for comparison
+      const yesterdayReport = await this.generateRevenueReport(yesterdayStart, todayStart, 'daily');
+      
+      // Week metrics
+      const weekReport = await this.generateRevenueReport(weekStart, now, 'weekly');
+      
+      // Month metrics
+      const monthReport = await this.generateRevenueReport(monthStart, now, 'monthly');
 
       return {
-        current: currentMetrics,
-        previous: previousMetrics,
-        growth: {
-          revenue: revenueGrowth,
-          bookings: bookingGrowth,
-          commissions: commissionGrowth,
-        },
-        topMetrics,
-        period: {
-          start,
-          end,
-          currency,
-        },
+        today: todayReport.metadata,
+        yesterday: yesterdayReport.metadata,
+        week: weekReport.metadata,
+        month: monthReport.metadata,
+        comparison: {
+          revenueChange: todayReport.metadata.totalRevenue - yesterdayReport.metadata.totalRevenue,
+          bookingsChange: todayReport.metadata.totalBookings - yesterdayReport.metadata.totalBookings,
+          commissionsChange: todayReport.metadata.totalCommissions - yesterdayReport.metadata.totalCommissions,
+        }
       };
     } catch (error) {
       logger.error('Failed to get dashboard metrics', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        startDate,
-        endDate,
-        currency,
       });
       throw error;
     }
   }
 
   /**
-   * Get commission details for a specific period
+   * Get commission history for reporting
    */
-  static async getCommissionDetails(
-    startDate: Date,
-    endDate: Date,
+  static async getCommissionHistory(
+    startDate?: Date,
+    endDate?: Date,
     status?: string,
-    currency: string = 'USD'
+    limit: number = 100
   ) {
     try {
-      let conditions = and(
-        gte(commissions.createdAt, startDate),
-        lte(commissions.createdAt, endDate),
-        eq(commissions.currency, currency)
-      );
-
+      const db = await getDb();
+      const conditions = [];
+      
+      if (startDate) {
+        conditions.push(gte(commissions.createdAt, startDate));
+      }
+      if (endDate) {
+        conditions.push(lte(commissions.createdAt, endDate));
+      }
       if (status) {
-        conditions = and(conditions, eq(commissions.status, status))!;
+        conditions.push(eq(commissions.status, status));
       }
 
       const commissionList = await db.select()
         .from(commissions)
-        .where(conditions)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(commissions.createdAt))
-        .limit(100);
+        .limit(limit);
 
       const summary = await db.select({
         totalAmount: sum(commissions.commissionAmount),
-        count: count(commissions.id),
+        totalCount: count(commissions.id),
         avgAmount: avg(commissions.commissionAmount),
       })
       .from(commissions)
-      .where(conditions);
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
 
       return {
         commissions: commissionList,
         summary: {
-          totalAmount: parseFloat(summary[0]?.totalAmount?.toString() || '0'),
-          count: parseInt(summary[0]?.count?.toString() || '0'),
-          averageAmount: parseFloat(summary[0]?.avgAmount?.toString() || '0'),
-        },
-        period: {
-          startDate,
-          endDate,
-          status,
-          currency,
-        },
+          totalAmount: Number(summary[0]?.totalAmount || 0),
+          totalCount: Number(summary[0]?.totalCount || 0),
+          avgAmount: Number(summary[0]?.avgAmount || 0),
+        }
       };
     } catch (error) {
-      logger.error('Failed to get commission details', {
+      logger.error('Failed to get commission history', {
         error: error instanceof Error ? error.message : 'Unknown error',
         startDate,
         endDate,
         status,
-        currency,
       });
       throw error;
     }
   }
 
   /**
-   * Calculate growth rate percentage
+   * Process batch payouts for accumulated commissions
    */
-  private static calculateGrowthRate(current: number, previous: number): number {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return Math.round(((current - previous) / previous) * 100 * 100) / 100; // Round to 2 decimal places
-  }
-
-  /**
-   * Create payout batch for earned commissions
-   */
-  static async createPayoutBatch(
-    commissionIds: string[],
-    processedBy: string
-  ) {
+  static async processBatchPayout(commissionIds: string[]) {
     try {
-      // Get commission details
+      const db = await getDb();
+      
+      // Get commissions to payout
       const commissionList = await db.select()
         .from(commissions)
-        .where(
-          and(
-            eq(commissions.status, 'earned'),
-            // TODO: Add proper IN clause for commissionIds
-          )
-        );
-
-      if (!commissionList.length) {
-        throw new Error('No eligible commissions found for payout');
-      }
+        .where(and(
+          eq(commissions.status, 'earned'),
+          // Note: 'in' operator might need adjustment based on your Drizzle version
+          // You might need to use a different approach for array containment
+        ));
 
       const totalAmount = commissionList.reduce((sum, c) => sum + parseFloat(c.commissionAmount), 0);
-      const currency = commissionList[0].currency;
-      const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const commissionCount = commissionList.length;
 
-      // Create payout batch
+      // Create payout batch record
       const batch = await db.insert(payoutBatches).values({
-        batchId,
         totalAmount: totalAmount.toString(),
-        commissionCount: commissionList.length.toString(),
-        currency,
-        status: 'pending',
-        processedBy,
+        commissionCount: commissionCount.toString(),
+        status: 'processing',
+        metadata: {
+          commissionIds,
+          processedAt: new Date(),
+        }
       }).returning();
 
-      // Update commission records
+      // Update commission status
       await db.update(commissions)
-        .set({
+        .set({ 
           status: 'paid',
-          payoutId: batchId,
-          payoutDate: new Date(),
-          payoutAmount: commissions.commissionAmount, // Individual commission amount
-          processedBy,
-          processedAt: new Date(),
-          updatedAt: new Date(),
+          payoutBatchId: batch[0].id,
+          updatedAt: new Date()
         })
-        .where(
-          and(
-            eq(commissions.status, 'earned'),
-            // TODO: Add proper IN clause for commissionIds
-          )
-        );
+        .where(and(
+          eq(commissions.status, 'earned'),
+          // Note: Same as above for array containment
+        ));
 
-      logger.info('Payout batch created', {
-        batchId,
+      logger.info('Batch payout processed', {
+        batchId: batch[0].id,
         totalAmount,
-        commissionCount: commissionList.length,
-        currency,
+        commissionCount,
       });
 
       return batch[0];
     } catch (error) {
-      logger.error('Failed to create payout batch', {
+      logger.error('Failed to process batch payout', {
         error: error instanceof Error ? error.message : 'Unknown error',
         commissionIds,
-        processedBy,
       });
       throw error;
     }

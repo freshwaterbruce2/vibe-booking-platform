@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { squarePaymentService } from '../services/squarePaymentService';
 import { getDb } from '../database';
 import { payments, refunds, bookings, paymentMethods } from '../database/schema';
 import { eq, and, desc, gte, lte, count, sql } from 'drizzle-orm';
@@ -9,6 +8,9 @@ import { authenticate } from '../middleware/authenticate';
 import { validateRequest } from '../middleware/validateRequest';
 
 export const paymentsRouter = Router();
+
+// Load Square payment service as primary payment provider
+import { squarePaymentService } from '../services/squarePaymentService';
 
 // Validation schemas for Square
 const createPaymentSchema = z.object({
@@ -52,7 +54,7 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
     const userId = req.user?.id;
 
     // Verify booking exists and belongs to user (or is accessible)
-    const db = getDb();
+    const db = await getDb();
     const booking = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
     
     if (!booking.length) {
@@ -117,6 +119,7 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
         success: false,
         error: result.errorMessage || 'Payment processing failed',
       });
+    }
   } catch (error) {
     logger.error('Failed to process Square payment', {
       error: error instanceof Error ? error.message : 'Unknown error',

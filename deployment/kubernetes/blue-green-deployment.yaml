@@ -26,86 +26,86 @@ spec:
         version: blue
         environment: production
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9090'
+        prometheus.io/path: '/metrics'
     spec:
       serviceAccountName: hotel-booking-sa
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - hotel-booking
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - hotel-booking
+                topologyKey: kubernetes.io/hostname
       containers:
-      - name: hotel-booking-app
-        image: hotel-booking:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 3000
-          name: http
-          protocol: TCP
-        - containerPort: 9090
-          name: metrics
-          protocol: TCP
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: VERSION
-          value: "blue"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: hotel-booking-secrets
-              key: database-url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: hotel-booking-secrets
-              key: redis-url
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 3000
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: config
-          mountPath: /app/config
-          readOnly: true
-        - name: secrets
-          mountPath: /app/secrets
-          readOnly: true
+        - name: hotel-booking-app
+          image: hotel-booking:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: VERSION
+              value: 'blue'
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hotel-booking-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hotel-booking-secrets
+                  key: redis-url
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: secrets
+              mountPath: /app/secrets
+              readOnly: true
       volumes:
-      - name: config
-        configMap:
-          name: hotel-booking-config
-      - name: secrets
-        secret:
-          secretName: hotel-booking-secrets
+        - name: config
+          configMap:
+            name: hotel-booking-config
+        - name: secrets
+          secret:
+            secretName: hotel-booking-secrets
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -117,7 +117,7 @@ metadata:
     version: green
     environment: production
 spec:
-  replicas: 0  # Initially scaled to 0
+  replicas: 0 # Initially scaled to 0
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -134,86 +134,86 @@ spec:
         version: green
         environment: production
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9090'
+        prometheus.io/path: '/metrics'
     spec:
       serviceAccountName: hotel-booking-sa
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - hotel-booking
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - hotel-booking
+                topologyKey: kubernetes.io/hostname
       containers:
-      - name: hotel-booking-app
-        image: hotel-booking:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 3000
-          name: http
-          protocol: TCP
-        - containerPort: 9090
-          name: metrics
-          protocol: TCP
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: VERSION
-          value: "green"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: hotel-booking-secrets
-              key: database-url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: hotel-booking-secrets
-              key: redis-url
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 3000
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: config
-          mountPath: /app/config
-          readOnly: true
-        - name: secrets
-          mountPath: /app/secrets
-          readOnly: true
+        - name: hotel-booking-app
+          image: hotel-booking:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: VERSION
+              value: 'green'
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hotel-booking-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hotel-booking-secrets
+                  key: redis-url
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: secrets
+              mountPath: /app/secrets
+              readOnly: true
       volumes:
-      - name: config
-        configMap:
-          name: hotel-booking-config
-      - name: secrets
-        secret:
-          secretName: hotel-booking-secrets
+        - name: config
+          configMap:
+            name: hotel-booking-config
+        - name: secrets
+          secret:
+            secretName: hotel-booking-secrets
 ---
 # Service for routing traffic
 apiVersion: v1
@@ -228,16 +228,16 @@ spec:
   type: ClusterIP
   selector:
     app: hotel-booking
-    version: blue  # Initially pointing to blue
+    version: blue # Initially pointing to blue
   ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
-    name: http
-  - port: 9090
-    targetPort: 9090
-    protocol: TCP
-    name: metrics
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+    - port: 9090
+      targetPort: 9090
+      protocol: TCP
+      name: metrics
 ---
 # Service for blue deployment
 apiVersion: v1
@@ -254,10 +254,10 @@ spec:
     app: hotel-booking
     version: blue
   ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
 ---
 # Service for green deployment
 apiVersion: v1
@@ -274,10 +274,10 @@ spec:
     app: hotel-booking
     version: green
   ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
 ---
 # HorizontalPodAutoscaler for blue deployment
 apiVersion: autoscaling/v2
@@ -293,31 +293,31 @@ spec:
   minReplicas: 3
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
   behavior:
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
-      - type: Percent
-        value: 10
-        periodSeconds: 60
+        - type: Percent
+          value: 10
+          periodSeconds: 60
     scaleUp:
       stabilizationWindowSeconds: 60
       policies:
-      - type: Percent
-        value: 50
-        periodSeconds: 60
+        - type: Percent
+          value: 50
+          periodSeconds: 60
 ---
 # HorizontalPodAutoscaler for green deployment
 apiVersion: autoscaling/v2
@@ -333,31 +333,31 @@ spec:
   minReplicas: 3
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
   behavior:
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
-      - type: Percent
-        value: 10
-        periodSeconds: 60
+        - type: Percent
+          value: 10
+          periodSeconds: 60
     scaleUp:
       stabilizationWindowSeconds: 60
       policies:
-      - type: Percent
-        value: 50
-        periodSeconds: 60
+        - type: Percent
+          value: 50
+          periodSeconds: 60
 ---
 # PodDisruptionBudget for high availability
 apiVersion: policy/v1

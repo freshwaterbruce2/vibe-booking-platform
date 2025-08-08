@@ -29,10 +29,7 @@
           "src/components/dashboard/RevenueChart.tsx",
           "src/contexts/AnalyticsContext.tsx"
         ],
-        "dependencies_to_add": [
-          "recharts",
-          "date-fns"
-        ],
+        "dependencies_to_add": ["recharts", "date-fns"],
         "patterns_to_apply": [
           "Use React.memo for chart components",
           "Implement data fetching with SWR or React Query",
@@ -105,12 +102,7 @@
     }
   },
   "velocity_coder_examples": {
-    "trigger_phrases": [
-      "quickly implement",
-      "rapid prototype",
-      "urgent fix for",
-      "spike solution"
-    ],
+    "trigger_phrases": ["quickly implement", "rapid prototype", "urgent fix for", "spike solution"],
     "rapid_patterns": {
       "mvp_approach": [
         "Use existing UI component libraries",

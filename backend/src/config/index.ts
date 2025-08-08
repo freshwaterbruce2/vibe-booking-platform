@@ -138,7 +138,7 @@ const rawConfig = {
   },
   email: {
     provider: (process.env.EMAIL_PROVIDER || 'smtp') as 'sendgrid' | 'aws-ses' | 'smtp',
-    from: process.env.EMAIL_FROM || 'noreply@hotelbooking.com',
+    from: process.env.EMAIL_FROM || 'noreply@vibebooking.com',
     apiKey: process.env.EMAIL_API_KEY,
     smtp: process.env.EMAIL_PROVIDER === 'smtp' ? {
       host: process.env.SMTP_HOST || 'localhost',
@@ -150,7 +150,7 @@ const rawConfig = {
   },
   storage: {
     provider: (process.env.STORAGE_PROVIDER || 'local') as 's3' | 'gcs' | 'local',
-    bucket: process.env.STORAGE_BUCKET || 'hotelbooking-uploads',
+    bucket: process.env.STORAGE_BUCKET || 'vibebooking-uploads',
     region: process.env.AWS_REGION,
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,

@@ -25,19 +25,19 @@ export function Hero() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
               Find Your Perfect
               <span className="block bg-gradient-to-r from-accent-400 to-secondary-400 bg-clip-text text-transparent">
-                Hotel Experience
+                Vibe
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto">
-              AI-powered search meets passion-based recommendations.
-              Describe your dream trip and let us find the perfect match.
+              AI-powered hotel matching based on your unique passions and vibe.
+              Earn 5% rewards on every booking. Find hotels that truly resonate with you.
             </p>
           </div>
 
           {/* Search Input */}
           <div className="max-w-2xl mx-auto">
             <NaturalLanguageInput
-              placeholder="Try: 'Romantic weekend in Paris for 2 people with spa and city views'"
+              placeholder="Try: 'Romantic vibe in Paris with spa and amazing city views for 2 people'"
               size="lg"
             />
           </div>

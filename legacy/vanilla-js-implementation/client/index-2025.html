@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Vibe Hotels - Find Your Perfect Vibe. AI-powered hotel matching based on your passions. Earn 5% rewards on every booking.">
+    <title>Vibe Hotels - Find Your Perfect Vibe</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="styles-2025.css" as="style">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles-2025.css">
+    
+    <!-- Payment Integration -->
+    <script src="https://payment-wrapper.liteapi.travel/dist/liteAPIPayment.js?a=11"></script>
+    <script src="payment-utils.js"></script>
+    
+    <!-- PWA Support -->
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Performance hints -->
+    <link rel="dns-prefetch" href="//api.openai.com">
+    <link rel="dns-prefetch" href="//api.liteapi.travel">
+</head>
+
+<body>
+    <!-- Modern Header with Glass Morphism -->
+    <header class="header">
+        <div class="container">
+            <a href="#" class="logo">
+                <i class="fas fa-hotel" aria-hidden="true"></i>
+                <span>Vibe Hotels</span>
+            </a>
+            <nav class="nav" role="navigation" aria-label="Main navigation">
+                <a href="#search" class="nav-link active">Search</a>
+                <a href="details.html" class="nav-link">Single Hotel</a>
+                <a href="#about" class="nav-link">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Cinematic Hero Section -->
+    <section class="hero" id="search">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Find Your Perfect Stay</h1>
+                <p class="hero-subtitle">
+                    Discover amazing hotels worldwide with AI-powered search, 
+                    transparent pricing, and personalized recommendations
+                </p>
+                
+                <!-- Enhanced Search Form - Mobile-First Design -->
+                <div class="search-form-container">
+                    <form class="search-form" id="searchForm" role="search" aria-label="Hotel search">
+                        <!-- Natural Language Destination Input -->
+                        <div class="form-group">
+                            <label for="destination">
+                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                Where are you going?
+                            </label>
+                            <input 
+                                type="text" 
+                                id="destination" 
+                                name="destination" 
+                                class="form-input" 
+                                placeholder="e.g., Paris, Tokyo, or 'romantic getaway in Europe'"
+                                value="Las Vegas, NV"
+                                required 
+                                autocomplete="off"
+                            />
+                        </div>
+
+                        <!-- AI-Powered Purpose Input -->
+                        <div class="form-group">
+                            <label for="purpose">
+                                <i class="fas fa-heart" aria-hidden="true"></i>
+                                What's the occasion?
+                            </label>
+                            <input 
+                                type="text" 
+                                id="purpose" 
+                                name="purpose" 
+                                class="form-input" 
+                                placeholder="e.g., Business trip, Anniversary, Family vacation"
+                                value="Fun golf trip with the boys"
+                                list="purpose-suggestions"
+                            />
+                            <datalist id="purpose-suggestions">
+                                <option value="Business trip">
+                                <option value="Romantic getaway">
+                                <option value="Family vacation">
+                                <option value="Solo adventure">
+                                <option value="Weekend escape">
+                                <option value="Honeymoon">
+                                <option value="Group celebration">
+                            </datalist>
+                        </div>
+
+                        <!-- Smart Date Inputs -->
+                        <div class="form-group">
+                            <label for="checkin">
+                                <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                                Check-in
+                            </label>
+                            <input 
+                                type="date" 
+                                id="checkin" 
+                                name="checkin" 
+                                class="form-input" 
+                                required 
+                                aria-describedby="checkin-help"
+                            />
+                            <div id="checkin-help" class="visually-hidden">Select your check-in date</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="checkout">
+                                <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                                Check-out
+                            </label>
+                            <input 
+                                type="date" 
+                                id="checkout" 
+                                name="checkout" 
+                                class="form-input" 
+                                required 
+                                aria-describedby="checkout-help"
+                            />
+                            <div id="checkout-help" class="visually-hidden">Select your check-out date</div>
+                        </div>
+
+                        <!-- Advanced Guest Selector -->
+                        <div class="form-group guests-group">
+                            <label id="guestsLabel">
+                                <i class="fas fa-users" aria-hidden="true"></i>
+                                Guests & Rooms
+                            </label>
+                            <div 
+                                class="guests-selector" 
+                                role="combobox" 
+                                aria-haspopup="true" 
+                                aria-expanded="false" 
+                                aria-labelledby="guestsLabel" 
+                                tabindex="0"
+                                onclick="toggleGuestsDropdown()"
+                                onkeydown="handleGuestsDropdownKeydown(event)"
+                            >
+                                <span id="guestsDisplay">1 Adult, 1 Room</span>
+                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                            </div>
+                            <div class="guests-dropdown" id="guestsDropdown" role="listbox">
+                                <div class="guest-option">
+                                    <span>Adults</span>
+                                    <div class="counter">
+                                        <button 
+                                            type="button" 
+                                            aria-label="Decrease adults" 
+                                            onclick="changeCount('adults', -1)"
+                                        >-</button>
+                                        <span id="adultsCount" aria-live="polite">1</span>
+                                        <button 
+                                            type="button" 
+                                            aria-label="Increase adults" 
+                                            onclick="changeCount('adults', 1)"
+                                        >+</button>
+                                    </div>
+                                </div>
+                                <div class="guest-option">
+                                    <span>Children</span>
+                                    <div class="counter">
+                                        <button 
+                                            type="button" 
+                                            aria-label="Decrease children" 
+                                            onclick="changeCount('children', -1)"
+                                        >-</button>
+                                        <span id="childrenCount" aria-live="polite">0</span>
+                                        <button 
+                                            type="button" 
+                                            aria-label="Increase children" 
+                                            onclick="changeCount('children', 1)"
+                                        >+</button>
+                                    </div>
+                                </div>
+                                <div class="guest-option">
+                                    <span>Rooms</span>
+                                    <div class="counter">
+                                        <button 
+                                            type="button" 
+                                            aria-label="Decrease rooms" 
+                                            onclick="changeCount('rooms', -1)"
+                                        >-</button>
+                                        <span id="roomsCount" aria-live="polite">1</span>
+                                        <button 
+                                            type="button" 
+                                            aria-label="Increase rooms" 
+                                            onclick="changeCount('rooms', 1)"
+                                        >+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Environment Selection (Hidden in Production) -->
+                        <div class="form-group" style="display: none;">
+                            <label for="environment">
+                                <i class="fas fa-cog" aria-hidden="true"></i>
+                                Environment
+                            </label>
+                            <select id="environment" name="environment" class="form-input">
+                                <option value="sandbox">Sandbox</option>
+                                <option value="production">Production</option>
+                            </select>
+                        </div>
+
+                        <!-- Modern Search Button -->
+                        <button type="submit" class="search-btn" aria-describedby="search-help">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <span>Search Hotels</span>
+                        </button>
+                        <div id="search-help" class="visually-hidden">
+                            Search for hotels based on your preferences
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Response Area -->
+    <section id="funnyResponseArea" class="container" aria-live="polite">
+        <h3 id="funnyResponseText" class="text-primary"></h3>
+    </section>
+
+    <!-- Modern Results Section -->
+    <section class="results-section initially-hidden" id="resultsSection" aria-label="Search results">
+        <div class="container">
+            <!-- Results Header with Smart Controls -->
+            <div class="results-header">
+                <h2 id="resultsTitle">Search Results</h2>
+                <div class="results-actions">
+                    <!-- Quick Filters -->
+                    <div class="quick-filters" style="display: none;">
+                        <button class="filter-pill" data-filter="passion">
+                            <i class="fas fa-heart"></i> Best Match
+                        </button>
+                        <button class="filter-pill" data-filter="price">
+                            <i class="fas fa-dollar-sign"></i> Best Value
+                        </button>
+                        <button class="filter-pill" data-filter="rating">
+                            <i class="fas fa-star"></i> Highest Rated
+                        </button>
+                    </div>
+                    
+                    <!-- View Toggle -->
+                    <div class="view-toggle" role="tablist">
+                        <button 
+                            class="view-btn active" 
+                            role="tab"
+                            aria-selected="true"
+                            onclick="setView('list')"
+                        >
+                            <i class="fas fa-list" aria-hidden="true"></i>
+                            <span class="visually-hidden">List view</span>
+                        </button>
+                        <button 
+                            class="view-btn" 
+                            role="tab"
+                            aria-selected="false"
+                            onclick="setView('grid')"
+                        >
+                            <i class="fas fa-th" aria-hidden="true"></i>
+                            <span class="visually-hidden">Grid view</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Sort Dropdown -->
+                    <div class="sort-dropdown">
+                        <label for="sortBy" class="visually-hidden">Sort hotels by</label>
+                        <select id="sortBy" name="sortBy" class="form-input" onchange="sortResults()">
+                            <option value="passion-match">Best Match</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="rating-high">Rating: High to Low</option>
+                            <option value="stars-high">Stars: High to Low</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-container">
+                <!-- Smart Filtering Sidebar -->
+                <aside class="filters-sidebar" role="complementary" aria-label="Filter options">
+                    <div class="filters-header">
+                        <h3>Refine Your Search</h3>
+                        <button class="clear-filters" onclick="clearFilters()">Clear All</button>
+                    </div>
+
+                    <!-- Passion-Based Filters -->
+                    <div class="filter-group">
+                        <h4>Travel Style</h4>
+                        <div class="passion-filters" id="passionFilters">
+                            <!-- Dynamically populated by passion-ui.js -->
+                        </div>
+                    </div>
+
+                    <!-- Price Range Filter with Transparent Display -->
+                    <div class="filter-group">
+                        <h4>Price Range (per night)</h4>
+                        <div class="price-range">
+                            <label for="priceMin" class="visually-hidden">Minimum Price</label>
+                            <input 
+                                type="range" 
+                                id="priceMin" 
+                                name="priceMin" 
+                                min="0" 
+                                max="1000" 
+                                value="0" 
+                                oninput="updatePriceFilter()" 
+                                aria-describedby="price-display"
+                            />
+                            <label for="priceMax" class="visually-hidden">Maximum Price</label>
+                            <input 
+                                type="range" 
+                                id="priceMax" 
+                                name="priceMax" 
+                                min="0" 
+                                max="1000" 
+                                value="1000" 
+                                oninput="updatePriceFilter()"
+                                aria-describedby="price-display"
+                            />
+                            <div class="price-display" id="price-display" aria-live="polite">
+                                <span>$<span id="priceMinDisplay">0</span> - $<span id="priceMaxDisplay">1000</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Star Rating Filter -->
+                    <div class="filter-group">
+                        <h4>Star Rating</h4>
+                        <div class="star-filters">
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="star5" name="starRating" value="5" onchange="filterByStars()">
+                                <span>5 Stars</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="star4" name="starRating" value="4" onchange="filterByStars()">
+                                <span>4 Stars</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="star3" name="starRating" value="3" onchange="filterByStars()">
+                                <span>3 Stars</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="star2" name="starRating" value="2" onchange="filterByStars()">
+                                <span>2 Stars</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="star1" name="starRating" value="1" onchange="filterByStars()">
+                                <span>1 Star</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Smart Amenities Filter -->
+                    <div class="filter-group">
+                        <h4>Amenities</h4>
+                        <div class="amenity-filters">
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="amenityWifi" name="amenities" value="wifi" onchange="filterByAmenities()">
+                                <span>Free Wi-Fi</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="amenityPool" name="amenities" value="pool" onchange="filterByAmenities()">
+                                <span>Swimming Pool</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="amenityGym" name="amenities" value="gym" onchange="filterByAmenities()">
+                                <span>Fitness Center</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="amenityParking" name="amenities" value="parking" onchange="filterByAmenities()">
+                                <span>Free Parking</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="amenityBreakfast" name="amenities" value="breakfast" onchange="filterByAmenities()">
+                                <span>Breakfast Included</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="amenitySpa" name="amenities" value="spa" onchange="filterByAmenities()">
+                                <span>Spa Services</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="amenityRestaurant" name="amenities" value="restaurant" onchange="filterByAmenities()">
+                                <span>Restaurant</span>
+                            </label>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Results Content -->
+                <main class="results-content" role="main">
+                    <!-- Loading State -->
+                    <div id="loader" class="loader" aria-live="polite">
+                        <div class="loader-spinner" aria-hidden="true"></div>
+                        <p>Finding your perfect hotels...</p>
+                    </div>
+                    
+                    <!-- Hotels Grid -->
+                    <div id="hotels" class="hotels-grid" role="region" aria-label="Hotel search results"></div>
+                    
+                    <!-- Pagination -->
+                    <nav class="pagination" id="pagination" aria-label="Hotels pagination" role="navigation"></nav>
+                </main>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Section (Hidden by default) -->
+    <div id="payment-form" class="payment-section" style="display: none;" role="dialog" aria-label="Payment form"></div>
+    <div id="pe"></div>
+
+    <!-- Theme Toggle Button -->
+    <button 
+        class="theme-toggle" 
+        onclick="toggleTheme()" 
+        title="Switch Theme"
+        aria-label="Toggle between light and dark theme"
+    >
+        <i class="fas fa-palette" aria-hidden="true"></i>
+    </button>
+
+    <!-- Core JavaScript -->
+    <script src="app.js"></script>
+    <script src="passion-data.js"></script>
+    <script src="passion-ui.js"></script>
+
+    <!-- Enhanced Application Logic -->
+    <script>
+        // Modern Theme Management
+        const ThemeManager = {
+            init() {
+                this.loadSavedTheme();
+                this.setupThemeListener();
+            },
+            
+            loadSavedTheme() {
+                const savedTheme = localStorage.getItem('hotelBookingTheme');
+                if (savedTheme === 'purple') {
+                    document.body.classList.add('theme-purple');
+                }
+            },
+            
+            toggle() {
+                document.body.classList.toggle('theme-purple');
+                const isDark = document.body.classList.contains('theme-purple');
+                localStorage.setItem('hotelBookingTheme', isDark ? 'purple' : 'default');
+                
+                // Animate theme change
+                document.body.style.transition = 'all 0.3s ease';
+                setTimeout(() => {
+                    document.body.style.transition = '';
+                }, 300);
+            },
+            
+            setupThemeListener() {
+                // Listen for system theme changes
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                mediaQuery.addEventListener('change', (e) => {
+                    if (!localStorage.getItem('hotelBookingTheme')) {
+                        document.body.classList.toggle('theme-purple', e.matches);
+                    }
+                });
+            }
+        };
+
+        // Enhanced Search Form Management
+        const SearchManager = {
+            init() {
+                this.setupDateValidation();
+                this.setupGuestControls();
+                this.setupFormSubmission();
+                this.setupAccessibility();
+            },
+            
+            setupDateValidation() {
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                const checkinInput = document.getElementById('checkin');
+                const checkoutInput = document.getElementById('checkout');
+                
+                // Set default and minimum dates
+                checkinInput.value = today.toISOString().split('T')[0];
+                checkoutInput.value = tomorrow.toISOString().split('T')[0];
+                checkinInput.min = today.toISOString().split('T')[0];
+                
+                // Dynamic checkout minimum date
+                checkinInput.addEventListener('change', function() {
+                    const checkinDate = new Date(this.value);
+                    const minCheckout = new Date(checkinDate);
+                    minCheckout.setDate(minCheckout.getDate() + 1);
+                    checkoutInput.min = minCheckout.toISOString().split('T')[0];
+                    
+                    if (new Date(checkoutInput.value) <= checkinDate) {
+                        checkoutInput.value = minCheckout.toISOString().split('T')[0];
+                    }
+                });
+            },
+            
+            setupGuestControls() {
+                // Enhanced guest counter with validation
+                window.changeCount = (type, delta) => {
+                    const counters = {
+                        adults: { min: 1, max: 10, element: 'adultsCount' },
+                        children: { min: 0, max: 8, element: 'childrenCount' },
+                        rooms: { min: 1, max: 5, element: 'roomsCount' }
+                    };
+                    
+                    const counter = counters[type];
+                    const currentValue = parseInt(document.getElementById(counter.element).textContent);
+                    const newValue = Math.max(counter.min, Math.min(counter.max, currentValue + delta));
+                    
+                    document.getElementById(counter.element).textContent = newValue;
+                    this.updateGuestsDisplay();
+                };
+                
+                window.toggleGuestsDropdown = () => {
+                    const dropdown = document.getElementById('guestsDropdown');
+                    const selector = document.querySelector('.guests-selector');
+                    const isOpen = dropdown.style.display === 'block';
+                    
+                    dropdown.style.display = isOpen ? 'none' : 'block';
+                    selector.setAttribute('aria-expanded', !isOpen);
+                    
+                    if (!isOpen) {
+                        dropdown.focus();
+                    }
+                };
+                
+                // Close dropdown on outside click
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.guests-group')) {
+                        const dropdown = document.getElementById('guestsDropdown');
+                        const selector = document.querySelector('.guests-selector');
+                        dropdown.style.display = 'none';
+                        selector.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                
+                // Initial display update
+                this.updateGuestsDisplay();
+            },
+            
+            updateGuestsDisplay() {
+                const adults = parseInt(document.getElementById('adultsCount').textContent);
+                const children = parseInt(document.getElementById('childrenCount').textContent);
+                const rooms = parseInt(document.getElementById('roomsCount').textContent);
+                
+                let displayText = `${adults} Adult${adults !== 1 ? 's' : ''}`;
+                if (children > 0) {
+                    displayText += `, ${children} Child${children !== 1 ? 'ren' : ''}`;
+                }
+                displayText += `, ${rooms} Room${rooms !== 1 ? 's' : ''}`;
+                
+                document.getElementById('guestsDisplay').textContent = displayText;
+            },
+            
+            setupFormSubmission() {
+                const form = document.getElementById('searchForm');
+                form.addEventListener('submit', this.handleSubmit.bind(this));
+            },
+            
+            async handleSubmit(event) {
+                event.preventDefault();
+                
+                // Show loading state
+                this.showLoadingState();
+                
+                // Construct search query
+                const formData = new FormData(event.target);
+                const searchQuery = this.buildSearchQuery(formData);
+                
+                try {
+                    const response = await fetch(`/api/search-hotels?q=${encodeURIComponent(searchQuery)}&environment=production`);
+                    const data = await response.json();
+                    
+                    // Handle response
+                    this.handleSearchResults(data);
+                    
+                } catch (error) {
+                    console.error('Search error:', error);
+                    this.handleSearchError(error);
+                } finally {
+                    this.hideLoadingState();
+                }
+            },
+            
+            buildSearchQuery(formData) {
+                const destination = formData.get('destination');
+                const purpose = formData.get('purpose');
+                const checkin = formData.get('checkin');
+                const checkout = formData.get('checkout');
+                const adults = parseInt(document.getElementById('adultsCount').textContent);
+                const children = parseInt(document.getElementById('childrenCount').textContent);
+                const rooms = parseInt(document.getElementById('roomsCount').textContent);
+                
+                let query = `Hotels in ${destination}`;
+                if (purpose) query += ` for ${purpose}`;
+                query += ` from ${checkin} to ${checkout}`;
+                query += ` for ${adults} adult${adults !== 1 ? 's' : ''}`;
+                if (children > 0) query += ` and ${children} child${children !== 1 ? 'ren' : ''}`;
+                query += ` in ${rooms} room${rooms !== 1 ? 's' : ''}`;
+                
+                return query;
+            },
+            
+            showLoadingState() {
+                const loader = document.getElementById('loader');
+                const funnyArea = document.getElementById('funnyResponseArea');
+                const funnyText = document.getElementById('funnyResponseText');
+                
+                loader.classList.add('active');
+                funnyArea.style.display = 'block';
+                funnyText.textContent = 'Finding your perfect match...';
+            },
+            
+            hideLoadingState() {
+                const loader = document.getElementById('loader');
+                loader.classList.remove('active');
+            },
+            
+            handleSearchResults(data) {
+                // Implementation will use existing app.js logic
+                if (data.error) {
+                    this.handleSearchError(new Error(data.error));
+                    return;
+                }
+                
+                // Show results section
+                const resultsSection = document.getElementById('resultsSection');
+                resultsSection.classList.remove('initially-hidden');
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+                
+                // Update funny response
+                const funnyText = document.getElementById('funnyResponseText');
+                funnyText.textContent = data.funnyResponse || 'Here are your personalized recommendations!';
+            },
+            
+            handleSearchError(error) {
+                const funnyText = document.getElementById('funnyResponseText');
+                const hotelsContainer = document.getElementById('hotels');
+                
+                funnyText.textContent = 'Oops! Something went wrong. Please try again.';
+                hotelsContainer.innerHTML = '<div class="error-message">Unable to search hotels at this time. Please try again later.</div>';
+                
+                document.getElementById('resultsSection').classList.remove('initially-hidden');
+            },
+            
+            setupAccessibility() {
+                // Keyboard navigation for guest dropdown
+                window.handleGuestsDropdownKeydown = (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        window.toggleGuestsDropdown();
+                    }
+                };
+                
+                // Focus management
+                const form = document.getElementById('searchForm');
+                form.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                        e.preventDefault();
+                        form.querySelector('button[type="submit"]').click();
+                    }
+                });
+            }
+        };
+
+        // View Management
+        window.setView = (viewType) => {
+            const hotelsGrid = document.getElementById('hotels');
+            const buttons = document.querySelectorAll('.view-btn');
+            
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            
+            const activeButton = document.querySelector(`[onclick="setView('${viewType}')"]`);
+            activeButton.classList.add('active');
+            activeButton.setAttribute('aria-selected', 'true');
+            
+            if (viewType === 'grid') {
+                hotelsGrid.classList.add('view-grid');
+            } else {
+                hotelsGrid.classList.remove('view-grid');
+            }
+        };
+
+        // Global theme toggle function
+        window.toggleTheme = () => ThemeManager.toggle();
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', () => {
+            ThemeManager.init();
+            SearchManager.init();
+            
+            // Initialize passion-based filtering if available
+            if (typeof initializePassionUI === 'function') {
+                initializePassionUI();
+            }
+        });
+
+        // Performance optimizations
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+
+        // Prefetch important resources
+        const prefetchLinks = [
+            '/api/search-hotels',
+            'details.html'
+        ];
+        
+        prefetchLinks.forEach(url => {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = url;
+            document.head.appendChild(link);
+        });
+    </script>
+</body>
+</html>

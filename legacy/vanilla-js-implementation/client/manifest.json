@@ -1,0 +1,161 @@
+{
+  "name": "Vibe Hotels - Find Your Perfect Vibe",
+  "short_name": "Vibe Hotels",
+  "description": "AI-powered hotel matching based on your unique passions and vibe. Earn 5% rewards on every booking.",
+  "start_url": "/index-2025.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["travel", "lifestyle", "business"],
+  "lang": "en-US",
+  "dir": "ltr",
+  
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/72x72?text=H",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "badge"
+    },
+    {
+      "src": "https://via.placeholder.com/96x96?text=H",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/128x128?text=H",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/144x144?text=H",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/152x152?text=H",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/192x192?text=H",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://via.placeholder.com/384x384?text=H",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512?text=H",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "https://via.placeholder.com/390x844?text=Hotel+Search",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AI-powered hotel search with natural language queries"
+    },
+    {
+      "src": "https://via.placeholder.com/390x844?text=Hotel+Results",
+      "sizes": "390x844", 
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Personalized hotel recommendations with transparent pricing"
+    },
+    {
+      "src": "https://via.placeholder.com/1024x768?text=Desktop+View",
+      "sizes": "1024x768",
+      "type": "image/png", 
+      "form_factor": "wide",
+      "label": "Immersive desktop experience with advanced filtering"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Quick Search",
+      "short_name": "Search",
+      "description": "Start a new hotel search",
+      "url": "/index-2025.html#search",
+      "icons": [
+        {
+          "src": "https://via.placeholder.com/96x96?text=S",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Bookings",
+      "short_name": "Bookings",
+      "description": "View your hotel bookings",
+      "url": "/index-2025.html#bookings",
+      "icons": [
+        {
+          "src": "https://via.placeholder.com/96x96?text=B",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "short_name": "Favorites",
+      "description": "Browse your favorite hotels",
+      "url": "/index-2025.html#favorites",
+      "icons": [
+        {
+          "src": "https://via.placeholder.com/96x96?text=F",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  
+  "related_applications": [],
+  "prefer_related_applications": false,
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+vibehotels",
+      "url": "/index-2025.html?action=%s"
+    }
+  ],
+  
+  "file_handlers": [
+    {
+      "action": "/index-2025.html",
+      "accept": {
+        "application/json": [".json"]
+      }
+    }
+  ],
+  
+  "share_target": {
+    "action": "/index-2025.html",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

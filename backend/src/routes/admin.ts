@@ -1,9 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../database';
+import { getDb } from '../database';
 import { bookings, payments, refunds, users } from '../database/schema';
 import { CommissionService } from '../services/commission';
-import { stripeService } from '../services/stripe';
+// Use mock service for local development
+const stripeService = process.env.LOCAL_SQLITE 
+  ? require('../services/stripeMock').stripeService
+  : require('../services/stripe').stripeService;
 import { eq, and, gte, lte, desc, count, sum, avg } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { validateRequest } from '../middleware/validateRequest';

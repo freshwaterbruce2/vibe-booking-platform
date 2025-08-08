@@ -137,7 +137,7 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
 </head>
 <body>
   <div class="header">
-    <div class="logo">Hotel Booking Platform</div>
+    <div class="logo">Vibe Hotels</div>
     <h1>Payment Receipt</h1>
     <p>Thank you for your booking!</p>
   </div>
@@ -191,7 +191,7 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
 
   <div class="footer">
     <p>This is an official receipt for your hotel booking.</p>
-    <p>For questions or support, please contact us at support@hotelbooking.com</p>
+    <p>For questions or support, please contact us at support@vibehotels.com</p>
     <p>Generated on ${format(new Date(), 'PPP')} at ${format(new Date(), 'pp')}</p>
   </div>
 </body>
@@ -277,7 +277,7 @@ Total: ${PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetail
           Payment Successful!
         </h1>
         <p className="text-green-100 text-lg">
-          Your booking has been confirmed
+          Your booking has been confirmed - Earn 5% rewards!
         </p>
       </div>
 
@@ -410,7 +410,7 @@ Total: ${PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetail
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Service Fee (5%)</span>
+              <span className="text-gray-600">Service Fee (5%) - You earn rewards!</span>
               <span className="font-medium">
                 {PaymentService.formatCurrency(commissionAmount, bookingDetails.currency)}
               </span>
@@ -490,7 +490,7 @@ Total: ${PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetail
           Save this confirmation for your records. You'll need it for check-in.
         </p>
         <p className="text-xs text-gray-500 mt-2">
-          Questions? Contact us at support@hotelbooking.com or call +1-800-HOTELS
+          Questions? Contact us at support@vibehotels.com | Enjoy your 5% rewards on this booking!
         </p>
       </div>
     </div>

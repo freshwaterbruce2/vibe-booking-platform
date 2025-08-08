@@ -36,12 +36,14 @@ This document outlines the comprehensive production deployment architecture for 
 ### 3. Deployment Strategies
 
 #### Blue-Green Deployment
+
 - Two identical production environments (Blue/Green)
 - Zero-downtime deployments
 - Instant rollback capability
 - Load balancer switching
 
 #### Canary Releases
+
 - Gradual traffic shifting (5% → 25% → 50% → 100%)
 - Automated metrics monitoring
 - Automatic rollback on error threshold

@@ -235,7 +235,7 @@ jobs:
       - name: Run SOC2 compliance checks
         run: |
           kubectl apply -f deployment/compliance/compliance-automation.yaml --dry-run=client
-          
+
       - name: Run PCI-DSS compliance scan
         uses: ./.github/actions/pci-compliance
         with:
@@ -312,7 +312,7 @@ jobs:
           kubectl set image deployment/hotel-booking \
             hotel-booking-app=${{ needs.build-test.outputs.image-tag }} \
             -n hotel-booking-staging
-          
+
           # Wait for rollout
           kubectl rollout status deployment/hotel-booking -n hotel-booking-staging --timeout=600s
 
@@ -364,7 +364,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [staging-integration-tests]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
-    environment: 
+    environment:
       name: production
       url: https://hotelbooking.com
     steps:
@@ -389,7 +389,7 @@ jobs:
         run: |
           STRATEGY=${{ github.event.inputs.deployment_strategy || 'canary' }}
           IMAGE_TAG=${{ needs.build-test.outputs.image-tag }}
-          
+
           case $STRATEGY in
             canary)
               kubectl apply -f deployment/kubernetes/canary-deployment.yaml

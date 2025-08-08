@@ -1,6 +1,6 @@
-# Hotel Booking - Modern React Application
+# Vibe Booking - Modern React Application
 
-A modern hotel booking application built with React, TypeScript, and AI-powered search capabilities.
+A modern hotel booking platform built with React, TypeScript, and AI-powered search capabilities. Vibe Booking combines cutting-edge technology with intuitive design to create the ultimate hotel booking experience.
 
 ## Features
 
@@ -40,8 +40,8 @@ npm install
 npm run dev
 
 # Start backend server (for API integration)
-cd build-website-example
-npm start
+cd backend
+npm run dev
 ```
 
 ### Available Scripts
@@ -87,7 +87,7 @@ VITE_LITEAPI_KEY=your_liteapi_key
 
 ## API Integration
 
-The frontend connects to the existing Express.js backend in `build-website-example/` which provides:
+The frontend connects to the modern TypeScript backend in `backend/` which provides:
 
 - Hotel search via LiteAPI
 - OpenAI natural language processing
