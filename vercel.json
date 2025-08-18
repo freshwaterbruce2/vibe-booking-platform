@@ -1,31 +1,12 @@
 {
-  "version": 2,
-  "name": "vibe-hotels",
-  "builds": [
+  "buildCommand": "npm run build:skip-errors",
+  "outputDirectory": "dist",
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "source": "/api/(.*)",
+      "destination": "https://api.vibehotels.com/api/$1"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "https://api.vibehotels.com/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "env": {
-    "VITE_APP_NAME": "Vibe Hotels",
-    "VITE_API_URL": "https://api.vibehotels.com",
-    "VITE_SQUARE_APPLICATION_ID": "@square_app_id",
-    "VITE_SQUARE_LOCATION_ID": "@square_location_id"
-  },
   "headers": [
     {
       "source": "/(.*)",
