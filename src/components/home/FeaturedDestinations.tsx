@@ -23,7 +23,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '1',
       name: 'Paris',
       country: 'France',
-      image: '/destinations/paris.jpg',
+      image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=250&fit=crop',
       description: 'The City of Light, famous for its iconic landmarks, art, and cuisine.',
       hotelCount: 1200,
       averagePrice: 180,
@@ -33,7 +33,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '2',
       name: 'Tokyo',
       country: 'Japan',
-      image: '/destinations/tokyo.jpg',
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=250&fit=crop',
       description: 'A vibrant metropolis blending traditional culture with modern innovation.',
       hotelCount: 800,
       averagePrice: 220,
@@ -43,7 +43,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '3',
       name: 'New York',
       country: 'USA',
-      image: '/destinations/newyork.jpg',
+      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=250&fit=crop',
       description: 'The city that never sleeps, offering endless entertainment and culture.',
       hotelCount: 950,
       averagePrice: 280,
@@ -53,7 +53,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '4',
       name: 'Bali',
       country: 'Indonesia',
-      image: '/destinations/bali.jpg',
+      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=250&fit=crop',
       description: 'Tropical paradise with stunning beaches, temples, and rice terraces.',
       hotelCount: 600,
       averagePrice: 120,
@@ -109,7 +109,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
                     alt={destination.name}
                     className="w-full h-48 object-cover group-hover:brightness-110 transition-all duration-300"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-destination.jpg';
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop';
                     }}
                   />
                   <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-full px-3 py-1">
