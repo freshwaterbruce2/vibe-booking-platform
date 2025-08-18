@@ -1,17 +1,11 @@
 {
-  "name": "vibe-hotels-backend-simple",
+  "name": "vibe-backend",
   "version": "1.0.0",
-  "description": "Simple backend for Vibe Hotels deployment",
-  "main": "server-simple.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server-simple.js",
-    "dev": "node server-simple.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "start": "node index.js"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   }
 }
