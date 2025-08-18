@@ -24,7 +24,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
       id: '1',
       name: 'Sarah Johnson',
       location: 'New York, USA',
-      avatar: '/avatars/sarah.jpg',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b93c?w=100&h=100&fit=crop&crop=face',
       rating: 5,
       review: 'Amazing experience! The hotel recommendation was perfect for our honeymoon. The booking process was so smooth and the customer service was exceptional.',
       hotelStayed: 'Grand Palace Resort, Bali',
@@ -35,7 +35,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
       id: '2',
       name: 'Michael Chen',
       location: 'Toronto, Canada',
-      avatar: '/avatars/michael.jpg',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
       rating: 5,
       review: 'I travel frequently for business and this platform has become my go-to for hotel bookings. Great prices, excellent selection, and reliable service.',
       hotelStayed: 'Business Tower Hotel, Tokyo',
@@ -46,7 +46,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
       id: '3',
       name: 'Emma Rodriguez',
       location: 'Madrid, Spain',
-      avatar: '/avatars/emma.jpg',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
       rating: 4,
       review: 'The passion-based hotel matching feature is brilliant! It found exactly the type of boutique hotel I was looking for in Paris. Highly recommend!',
       hotelStayed: 'Le Petit Boutique, Paris',
@@ -57,7 +57,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
       id: '4',
       name: 'David Kim',
       location: 'Seoul, South Korea',
-      avatar: '/avatars/david.jpg',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
       rating: 5,
       review: 'Fantastic platform with great user experience. The AI-powered search understood exactly what I was looking for. Will definitely use again!',
       hotelStayed: 'Luxury Suites Dubai',
@@ -68,7 +68,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
       id: '5',
       name: 'Lisa Thompson',
       location: 'London, UK',
-      avatar: '/avatars/lisa.jpg',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
       rating: 5,
       review: 'Best hotel booking experience ever! The personalized recommendations were spot-on, and the whole family loved our vacation resort.',
       hotelStayed: 'Tropical Paradise Resort, Maldives',
@@ -130,7 +130,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
                   alt={testimonial.name}
                   className="w-12 h-12 rounded-full object-cover mr-4"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder-avatar.jpg';
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face';
                   }}
                 />
                 <div>
@@ -178,7 +178,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
                   alt={testimonials[currentIndex].name}
                   className="w-12 h-12 rounded-full object-cover mr-4"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder-avatar.jpg';
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face';
                   }}
                 />
                 <div>
