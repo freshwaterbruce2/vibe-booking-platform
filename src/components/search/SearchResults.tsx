@@ -1,6 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import { Star, MapPin, Heart, Share2, ChevronRight, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useSearchStore } from '@/store/searchStore';
 import type { Hotel } from '@/types/hotel';
@@ -114,7 +114,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
             </p>
           )}
         </div>
-        
+
         {/* Sort Options - You can move this to a separate component */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
@@ -133,7 +133,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         {hotels.map((hotel) => {
           const primaryImage = hotel.images?.find(img => img.isPrimary) || hotel.images?.[0];
           const passionScore = hotel.passionScore ? Math.max(...Object.values(hotel.passionScore)) : 0;
-          
+
           return (
             <Card
               key={hotel.id}
@@ -151,7 +151,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                       (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
                     }}
                   />
-                  
+
                   {/* Passion Score Badge */}
                   {passionScore > 0.7 && (
                     <div className="absolute top-3 left-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
@@ -159,14 +159,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                       {Math.round(passionScore * 100)}% Match
                     </div>
                   )}
-                  
+
                   {/* Availability Badge */}
                   {hotel.availability.lowAvailability && (
                     <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
                       Only {Math.floor(Math.random() * 3) + 1} left!
                     </div>
                   )}
-                  
+
                   {/* Action Buttons */}
                   <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <Button
@@ -210,7 +210,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Price */}
                       <div className="text-right ml-4">
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -277,7 +277,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                           View on Map
                         </button>
                       </div>
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -307,7 +307,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
           >
             Previous
           </Button>
-          
+
           <div className="flex gap-1">
             {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
               const pageNum = i + 1;
@@ -326,7 +326,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               );
             })}
           </div>
-          
+
           <Button
             variant="outline"
             disabled={pagination.page === pagination.totalPages}

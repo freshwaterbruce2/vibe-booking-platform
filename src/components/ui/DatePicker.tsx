@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Minus, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from './Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+import { Input } from './Button';
 import { useSearchStore } from '@/store/searchStore';
 import { cn } from '@/utils/cn';
 
@@ -57,7 +57,7 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
   return (
     <div className={cn('space-y-4', className)}>
       <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Guests & Rooms</h3>
-      
+
       {/* Adults */}
       <div className="flex items-center justify-between">
         <div>
@@ -158,11 +158,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   onClose,
   className,
 }) => {
-  const { 
-    selectedDateRange, 
-    guestCount, 
-    setDateRange, 
-    setGuestCount 
+  const {
+    selectedDateRange,
+    guestCount,
+    setDateRange,
+    setGuestCount
   } = useSearchStore();
 
   const [checkInDate, setCheckInDate] = useState(selectedDateRange.checkIn || '');
@@ -170,10 +170,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [localGuestCount, setLocalGuestCount] = useState(guestCount);
   const [activeTab, setActiveTab] = useState<'dates' | 'guests'>('dates');
-  
+
   const today = new Date();
   const minDate = today.toISOString().split('T')[0];
-  
+
   // Calculate nights
   const calculateNights = (checkIn: string, checkOut: string) => {
     if (!checkIn || !checkOut) return 0;
@@ -229,7 +229,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const { adults, children, rooms } = localGuestCount;
     const guestText = `${adults} adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} child${children > 1 ? 'ren' : ''}` : ''}`;
     const roomText = `${rooms} room${rooms > 1 ? 's' : ''}`;
-    return `${guestText} • ${roomText}`;
+    return `${guestText} â€¢ ${roomText}`;
   };
 
   return (
@@ -250,7 +250,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               size="sm"
               className="text-gray-500 hover:text-gray-700"
             >
-              ✕
+              âœ•
             </Button>
           )}
         </div>
@@ -304,7 +304,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Check-out

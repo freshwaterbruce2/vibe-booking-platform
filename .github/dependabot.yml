@@ -1,41 +1,80 @@
 version: 2
 updates:
-  # JavaScript dependencies
+  # === JavaScript Dependencies (Root/Frontend) ===
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'daily'
       time: '04:00'
+      timezone: 'Etc/UTC'
     open-pull-requests-limit: 10
-    reviewers:
-      - 'your-github-username'
     labels:
       - 'dependencies'
-      - 'javascript'
+      - 'npm'
+      - 'frontend'
     commit-message:
-      prefix: 'deps'
-      prefix-development: 'deps-dev'
+      prefix: 'deps(frontend)'
       include: 'scope'
     groups:
-      production-dependencies:
-        dependency-type: 'production'
-        update-types:
-          - 'minor'
-          - 'patch'
-      development-dependencies:
-        dependency-type: 'development'
-        update-types:
-          - 'minor'
-          - 'patch'
-    # Security updates should be prioritized
-    allow:
-      - dependency-type: 'all'
+      # Group related packages to reduce PR noise
+      react-stack:
+        patterns:
+          - 'react'
+          - 'react-dom'
+          - '@types/react'
+          - '@types/react-dom'
+      vite-stack:
+        patterns:
+          - 'vite'
+          - '@vitejs/*'
+      testing-stack:
+        patterns:
+          - 'vitest'
+          - '@testing-library/*'
+          - 'playwright'
+          - '@playwright/test'
+      eslint-stack:
+        patterns:
+          - 'eslint'
+          - 'eslint-*'
+          - '@typescript-eslint/*'
+    # Ignore major updates for all dependencies to avoid breaking changes
     ignore:
-      # Don't update major versions automatically
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
 
-  # GitHub Actions
+  # === JavaScript Dependencies (Backend) ===
+  - package-ecosystem: 'npm'
+    directory: '/backend'
+    schedule:
+      interval: 'daily'
+      time: '04:00'
+      timezone: 'Etc/UTC'
+    open-pull-requests-limit: 10
+    labels:
+      - 'dependencies'
+      - 'npm'
+      - 'backend'
+    commit-message:
+      prefix: 'deps(backend)'
+      include: 'scope'
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  # === Docker Dependencies ===
+  - package-ecosystem: 'docker'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'dependencies'
+      - 'docker'
+    commit-message:
+      prefix: 'chore(deps)'
+      include: 'scope'
+
+  # === GitHub Actions ===
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
@@ -43,5 +82,12 @@ updates:
     labels:
       - 'dependencies'
       - 'github-actions'
+      - 'ci'
     commit-message:
-      prefix: 'ci'
+      prefix: 'ci(deps)'
+      include: 'scope'
+    # Group all GitHub Actions updates into a single PR
+    groups:
+       github-actions:
+         patterns:
+           - "*"

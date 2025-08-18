@@ -1,6 +1,6 @@
-
+﻿
 import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../ui/Button';
 import { ThemeToggle } from './ThemeToggle';
 import { Navigation } from './Navigation';
 import { UserMenu } from './UserMenu';

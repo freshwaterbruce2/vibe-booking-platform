@@ -67,9 +67,11 @@ export class HotelBookingServer {
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
     }));
 
-    // Body parsing
-    this.app.use(express.json({ limit: '10mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  // Raw body capture for Square webhooks BEFORE json parsing
+  this.app.use('/api/payments/webhook/square', express.raw({ type: '*/*', limit: '1mb' }));
+  // Body parsing (general)
+  this.app.use(express.json({ limit: '10mb' }));
+  this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
     // Compression
     this.app.use(compression());
@@ -86,7 +88,7 @@ export class HotelBookingServer {
     this.app.use(rateLimiter);
 
     // Health check
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (_req, res) => {
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),

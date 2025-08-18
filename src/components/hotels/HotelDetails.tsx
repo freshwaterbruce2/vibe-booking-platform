@@ -1,11 +1,31 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Star, MapPin, Wifi, Car, Utensils, Dumbbell, Heart, Share2, Calendar, Users, Sparkles, Shield, Leaf, Camera, Play, ChevronLeft, ChevronRight, Clock, Check, X } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+﻿import React, { useState } from 'react';
+import {
+  ArrowLeft,
+  Star,
+  MapPin,
+  Heart,
+  Share2,
+  Calendar,
+  Users,
+  Sparkles,
+  Shield,
+  Leaf,
+  Camera,
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Check,
+  X,
+} from 'lucide-react';
+import { Button } from '../ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useHotelStore } from '@/store/hotelStore';
 import { useSearchStore } from '@/store/searchStore';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import type { HotelDetails } from '@/types/hotel';
 import { cn } from '@/utils/cn';
+import './HotelDetails.css';
 
 interface HotelDetailsProps {
   hotelId?: string;
@@ -17,7 +37,7 @@ interface HotelDetailsProps {
 }
 
 const HotelDetails: React.FC<HotelDetailsProps> = ({
-  hotelId,
+  // hotelId removed (unused)
   hotel: providedHotel,
   isLoading = false,
   onBookRoom,
@@ -26,10 +46,10 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
 }) => {
   const { selectedHotel, loading: hotelLoading } = useHotelStore();
   const { selectedDateRange, guestCount } = useSearchStore();
-  
-  const hotel = providedHotel || selectedHotel;
+
+  const hotel = (providedHotel || selectedHotel) as HotelDetails | null;
   const loading = isLoading || hotelLoading;
-  
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'amenities' | 'location' | 'reviews'>('overview');
   const [showAllImages, setShowAllImages] = useState(false);
@@ -37,14 +57,14 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
   const renderStars = (rating: number) => {
     return (
       <div className="flex items-center gap-1">
-        {[...Array(5)].map((_, i) => (
+  {[...Array(5)].map((_, i) => (
           <Star
             key={i}
             className={cn(
               'w-5 h-5',
               i < Math.floor(rating)
                 ? 'text-yellow-400 fill-current'
-                : 'text-gray-300'
+    : 'text-gray-300',
             )}
           />
         ))}
@@ -56,9 +76,15 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
   };
 
   const getPassionScoreColor = (score: number) => {
-    if (score >= 0.8) return 'from-purple-500 to-pink-500';
-    if (score >= 0.6) return 'from-blue-500 to-purple-500';
-    if (score >= 0.4) return 'from-green-500 to-blue-500';
+    if (score >= 0.8) {
+      return 'from-purple-500 to-pink-500';
+    }
+    if (score >= 0.6) {
+      return 'from-blue-500 to-purple-500';
+    }
+    if (score >= 0.4) {
+      return 'from-green-500 to-blue-500';
+    }
     return 'from-gray-400 to-gray-500';
   };
 
@@ -104,11 +130,18 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
     );
   }
 
-  const maxPassionScore = hotel.passionScore ? Math.max(...Object.values(hotel.passionScore)) : 0;
-  const primaryImage = hotel.images?.find(img => img.isPrimary) || hotel.images?.[0];
-  const totalNights = selectedDateRange.checkIn && selectedDateRange.checkOut 
-    ? Math.ceil((new Date(selectedDateRange.checkOut).getTime() - new Date(selectedDateRange.checkIn).getTime()) / (1000 * 60 * 60 * 24))
-    : 1;
+  const maxPassionScore = hotel.passionScore
+    ? Math.max(...Object.values(hotel.passionScore))
+    : 0;
+  // const primaryImage = hotel.images?.find((img) => img.isPrimary) || hotel.images?.[0];
+  const totalNights =
+    selectedDateRange.checkIn && selectedDateRange.checkOut
+      ? Math.ceil(
+          (new Date(selectedDateRange.checkOut).getTime() -
+            new Date(selectedDateRange.checkIn).getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+      : 1;
 
   return (
     <div className={cn('max-w-7xl mx-auto', className)}>
@@ -124,29 +157,31 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
             Back to Results
           </Button>
         )}
-        
+
         <div className="flex items-center gap-3">
           {maxPassionScore > 0.6 && (
-            <div className={cn(
-              'bg-gradient-to-r text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1',
-              getPassionScoreColor(maxPassionScore)
-            )}>
+            <div
+              className={cn(
+                'bg-gradient-to-r text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1',
+                getPassionScoreColor(maxPassionScore),
+              )}
+            >
               <Sparkles className="w-4 h-4" />
               {Math.round(maxPassionScore * 100)}% Passion Match
             </div>
           )}
-          
+
           {hotel.sustainabilityScore && hotel.sustainabilityScore > 0.8 && (
             <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
               <Leaf className="w-4 h-4" />
               Eco-Friendly
             </div>
           )}
-          
+
           <Button variant="outline" size="icon">
             <Heart className="w-4 h-4" />
           </Button>
-          
+
           <Button variant="outline" size="icon">
             <Share2 className="w-4 h-4" />
           </Button>
@@ -166,7 +201,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                   (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
                 }}
               />
-              
+
               {/* Image Navigation */}
               {hotel.images.length > 1 && (
                 <>
@@ -174,7 +209,13 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                     variant="secondary"
                     size="icon"
                     className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => setSelectedImageIndex(selectedImageIndex > 0 ? selectedImageIndex - 1 : hotel.images.length - 1)}
+                    onClick={() =>
+                      setSelectedImageIndex(
+                        selectedImageIndex > 0
+                          ? selectedImageIndex - 1
+                          : hotel.images.length - 1,
+                      )
+                    }
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </Button>
@@ -182,13 +223,19 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                     variant="secondary"
                     size="icon"
                     className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => setSelectedImageIndex(selectedImageIndex < hotel.images.length - 1 ? selectedImageIndex + 1 : 0)}
+                    onClick={() =>
+                      setSelectedImageIndex(
+                        selectedImageIndex < hotel.images.length - 1
+                          ? selectedImageIndex + 1
+                          : 0,
+                      )
+                    }
                   >
                     <ChevronRight className="w-5 h-5" />
                   </Button>
                 </>
               )}
-              
+
               {/* Virtual Tour */}
               {hotel.virtualTourUrl && (
                 <Button
@@ -200,13 +247,13 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                   Virtual Tour
                 </Button>
               )}
-              
+
               {/* Image Counter */}
               <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
                 {selectedImageIndex + 1} / {hotel.images.length}
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
               {hotel.images.slice(1, 4).map((image, index) => (
                 <div key={index + 1} className="relative group cursor-pointer">
@@ -220,7 +267,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                     }}
                   />
                   {index === 2 && hotel.images.length > 4 && (
-                    <div 
+                    <div
                       className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white font-medium cursor-pointer"
                       onClick={() => setShowAllImages(true)}
                     >
@@ -252,7 +299,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
             ))}
           </div>
         )}
-        
+
         {showAllImages && (
           <Button
             onClick={() => setShowAllImages(false)}
@@ -275,7 +322,9 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-3">
               <MapPin className="w-5 h-5" />
               <span className="text-lg">
-                {hotel.location.address}, {hotel.location.city}, {hotel.location.country}
+                {hotel.location.address}, {hotel.location.city},
+                {' '}
+                {hotel.location.country}
               </span>
             </div>
             <div className="flex items-center gap-4 mb-4">
@@ -284,7 +333,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                 ({hotel.reviewCount.toLocaleString()} reviews)
               </span>
             </div>
-            
+
             {/* Quick Info */}
             <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-1">
@@ -297,7 +346,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
               </div>
             </div>
           </div>
-          
+
           {/* Booking Card */}
           <Card className="w-full lg:w-96 p-6 lg:sticky lg:top-6">
             <div className="text-center mb-4">
@@ -308,11 +357,15 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
               <div className="text-sm text-gray-500 dark:text-gray-400">per night</div>
               {totalNights > 1 && (
                 <div className="text-lg font-semibold text-gray-900 dark:text-white mt-2">
-                  Total: {formatPrice(hotel.priceRange.avgNightly * totalNights, hotel.priceRange.currency)}
+                  Total:{' '}
+                  {formatPrice(
+                    hotel.priceRange.avgNightly * totalNights,
+                    hotel.priceRange.currency,
+                  )}
                 </div>
               )}
             </div>
-            
+
             {/* Date & Guest Info */}
             {selectedDateRange.checkIn && selectedDateRange.checkOut && (
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
@@ -328,18 +381,18 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                   <div className="col-span-2">
                     <div className="text-gray-600 dark:text-gray-400">Guests</div>
                     <div className="font-medium">
-                      {guestCount.adults} adults{guestCount.children > 0 && `, ${guestCount.children} children`} • {guestCount.rooms} room{guestCount.rooms > 1 ? 's' : ''}
+                      {guestCount.adults} adults{guestCount.children > 0 && `, ${guestCount.children} children`} â€¢ {guestCount.rooms} room{guestCount.rooms > 1 ? 's' : ''}
                     </div>
                   </div>
                 </div>
               </div>
             )}
-            
+
             <Button className="w-full mb-3" size="lg">
               <Calendar className="w-4 h-4 mr-2" />
               Book Now
             </Button>
-            
+
             <Button variant="outline" className="w-full">
               <Users className="w-4 h-4 mr-2" />
               View Rooms
@@ -360,12 +413,12 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={cn(
                 'flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
                 activeTab === tab.id
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
               )}
             >
               {tab.icon && <tab.icon className="w-4 h-4" />}
@@ -384,7 +437,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
               <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
                 {hotel.fullDescription || hotel.description}
               </p>
-              
+
               {/* Passion Scores */}
               {hotel.passionScore && Object.keys(hotel.passionScore).length > 0 && (
                 <div className="mb-6">
@@ -400,12 +453,12 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                           </span>
                           <div className="flex items-center gap-2">
                             <div className="w-16 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                              <div 
+                              <div
                                 className={cn(
-                                  'h-full bg-gradient-to-r transition-all duration-500',
-                                  getPassionScoreColor(score)
+                                  'h-full bg-gradient-to-r transition-all duration-500 passion-bar',
+                                  getPassionScoreColor(score),
                                 )}
-                                style={{ width: `${score * 100}%` }}
+                                data-width={score * 100}
                               />
                             </div>
                             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -420,7 +473,11 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
 
               <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Hotel Policies</h4>
               <div className="space-y-3">
-                {hotel.policies.map((policy, index) => (
+                {hotel.policies.map(
+                  (
+                    policy: HotelDetails['policies'][number],
+                    index: number,
+                  ) => (
                   <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     {policy.type === 'cancellation' ? (
                       <Shield className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -432,7 +489,8 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                       <div className="text-sm text-gray-600 dark:text-gray-400">{policy.description}</div>
                     </div>
                   </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
 
@@ -450,7 +508,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                   </div>
                 </div>
               </Card>
-              
+
               {hotel.sustainabilityScore && hotel.sustainabilityScore > 0.5 && (
                 <Card className="p-6">
                   <div className="flex items-center gap-3 mb-3">
@@ -459,9 +517,9 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                   </div>
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-green-500 transition-all duration-500"
-                        style={{ width: `${hotel.sustainabilityScore * 100}%` }}
+                      <div
+                        className="h-full bg-green-500 transition-all duration-500 passion-bar"
+                        data-width={hotel.sustainabilityScore * 100}
                       />
                     </div>
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -479,7 +537,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
 
         {activeTab === 'rooms' && (
           <div className="grid gap-6">
-            {hotel.rooms.map((room) => (
+            {hotel.rooms.map((room: HotelDetails['rooms'][number]) => (
               <div key={room.id} className="border border-gray-200 rounded-lg p-6">
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="lg:w-1/3">
@@ -499,8 +557,8 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                         <h4 className="text-xl font-semibold mb-2">{room.name}</h4>
                         <p className="text-gray-600 mb-2">{room.description}</p>
                         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                          <span>👥 Up to {room.capacity} guests</span>
-                          <span>🛏️ {room.type}</span>
+                          <span>ðŸ‘¥ Up to {room.capacity} guests</span>
+                          <span>ðŸ›ï¸ {room.type}</span>
                         </div>
                       </div>
                       <div className="text-right">
@@ -514,7 +572,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                     <div className="mb-4">
                       <h5 className="font-medium mb-2">Room Amenities:</h5>
                       <div className="flex flex-wrap gap-2">
-                        {room.amenities.map((amenity, index) => (
+                        {room.amenities.map((amenity: string, index: number) => (
                           <span
                             key={index}
                             className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
@@ -542,13 +600,15 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
         {activeTab === 'amenities' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(
-              hotel.amenities.reduce((acc, amenity) => {
+              hotel.amenities.reduce<
+                Record<string, HotelDetails['amenities'][number][]>
+              >((acc, amenity) => {
                 if (!acc[amenity.category]) {
-acc[amenity.category] = [];
-}
+                  acc[amenity.category] = [];
+                }
                 acc[amenity.category].push(amenity);
                 return acc;
-              }, {} as Record<string, HotelAmenity[]>),
+              }, {}),
             ).map(([category, amenities]) => (
               <div key={category} className="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 className="text-lg font-semibold mb-4 capitalize">
@@ -572,7 +632,11 @@ acc[amenity.category] = [];
             <div>
               <h4 className="text-lg font-semibold mb-4">Nearby Attractions</h4>
               <div className="space-y-3">
-                {hotel.nearbyAttractions.map((attraction, index) => (
+                {hotel.nearbyAttractions.map(
+                  (
+                    attraction: HotelDetails['nearbyAttractions'][number],
+                    index: number,
+                  ) => (
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium text-gray-900">{attraction.name}</div>
@@ -582,7 +646,8 @@ acc[amenity.category] = [];
                       {attraction.distance}
                     </div>
                   </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
 
@@ -592,7 +657,8 @@ acc[amenity.category] = [];
                 <span className="text-gray-500">Interactive Map Coming Soon</span>
               </div>
               <div className="mt-4 text-sm text-gray-600">
-                <strong>Address:</strong> {hotel.address}, {hotel.city}, {hotel.country}
+                <strong>Address:</strong> {hotel.location.address}, {hotel.location.city},{' '}
+                {hotel.location.country}
               </div>
             </div>
           </div>

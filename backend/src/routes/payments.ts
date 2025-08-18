@@ -1,23 +1,25 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { getDb } from '../database';
-import { payments, refunds, bookings, paymentMethods } from '../database/schema';
-import { eq, and, desc, gte, lte, count, sql } from 'drizzle-orm';
+import { payments, refunds, bookings } from '../database/schema';
+import { eq, and, desc, gte, lte } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { authenticate } from '../middleware/authenticate';
 import { validateRequest } from '../middleware/validateRequest';
 
 export const paymentsRouter = Router();
 
-// Load Square payment service as primary payment provider
+// Square payment service (primary provider)
 import { squarePaymentService } from '../services/squarePaymentService';
+import { paypalService } from '../services/paypalService';
+import { pdfService } from '../services/pdfService.js';
 
-// Validation schemas for Square
+// Validation schemas (Square) 
 const createPaymentSchema = z.object({
-  bookingId: z.string().uuid(),
-  sourceId: z.string(), // Square payment token from frontend
+  sourceId: z.string(),
   amount: z.number().positive(),
-  currency: z.string().length(3).default('USD'),
+  bookingId: z.string().uuid(),
+  provider: z.string().optional().default('square'),
+  currency: z.string().optional().default('USD'),
   metadata: z.record(z.string()).optional(),
   billingAddress: z.object({
     firstName: z.string().optional(),
@@ -38,15 +40,21 @@ const createRefundSchema = z.object({
   bookingId: z.string().uuid(),
 });
 
-const paymentStatsSchema = z.object({
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+// PayPal minimal schemas
+const createPayPalOrderSchema = z.object({
+  bookingId: z.string().uuid(),
+  amount: z.number().positive(),
   currency: z.string().length(3).default('USD'),
 });
+const capturePayPalOrderSchema = z.object({
+  orderId: z.string(),
+});
+
+// Removed Stripe-specific schemas (confirm intent, stats, setup intents)
 
 /**
  * POST /api/payments/create
- * Process a Square payment for a booking
+ * Create & capture a Square payment for a booking
  */
 paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req: Request, res: Response) => {
   try {
@@ -74,15 +82,27 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
       });
     }
 
-    // Check if booking is in a payable state
-    if (!['pending', 'payment_failed'].includes(bookingData.status)) {
+    // Idempotency: if there's already a succeeded payment for this booking, return it
+    const existingSucceeded = await db.select().from(payments)
+      .where(and(eq(payments.bookingId, bookingId), eq(payments.status, 'succeeded')))
+      .limit(1);
+    if (existingSucceeded.length) {
+      return res.json({
+        success: true,
+        paymentId: existingSucceeded[0].transactionId,
+        message: 'Payment already completed for this booking',
+      });
+    }
+
+    // Check if booking is in a payable state now
+    if (!['pending', 'payment_failed', 'reserved'].includes(bookingData.status)) {
       return res.status(400).json({
         error: 'Invalid booking status',
         message: `Cannot make payment for booking with status: ${bookingData.status}`,
       });
     }
 
-    // Process Square payment
+  // Process Square payment
     const result = await squarePaymentService.createPayment({
       sourceId,
       amount,
@@ -99,23 +119,30 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
     });
 
     if (result.success) {
-      // Update booking status to confirmed
-      await db
-        .update(bookings)
-        .set({
-          status: 'confirmed',
-          updatedAt: new Date(),
-        })
-        .where(eq(bookings.id, bookingId));
-
-      res.json({
+      // Only confirm booking if payment succeeded immediately
+      if (result.paymentId) {
+        const newlyCreated = await db.select().from(payments)
+          .where(and(eq(payments.bookingId, bookingId), eq(payments.transactionId, result.paymentId)))
+          .limit(1);
+        const paymentStatus = newlyCreated[0]?.status;
+        if (paymentStatus === 'succeeded') {
+          await db
+            .update(bookings)
+            .set({
+              status: 'confirmed',
+              updatedAt: new Date(),
+            })
+            .where(eq(bookings.id, bookingId));
+        }
+      }
+      return res.json({
         success: true,
         paymentId: result.paymentId,
         receiptUrl: result.receiptUrl,
-        message: 'Payment processed successfully',
+        message: 'Payment processed',
       });
     } else {
-      res.status(400).json({
+  return res.status(400).json({
         success: false,
         error: result.errorMessage || 'Payment processing failed',
       });
@@ -127,7 +154,7 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
       body: req.body,
     });
 
-    res.status(500).json({
+  return res.status(500).json({
       success: false,
       error: 'Payment processing failed',
       message: error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -135,79 +162,35 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
   }
 });
 
+// Removed Stripe-specific confirm/status endpoints
+
 /**
- * POST /api/payments/confirm
- * Confirm a payment intent
+ * POST /api/payments/paypal/order
+ * Create a (simulated) PayPal order
  */
-paymentsRouter.post('/confirm', validateRequest(confirmPaymentSchema), async (req: Request, res: Response) => {
+paymentsRouter.post('/paypal/order', validateRequest(createPayPalOrderSchema), async (req: Request, res: Response) => {
   try {
-    const { paymentIntentId, paymentMethodId } = req.body;
-
-    const paymentIntent = await stripeService.confirmPaymentIntent(paymentIntentId, paymentMethodId);
-
-    res.json({
-      success: true,
-      data: {
-        paymentIntent: {
-          id: paymentIntent.id,
-          status: paymentIntent.status,
-          client_secret: paymentIntent.client_secret,
-        },
-      },
-    });
-
-  } catch (error) {
-    logger.error('Failed to confirm payment', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      paymentIntentId: req.body.paymentIntentId,
-      userId: req.user?.id,
-    });
-
-    res.status(500).json({
-      error: 'Payment confirmation failed',
-      message: error instanceof Error ? error.message : 'An unexpected error occurred',
-    });
+    const { bookingId, amount, currency } = req.body;
+    const userId = req.user?.id;
+    const result = await paypalService.createOrder({ bookingId, amount, currency, userId });
+  return res.json(result);
+  } catch (e) {
+  return res.status(500).json({ success: false, error: 'Failed to create PayPal order' });
   }
 });
 
 /**
- * GET /api/payments/status/:paymentIntentId
- * Get payment status
+ * POST /api/payments/paypal/capture
+ * Capture a (simulated) PayPal order
  */
-paymentsRouter.get('/status/:paymentIntentId', async (req: Request, res: Response) => {
+paymentsRouter.post('/paypal/capture', validateRequest(capturePayPalOrderSchema), async (req: Request, res: Response) => {
   try {
-    const { paymentIntentId } = req.params;
-
-    const paymentIntent = await stripeService.retrievePaymentIntent(paymentIntentId);
-    
-    // Get payment record from database
-    const payment = await db.select()
-      .from(payments)
-      .where(eq(payments.transactionId, paymentIntentId))
-      .limit(1);
-
-    res.json({
-      success: true,
-      data: {
-        status: paymentIntent.status,
-        amount: paymentIntent.amount / 100,
-        currency: paymentIntent.currency,
-        created: paymentIntent.created,
-        payment: payment.length > 0 ? payment[0] : null,
-      },
-    });
-
-  } catch (error) {
-    logger.error('Failed to get payment status', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      paymentIntentId: req.params.paymentIntentId,
-      userId: req.user?.id,
-    });
-
-    res.status(500).json({
-      error: 'Failed to retrieve payment status',
-      message: error instanceof Error ? error.message : 'An unexpected error occurred',
-    });
+    const { orderId } = req.body;
+    const result = await paypalService.captureOrder(orderId);
+  if (!result.success) { return res.status(400).json(result); }
+  return res.json(result);
+  } catch (e) {
+  return res.status(500).json({ success: false, error: 'Failed to capture PayPal order' });
   }
 });
 
@@ -221,7 +204,8 @@ paymentsRouter.get('/booking/:bookingId', async (req: Request, res: Response) =>
     const userId = req.user?.id;
 
     // Verify booking access
-    const booking = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+  const db = await getDb();
+  const booking = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
     
     if (!booking.length) {
       return res.status(404).json({
@@ -252,17 +236,17 @@ paymentsRouter.get('/booking/:bookingId', async (req: Request, res: Response) =>
       .where(eq(refunds.bookingId, bookingId))
       .orderBy(desc(refunds.createdAt));
 
-    res.json({
+  return res.json({
       success: true,
       data: {
         payments: bookingPayments,
         refunds: bookingRefunds,
         summary: {
           totalPaid: bookingPayments
-            .filter(p => p.status === 'completed')
+            .filter(p => p.status === 'succeeded')
             .reduce((sum, p) => sum + parseFloat(p.amount), 0),
           totalRefunded: bookingRefunds
-            .filter(r => r.status === 'completed')
+            .filter(r => r.status === 'succeeded')
             .reduce((sum, r) => sum + parseFloat(r.amount), 0),
           pendingPayments: bookingPayments.filter(p => p.status === 'pending').length,
           pendingRefunds: bookingRefunds.filter(r => r.status === 'pending').length,
@@ -277,7 +261,7 @@ paymentsRouter.get('/booking/:bookingId', async (req: Request, res: Response) =>
       userId: req.user?.id,
     });
 
-    res.status(500).json({
+  return res.status(500).json({
       error: 'Failed to retrieve booking payments',
       message: error instanceof Error ? error.message : 'An unexpected error occurred',
     });
@@ -286,90 +270,76 @@ paymentsRouter.get('/booking/:bookingId', async (req: Request, res: Response) =>
 
 /**
  * POST /api/payments/refund
- * Create a refund for a payment
+ * Create a Square refund for a payment
  */
 paymentsRouter.post('/refund', validateRequest(createRefundSchema), async (req: Request, res: Response) => {
   try {
-    const { paymentIntentId, amount, reason, metadata = {} } = req.body;
-    const userId = req.user?.id;
+    const { paymentId, amount, reason, bookingId } = req.body;
 
-    // Get payment record to find booking
-    const payment = await db.select()
-      .from(payments)
-      .where(eq(payments.transactionId, paymentIntentId))
+    const db = await getDb();
+
+    // Verify payment belongs to booking
+    const paymentRecord = await db.select().from(payments)
+      .where(eq(payments.transactionId, paymentId))
       .limit(1);
 
-    if (!payment.length) {
+    if (!paymentRecord.length) {
       return res.status(404).json({
         error: 'Payment not found',
         message: 'The specified payment does not exist',
       });
     }
 
-    const paymentData = payment[0];
+    if (paymentRecord[0].bookingId !== bookingId) {
+      return res.status(400).json({
+        error: 'Booking mismatch',
+        message: 'Payment does not belong to provided booking',
+      });
+    }
 
-    // Verify booking access
-    const booking = await db.select()
+    // Check if user has permission to create refunds for this payment
+    // Either the user owns the booking or is an admin
+    const booking = await db
+      .select()
       .from(bookings)
-      .where(eq(bookings.id, paymentData.bookingId))
+      .where(eq(bookings.id, bookingId))
       .limit(1);
 
-    if (!booking.length) {
+    if (booking.length === 0) {
       return res.status(404).json({
         error: 'Booking not found',
-        message: 'The associated booking does not exist',
+        message: 'The specified booking does not exist',
       });
     }
 
-    const bookingData = booking[0];
+    const userOwnsBooking = booking[0].userId === req.user?.id;
+    const isAdmin = req.user?.role === 'admin';
 
-    // Check user access (users can only refund their own bookings, admins can refund any)
-    if (userId && bookingData.userId && bookingData.userId !== userId && req.user?.role !== 'admin') {
+    if (!userOwnsBooking && !isAdmin) {
       return res.status(403).json({
         error: 'Access denied',
-        message: 'You do not have permission to refund this payment',
+        message: 'You can only request refunds for your own bookings',
       });
     }
 
-    // Check if refund is allowed based on cancellation policy
-    if (bookingData.cancellationDeadline && new Date() > new Date(bookingData.cancellationDeadline)) {
-      return res.status(400).json({
-        error: 'Refund not allowed',
-        message: 'Cancellation deadline has passed',
-      });
-    }
-
-    // Create refund
-    const refund = await stripeService.createRefund({
-      paymentIntentId,
+    const result = await squarePaymentService.createRefund({
+      paymentId,
       amount,
       reason,
-      bookingId: paymentData.bookingId,
-      processedBy: userId,
-      metadata,
+      bookingId,
     });
 
-    res.json({
-      success: true,
-      data: {
-        refund: {
-          id: refund.id,
-          amount: refund.amount / 100,
-          currency: refund.currency,
-          status: refund.status,
-          reason: refund.reason,
-        },
-      },
-    });
-
+    if (result.success) {
+      return res.json({ success: true, refundId: result.refundId });
+    }
+    return res.status(400).json({ success: false, error: result.errorMessage });
   } catch (error) {
-    logger.error('Failed to create refund', {
+    logger.error('Failed to create Square refund', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      paymentIntentId: req.body.paymentIntentId,
+      paymentId: req.body.paymentId,
       userId: req.user?.id,
     });
-
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Refund creation failed',
       message: error instanceof Error ? error.message : 'An unexpected error occurred',
     });
@@ -404,7 +374,8 @@ paymentsRouter.get('/history', async (req: Request, res: Response) => {
       conditions = and(conditions, lte(payments.createdAt, new Date(endDate as string)))!;
     }
 
-    const userPayments = await db.select()
+  const db = await getDb();
+  const userPayments = await db.select()
       .from(payments)
       .where(conditions)
       .orderBy(desc(payments.createdAt))
@@ -412,7 +383,7 @@ paymentsRouter.get('/history', async (req: Request, res: Response) => {
       .offset(offset);
 
     // Get total count for pagination
-    const totalCount = await db.select({ count: payments.id })
+  const totalCount = await db.select({ count: payments.id })
       .from(payments)
       .where(conditions);
 
@@ -443,134 +414,116 @@ paymentsRouter.get('/history', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/payments/webhook
- * Handle Stripe webhooks (public endpoint, no authentication required)
- */
-paymentsRouter.post('/webhook', async (req: Request, res: Response) => {
+// Get PDF receipt for a payment
+paymentsRouter.get('/:paymentId/receipt', async (req: Request, res: Response) => {
   try {
-    const signature = req.headers['stripe-signature'] as string;
-    
-    if (!signature) {
-      return res.status(400).json({
-        error: 'Missing stripe-signature header',
+    const { paymentId } = req.params;
+    const userId = req.user?.id;
+
+    // Get payment details with booking information
+    const payment = await db
+      .select({
+        payment: payments,
+        booking: bookings,
+      })
+      .from(payments)
+      .leftJoin(bookings, eq(payments.bookingId, bookings.id))
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+
+    if (payment.length === 0) {
+      return res.status(404).json({
+        error: 'Payment not found',
+        message: 'The specified payment does not exist',
       });
     }
 
-    await paymentService.handleWebhook(signature, req.body);
+    const { payment: paymentRecord, booking } = payment[0];
 
-    res.json({ received: true });
+    // Check if user owns this payment or is admin
+    const userOwnsPayment = booking?.userId === userId;
+    const isAdmin = req.user?.role === 'admin';
 
-  } catch (error) {
-    logger.error('Webhook processing failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      signature: req.headers['stripe-signature'],
+    if (!userOwnsPayment && !isAdmin) {
+      return res.status(403).json({
+        error: 'Access denied',
+        message: 'You can only access receipts for your own payments',
+      });
+    }
+
+    // Generate PDF receipt
+    const pdfBuffer = await pdfService.generateBookingReceipt({
+      bookingId: booking?.confirmationNumber || paymentRecord.bookingId,
+      guestName: booking?.guestName || 'Guest',
+      guestEmail: booking?.guestEmail || '',
+      hotelName: booking?.hotelName || '',
+      hotelAddress: booking?.hotelAddress || '',
+      roomType: booking?.roomType || '',
+      checkIn: booking?.checkIn?.toISOString().split('T')[0] || '',
+      checkOut: booking?.checkOut?.toISOString().split('T')[0] || '',
+      nights: booking?.nights || 1,
+      pricePerNight: parseFloat(paymentRecord.amount) || 0,
+      taxes: 0, // Calculate from booking if available
+      totalAmount: parseFloat(paymentRecord.amount),
+      paymentMethod: paymentRecord.provider,
+      transactionId: paymentRecord.transactionId,
+      bookingDate: paymentRecord.createdAt.toISOString().split('T')[0],
     });
 
-    res.status(400).json({
-      error: 'Webhook processing failed',
-      message: error instanceof Error ? error.message : 'Invalid webhook signature',
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="receipt-${booking?.confirmationNumber || paymentId}.pdf"`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    logger.error('Failed to generate PDF receipt:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to generate receipt',
     });
   }
 });
+
+// Stripe webhook removed; Square webhook is defined at top-level router (index.ts)
+
+// Removed admin stats & setup-intent endpoints (Stripe-specific). Add later for Square if needed.
 
 /**
  * GET /api/payments/stats
- * Get payment statistics (admin only)
+ * Basic revenue stats for dashboard (authenticated user scope if not admin)
  */
-paymentsRouter.get('/stats', authenticate, validateRequest(paymentStatsSchema, 'query'), async (req: Request, res: Response) => {
-  try {
-    // Check admin access
-    if (req.user?.role !== 'admin') {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'Admin access required',
-      });
-    }
-
-    const { startDate, endDate, currency } = req.query;
-
-    const stats = await stripeService.getPaymentStats({
-      startDate: startDate ? new Date(startDate as string) : undefined,
-      endDate: endDate ? new Date(endDate as string) : undefined,
-      currency: currency as string,
-    });
-
-    res.json({
-      success: true,
-      data: stats,
-    });
-
-  } catch (error) {
-    logger.error('Failed to get payment stats', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id,
-      query: req.query,
-    });
-
-    res.status(500).json({
-      error: 'Failed to retrieve payment statistics',
-      message: error instanceof Error ? error.message : 'An unexpected error occurred',
-    });
-  }
-});
-
-/**
- * POST /api/payments/setup-intent
- * Create a setup intent for saving payment methods
- */
-paymentsRouter.post('/setup-intent', async (req: Request, res: Response) => {
+paymentsRouter.get('/stats', async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { metadata = {} } = req.body;
+    const db = await getDb();
 
-    // Create or get Stripe customer
-    let stripeCustomerId = req.user?.metadata?.stripeCustomerId;
-    
-    if (!stripeCustomerId) {
-      const customer = await stripeService.createCustomer({
-        email: req.user!.email,
-        name: `${req.user!.firstName} ${req.user!.lastName}`,
-        phone: req.user!.phone || undefined,
-        metadata: {
-          userId: userId!,
-        },
-      });
-      
-      stripeCustomerId = customer.id;
-      
-      // TODO: Update user record with Stripe customer ID
-    }
+    const now = new Date();
+    const last30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const setupIntent = await stripeService.createSetupIntent(stripeCustomerId, {
-      userId: userId!,
-      ...metadata,
-    });
+    // Total succeeded revenue
+    const allPayments = await db.select().from(payments).where(eq(payments.status, 'succeeded'));
+    const userFiltered = userId ? allPayments.filter(p => p.userId === userId) : allPayments;
+    const totalRevenue = userFiltered.reduce((s, p) => s + parseFloat(p.amount), 0);
+
+    const last30Revenue = userFiltered
+      .filter(p => p.createdAt && p.createdAt >= last30)
+      .reduce((s, p) => s + parseFloat(p.amount), 0);
+
+    const orderCount = userFiltered.length;
+    const avgOrderValue = orderCount ? totalRevenue / orderCount : 0;
 
     res.json({
       success: true,
       data: {
-        clientSecret: setupIntent.client_secret,
-        setupIntentId: setupIntent.id,
+        totalRevenue,
+        last30Revenue,
+        avgOrderValue,
+        orderCount,
       },
     });
-
   } catch (error) {
-    logger.error('Failed to create setup intent', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id,
-    });
-
-    res.status(500).json({
-      error: 'Setup intent creation failed',
-      message: error instanceof Error ? error.message : 'An unexpected error occurred',
-    });
+    logger.error('Failed to get payment stats', { error: error instanceof Error ? error.message : 'Unknown' });
+    res.status(500).json({ success: false, error: 'Failed to retrieve stats' });
   }
 });
 
-// Remove authentication from webhook endpoint
-paymentsRouter.use('/webhook', (req, res, next) => {
-  // Skip authentication for webhook endpoint
-  req.user = undefined;
-  next();
-});
+// Cleanup of Stripe setup-intent logic complete.

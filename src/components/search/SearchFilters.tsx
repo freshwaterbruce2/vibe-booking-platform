@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Filter, X, Star, Sliders } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../ui/Button';
 import { useSearchStore } from '@/store/searchStore';
 import type { SearchFilters as FilterOptions } from '@/types/hotel';
 import { cn } from '@/utils/cn';

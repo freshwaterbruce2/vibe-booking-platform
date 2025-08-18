@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { PaymentConfirmation } from '../components/payment/PaymentConfirmation';
-import { BookingService } from '../services/booking';
-import { PaymentService } from '../services/payment';
+import { BookingService } from '@/domain/booking';
+import { PaymentService } from '@/domain/payments';
 import { toast } from 'sonner';
-import { Loader2, AlertTriangle, Home } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Mail, Phone } from 'lucide-react';
 
 interface BookingDetails {
   id: string;
@@ -50,14 +50,38 @@ export const BookingConfirmationPage: React.FC = () => {
     loadBookingConfirmation();
   }, [bookingId]);
 
-  const loadBookingConfirmation = async () => {
+  interface ApiBooking {
+    id: string;
+    hotelName: string;
+    checkIn: string | Date;
+    checkOut: string | Date;
+    totalAmount: number;
+    status: string;
+    confirmationNumber?: string;
+    roomType?: string;
+    guests?: number;
+    nights?: number;
+    currency?: string;
+    guestFirstName?: string;
+    guestLastName?: string;
+    guestEmail?: string;
+    guestPhone?: string;
+    specialRequests?: string;
+    paymentStatus?: string;
+  }
+
+  const loadBookingConfirmation = async (): Promise<void> => {
     try {
       setIsLoading(true);
       setError('');
 
       // Load booking details
-      const bookingData = await BookingService.getBookingById(bookingId!);
-      
+  const id = bookingId || '';
+      const bookingData = await BookingService.getBooking(id) as ApiBooking | null;
+      if (!bookingData) {
+        throw new Error('Booking not found');
+      }
+
       if (!bookingData) {
         throw new Error('Booking not found');
       }
@@ -68,9 +92,23 @@ export const BookingConfirmationPage: React.FC = () => {
       }
 
       setBooking({
-        ...bookingData,
+        id: bookingData.id,
+        confirmationNumber: bookingData.confirmationNumber || bookingData.id,
+        hotelName: bookingData.hotelName,
+        roomType: bookingData.roomType || 'Standard',
         checkIn: new Date(bookingData.checkIn),
         checkOut: new Date(bookingData.checkOut),
+        guests: bookingData.guests || 1,
+        nights: bookingData.nights || 1,
+        totalAmount: bookingData.totalAmount,
+        currency: bookingData.currency || 'USD',
+        guestFirstName: bookingData.guestFirstName || 'Guest',
+        guestLastName: bookingData.guestLastName || 'User',
+        guestEmail: bookingData.guestEmail || '',
+        guestPhone: bookingData.guestPhone || '',
+        specialRequests: bookingData.specialRequests,
+        status: bookingData.status,
+        paymentStatus: bookingData.paymentStatus || 'pending',
       });
 
       // Try to get payment intent details
@@ -79,22 +117,24 @@ export const BookingConfirmationPage: React.FC = () => {
       } else {
         // Fallback: get payment details from booking payments
         try {
-          const bookingPayments = await PaymentService.getBookingPayments(bookingId!);
-          const successfulPayment = bookingPayments.payments.find(p => p.status === 'completed');
-          
+          const bookingPayments = await PaymentService.getBookingPayments(id);
+          const successfulPayment = bookingPayments.payments.find((p) => p.status === 'completed');
+
           if (successfulPayment && successfulPayment.transactionId) {
-            const paymentStatus = await PaymentService.getPaymentStatus(successfulPayment.transactionId);
-            // Create a mock payment intent object for display
+            const amountNumber = typeof successfulPayment.amount === 'string'
+              ? parseFloat(successfulPayment.amount)
+              : (successfulPayment.amount ?? 0);
+            const createdAt = successfulPayment.createdAt || new Date().toISOString();
             setPaymentIntent({
               id: successfulPayment.transactionId,
               status: 'succeeded',
-              amount: parseFloat(successfulPayment.amount) * 100, // Convert to cents
-              currency: successfulPayment.currency.toLowerCase(),
-              created: Math.floor(new Date(successfulPayment.createdAt).getTime() / 1000),
+              amount: Math.round(amountNumber * 100),
+              currency: (successfulPayment.currency || 'usd').toLowerCase(),
+              created: Math.floor(new Date(createdAt).getTime() / 1000),
               payment_method: {
                 card: {
-                  brand: successfulPayment.cardBrand || 'card',
-                  last4: successfulPayment.cardLast4 || '****',
+                  brand: 'card',
+                  last4: '****',
                 },
               },
             });
@@ -109,7 +149,7 @@ export const BookingConfirmationPage: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load booking confirmation';
       setError(errorMessage);
       toast.error(errorMessage);
-      
+
       // Redirect to home after error
       setTimeout(() => {
         navigate('/');
@@ -152,7 +192,7 @@ export const BookingConfirmationPage: React.FC = () => {
             Unable to Load Confirmation
           </h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          
+
           <div className="space-y-3">
             <p className="text-sm text-gray-500">
               Redirecting to home page in a few seconds...
@@ -172,7 +212,7 @@ export const BookingConfirmationPage: React.FC = () => {
 
   // If no payment intent available, create a minimal one for display
   const displayPaymentIntent = paymentIntent || {
-    id: 'confirmation_' + booking.confirmationNumber,
+    id: `confirmation_${booking.confirmationNumber}`,
     status: 'succeeded',
     amount: booking.totalAmount * 100,
     currency: booking.currency.toLowerCase(),
@@ -225,7 +265,7 @@ export const BookingConfirmationPage: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             What's Next?
           </h3>
-          
+
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -236,17 +276,18 @@ export const BookingConfirmationPage: React.FC = () => {
                 We've sent a detailed confirmation to {booking.guestEmail}
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-green-600 font-bold text-lg">2</span>
               </div>
               <h4 className="font-medium text-gray-900 mb-2">Prepare for Check-in</h4>
               <p className="text-sm text-gray-600">
-                Bring a valid ID and this confirmation number: <strong>{booking.confirmationNumber}</strong>
+                Bring a valid ID and this confirmation number:
+                <strong>{booking.confirmationNumber}</strong>
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-purple-600 font-bold text-lg">3</span>

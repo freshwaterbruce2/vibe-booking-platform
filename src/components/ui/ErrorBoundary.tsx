@@ -1,6 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from './Button';
 import { Card } from '@/components/ui/Card';
 
 interface ErrorBoundaryState {
@@ -21,10 +21,10 @@ interface ErrorFallbackProps {
   errorInfo?: React.ErrorInfo;
 }
 
-const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({ 
-  error, 
-  resetError, 
-  errorInfo 
+const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
+  error,
+  resetError,
+  errorInfo
 }) => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -162,7 +162,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render() {
     if (this.state.hasError && this.state.error) {
       const FallbackComponent = this.props.fallback || DefaultErrorFallback;
-      
+
       return (
         <FallbackComponent
           error={this.state.error}
@@ -210,7 +210,7 @@ export const withErrorBoundary = <P extends object>(
   );
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 };
 

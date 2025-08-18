@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { validateRequest } from '../middleware/validateRequest';
 import { logger } from '../utils/logger';
 import { getDb } from '../database';
-import { reviews, bookings, users, NewReview } from '../database/schema';
+import { reviews, bookings, users, reviewVotes, NewReview } from '../database/schema';
 import { eq, and, desc, avg, count, gte, lte } from 'drizzle-orm';
 
 export const reviewsRouter = Router();
@@ -551,8 +551,45 @@ reviewsRouter.post('/:reviewId/helpful', async (req, res) => {
       .where(eq(reviews.id, reviewId))
       .returning();
 
-    // TODO: Track user votes to prevent multiple votes from same user
-    // This would require a separate table: review_votes
+    // Check if user has already voted on this review
+    const existingVote = await db
+      .select()
+      .from(reviewVotes)
+      .where(
+        and(
+          eq(reviewVotes.reviewId, reviewId),
+          eq(reviewVotes.userId, userId)
+        )
+      )
+      .limit(1);
+
+    // If user already voted, update or return error based on business logic
+    if (existingVote.length > 0) {
+      if (existingVote[0].voteType === 'helpful') {
+        return res.status(400).json({
+          error: 'Already voted',
+          message: 'You have already marked this review as helpful',
+        });
+      } else {
+        // Update vote from 'not_helpful' to 'helpful'
+        await db
+          .update(reviewVotes)
+          .set({ voteType: 'helpful' })
+          .where(
+            and(
+              eq(reviewVotes.reviewId, reviewId),
+              eq(reviewVotes.userId, userId)
+            )
+          );
+      }
+    } else {
+      // Create new vote
+      await db.insert(reviewVotes).values({
+        reviewId,
+        userId,
+        voteType: 'helpful',
+      });
+    }
 
     logger.info('Review marked as helpful', {
       reviewId,

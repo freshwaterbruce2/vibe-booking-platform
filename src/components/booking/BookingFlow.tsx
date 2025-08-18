@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Check, AlertCircle, CreditCard, User, Calendar, ShieldCheck, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+import { Input } from '../ui/Button';
 import { useBookingStore } from '@/store/bookingStore';
 import { useSearchStore } from '@/store/searchStore';
 import { useHotelStore } from '@/store/hotelStore';
@@ -42,13 +42,13 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
     setLoading,
     clearBooking,
   } = useBookingStore();
-  
+
   const { selectedDateRange, guestCount } = useSearchStore();
   const { selectedHotel } = useHotelStore();
-  
+
   const [cardNumberFormatted, setCardNumberFormatted] = useState('');
   const [expiryFormatted, setExpiryFormatted] = useState('');
-  
+
   useEffect(() => {
     if (propSelectedRoom && !selectedRoom) {
       setSelectedRoom(propSelectedRoom);
@@ -61,14 +61,14 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
     { id: 'payment', title: 'Payment', description: 'Payment information', icon: CreditCard },
     { id: 'confirmation', title: 'Confirmation', description: 'Review and confirm booking', icon: ShieldCheck },
   ];
-  
+
   const formatPrice = (price: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
     }).format(price);
   };
-  
+
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
@@ -83,18 +83,18 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
       return v;
     }
   };
-  
+
   const formatExpiry = (value: string) => {
     return value
       .replace(/\D/g, '')
       .replace(/(\d{2})(\d)/, '$1/$2')
       .substr(0, 5);
   };
-  
+
   const totalNights = selectedDateRange.checkIn && selectedDateRange.checkOut
     ? Math.ceil((new Date(selectedDateRange.checkOut).getTime() - new Date(selectedDateRange.checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 1;
-  
+
   const totalAmount = selectedRoom ? selectedRoom.price * totalNights : 0;
 
   const handleCardNumberChange = (value: string) => {
@@ -102,19 +102,19 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
     setCardNumberFormatted(formatted);
     setPaymentInfo({ cardNumber: formatted.replace(/\s/g, '') });
   };
-  
+
   const handleExpiryChange = (value: string) => {
     const formatted = formatExpiry(value);
     setExpiryFormatted(formatted);
     setPaymentInfo({ expiryDate: formatted });
   };
-  
+
   const handleNextStep = () => {
     if (validateCurrentStep()) {
       nextStep();
     }
   };
-  
+
   const handlePreviousStep = () => {
     previousStep();
   };
@@ -129,9 +129,9 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
     try {
       // Simulate API call to create booking
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      
+
       const bookingId = `BK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       onBookingComplete && onBookingComplete(bookingId);
     } catch (error) {
       console.error('Booking failed:', error);
@@ -142,7 +142,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
 
   const renderStepIndicator = () => {
     const currentIndex = steps.findIndex((s) => s.id === currentStep);
-    
+
     return (
       <div className="flex items-center justify-between mb-8">
         {steps.map((step, index) => {
@@ -154,10 +154,10 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
             <div key={step.id} className="flex items-center">
               <div className={cn(
                 'flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300',
-                isActive 
-                  ? 'border-primary-600 bg-primary-600 text-white shadow-lg scale-110' 
-                  : isCompleted 
-                    ? 'border-green-600 bg-green-600 text-white' 
+                isActive
+                  ? 'border-primary-600 bg-primary-600 text-white shadow-lg scale-110'
+                  : isCompleted
+                    ? 'border-green-600 bg-green-600 text-white'
                     : 'border-gray-300 bg-white text-gray-400'
               )}>
                 {isCompleted ? (
@@ -193,7 +193,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
   const renderRoomSelectionStep = () => (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Room Selection</h3>
-      
+
       {selectedRoom ? (
         <Card className="p-6">
           <div className="flex flex-col lg:flex-row gap-6">
@@ -207,7 +207,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
                 }}
               />
             </div>
-            
+
             <div className="lg:w-2/3">
               <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 {selectedRoom.name}
@@ -215,12 +215,12 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 {selectedRoom.description}
               </p>
-              
+
               <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-                <span>👥 Up to {selectedRoom.capacity} guests</span>
-                <span>🛏️ {selectedRoom.type}</span>
+                <span>ðŸ‘¥ Up to {selectedRoom.capacity} guests</span>
+                <span>ðŸ›ï¸ {selectedRoom.type}</span>
               </div>
-              
+
               <div className="flex flex-wrap gap-2 mb-4">
                 {selectedRoom.amenities.map((amenity, index) => (
                   <span
@@ -231,7 +231,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
                   </span>
                 ))}
               </div>
-              
+
               <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div>
                   <div className="text-2xl font-bold text-primary-600">
@@ -239,7 +239,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">per night</div>
                 </div>
-                
+
                 <div className="text-right">
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
                     Total: {formatPrice(totalAmount, selectedRoom.currency)}
@@ -262,14 +262,14 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
       )}
     </div>
   );
-  
+
   const renderGuestDetailsStep = () => (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Guest Information</h3>
 
       <Card className="p-6">
         <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Main Guest</h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -345,7 +345,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
             )}
           </div>
         </div>
-        
+
         <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Special Requests (Optional)
@@ -448,11 +448,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
               )}
             </div>
           </div>
-          
+
           {/* Billing Address */}
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Billing Address</h4>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -460,34 +460,34 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
                 </label>
                 <Input
                   value={paymentInfo.billingAddress.street}
-                  onChange={(e) => setPaymentInfo({ 
-                    billingAddress: { ...paymentInfo.billingAddress, street: e.target.value } 
+                  onChange={(e) => setPaymentInfo({
+                    billingAddress: { ...paymentInfo.billingAddress, street: e.target.value }
                   })}
                   placeholder="123 Main Street"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   City
                 </label>
                 <Input
                   value={paymentInfo.billingAddress.city}
-                  onChange={(e) => setPaymentInfo({ 
-                    billingAddress: { ...paymentInfo.billingAddress, city: e.target.value } 
+                  onChange={(e) => setPaymentInfo({
+                    billingAddress: { ...paymentInfo.billingAddress, city: e.target.value }
                   })}
                   placeholder="New York"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   ZIP Code
                 </label>
                 <Input
                   value={paymentInfo.billingAddress.zipCode}
-                  onChange={(e) => setPaymentInfo({ 
-                    billingAddress: { ...paymentInfo.billingAddress, zipCode: e.target.value } 
+                  onChange={(e) => setPaymentInfo({
+                    billingAddress: { ...paymentInfo.billingAddress, zipCode: e.target.value }
                   })}
                   placeholder="10001"
                 />
@@ -496,7 +496,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           </div>
         </div>
       </Card>
-      
+
       {/* Payment Summary */}
       {selectedRoom && (
         <Card className="p-6 bg-primary-50 dark:bg-primary-900/20">
@@ -557,7 +557,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
               </p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300">Check-in:</span>
@@ -621,7 +621,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
               </div>
             </div>
           </div>
-          
+
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <CreditCard className="w-4 h-4" />
@@ -638,7 +638,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           <div className="text-sm text-blue-800 dark:text-blue-300">
             <p className="font-medium mb-1">Terms & Conditions</p>
             <p>
-              By completing this booking, you agree to our terms and conditions and privacy policy. 
+              By completing this booking, you agree to our terms and conditions and privacy policy.
               Your booking is protected by our secure payment system.
             </p>
           </div>

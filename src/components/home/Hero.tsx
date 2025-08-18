@@ -1,6 +1,6 @@
-
+﻿
 import { NaturalLanguageInput } from '@/components/search/NaturalLanguageInput';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../ui/Button';
 import { Play, Star, Users, MapPin } from 'lucide-react';
 
 export function Hero() {

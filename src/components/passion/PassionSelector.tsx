@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Heart, Star, MapPin, Utensils, Waves, TreePine, Users, Briefcase, Sparkles, Check } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useSearchStore } from '@/store/searchStore';
 import { cn } from '@/utils/cn';
@@ -136,7 +136,7 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
           </h2>
         </div>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Select up to {maxSelections} travel styles that match your interests. 
+          Select up to {maxSelections} travel styles that match your interests.
           We'll find hotels that perfectly align with your passions.
         </p>
       </div>
@@ -171,10 +171,10 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
               key={passion.id}
               className={cn(
                 'relative overflow-hidden cursor-pointer transition-all duration-300 group',
-                isSelected 
-                  ? 'ring-2 ring-primary-500 shadow-lg scale-105' 
-                  : canSelect 
-                    ? 'hover:shadow-lg hover:scale-105' 
+                isSelected
+                  ? 'ring-2 ring-primary-500 shadow-lg scale-105'
+                  : canSelect
+                    ? 'hover:shadow-lg hover:scale-105'
                     : 'opacity-50 cursor-not-allowed',
                 !canSelect && 'pointer-events-none'
               )}
@@ -201,8 +201,8 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
                 {/* Icon */}
                 <div className={cn(
                   'w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-all duration-300',
-                  isSelected || isHovered 
-                    ? `bg-gradient-to-br ${passion.gradient} text-white` 
+                  isSelected || isHovered
+                    ? `bg-gradient-to-br ${passion.gradient} text-white`
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                 )}>
                   <IconComponent className="w-6 h-6" />
@@ -212,8 +212,8 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
                 <div className="flex-1">
                   <h3 className={cn(
                     'font-semibold mb-2 transition-colors',
-                    isSelected 
-                      ? 'text-primary-700 dark:text-primary-400' 
+                    isSelected
+                      ? 'text-primary-700 dark:text-primary-400'
                       : 'text-gray-900 dark:text-white'
                   )}>
                     {passion.name}

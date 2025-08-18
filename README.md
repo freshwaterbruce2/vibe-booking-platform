@@ -12,6 +12,8 @@ A modern hotel booking platform built with React, TypeScript, and AI-powered sea
 - 📱 **PWA Ready**: Progressive Web App capabilities
 - 🌙 **Dark Mode**: System-aware theme switching
 - ♿ **Accessible**: WCAG 2.1 AA compliant
+- 💳 **Square Payments**: Primary provider with idempotent booking payments
+- 🅿️ **PayPal (Simulated)**: Optional order/capture flow scaffold
 
 ## Tech Stack
 
@@ -58,7 +60,7 @@ npm run typecheck    # Run TypeScript checks
 
 ## Project Structure
 
-```
+```text
 src/
 ├── components/          # Reusable UI components
 │   ├── ui/             # Base UI components (Button, Input, Card)
@@ -79,10 +81,19 @@ src/
 
 Create a `.env` file in the root directory:
 
-```env
+```bash
 VITE_API_URL=http://localhost:3001
 VITE_OPENAI_API_KEY=your_openai_key
 VITE_LITEAPI_KEY=your_liteapi_key
+SQUARE_ACCESS_TOKEN=your_square_access_token
+SQUARE_APPLICATION_ID=your_square_app_id
+SQUARE_ENVIRONMENT=sandbox
+SQUARE_LOCATION_ID=your_square_location_id
+SQUARE_WEBHOOK_SIGNATURE_KEY=optional_signature_key
+# Optional simulated PayPal (no real API calls yet)
+PAYPAL_CLIENT_ID=placeholder
+PAYPAL_CLIENT_SECRET=placeholder
+PAYPAL_ENVIRONMENT=sandbox
 ```
 
 ## API Integration
@@ -93,6 +104,25 @@ The frontend connects to the modern TypeScript backend in `backend/` which provi
 - OpenAI natural language processing
 - Booking management
 - Payment processing
+
+### Payment Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/payments/create | Create & capture Square payment (sourceId nonce) |
+| POST | /api/payments/paypal/order | Create simulated PayPal order (records pending payment) |
+| POST | /api/payments/paypal/capture | Capture simulated PayPal order (marks succeeded) |
+| GET | /api/payments/booking/:id | List payments & refunds for booking |
+| POST | /api/payments/refund | Create Square refund |
+| GET | /api/payments/history | Paginated user payment history |
+| GET | /api/payments/stats | Basic revenue stats |
+
+Notes:
+
+- Idempotent booking payments: second succeeded attempt returns existing record.
+- Booking auto-confirm only when payment status transitions to succeeded.
+- Square webhook endpoint at `/api/payments/webhook/square` expects raw body (configure in Square dashboard).
+- Legacy Stripe code replaced with inert stubs and safe to remove later.
 
 ## Passion-Based Matching
 

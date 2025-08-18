@@ -26,9 +26,11 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@vibe/contracts": ["../packages/contracts/src"],
+      "@vibe/contracts/*": ["../packages/contracts/src/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "include": ["src/**/*.ts", "src/__tests__/**/*.ts"],
+  "exclude": ["node_modules"]
 }

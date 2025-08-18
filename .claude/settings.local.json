@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx eslint:*)",
+      "Bash(docker:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(git rm:*)",
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run:*)",
+      "Bash(chmod:*)",
+      "Bash(curl:*)",
+      "Bash(LOCAL_SQLITE=true npx tsx src/server.ts)",
+      "Bash(export LOCAL_SQLITE=true)",
+      "Bash(npx tsx:*)",
+      "Bash(timeout 2 npx tsx src/server.ts)",
+      "Bash(node:*)",
+      "Bash(npm test)",
+      "Bash(npm audit fix)",
+      "Bash(timeout 15 npm test)",
+      "Bash(timeout 10 npm test)",
+      "Bash(timeout 15 npm test -- --run)",
+      "Bash(npm test:*)",
+      "Bash(del:*)"
+    ],
+    "deny": []
+  }
+}

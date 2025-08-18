@@ -4,9 +4,14 @@ const cors = require('cors');
 const app = express();
 const PORT = 3001;
 
+const paymentRoutes = require('./src/routes/paymentRoutes');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use('/api/payments', paymentRoutes.default);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -64,7 +69,7 @@ app.get('/api/hotels/search', (req, res) => {
 // Mock auth endpoints
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
-  
+
   if (email === 'admin@hotelbooking.com' && password === 'admin123') {
     res.json({
       success: true,
@@ -132,7 +137,7 @@ app.post('/api/bookings/create', (req, res) => {
 app.post('/api/payments/create-intent', (req, res) => {
   const amount = req.body.amount || 1000;
   const commission = amount * 0.05; // 5% commission for Square
-  
+
   res.json({
     success: true,
     data: {
@@ -163,16 +168,16 @@ app.listen(PORT, () => {
     ========================================
     Hotel Booking Backend (Local Mode)
     ========================================
-    
+
     Server running at: http://localhost:${PORT}
     Health check: http://localhost:${PORT}/health
     Database: SQLite (Local)
     Payment: Square Mock (5% commission)
-    
+
     Test Accounts:
     - Admin: admin@hotelbooking.com / admin123
     - User: john.doe@example.com / password123
-    
+
     ========================================
   `);
 });

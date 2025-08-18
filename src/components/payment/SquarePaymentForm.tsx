@@ -1,14 +1,34 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Square, Card, Payments } from '@square/web-sdk';
-import { useBookingStore } from '../../store/bookingStore';
+import { z } from 'zod';
+import type { Card } from '@square/web-sdk';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CreditCard, Lock, Shield, Loader2 } from 'lucide-react';
 
+// Define the payment request schema locally
+const CreatePaymentRequestSchema = z.object({
+  sourceId: z.string(),
+  amount: z.number().positive(),
+  currency: z.string().default('USD'),
+  bookingId: z.string(),
+  billingDetails: z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string().email(),
+    addressLine1: z.string(),
+    addressLine2: z.string().optional(),
+    locality: z.string(),
+    administrativeDistrictLevel1: z.string(),
+    postalCode: z.string(),
+    country: z.string(),
+  }).optional(),
+});
+
 interface SquarePaymentFormProps {
+  bookingId: string;
   amount: number;
   currency?: string;
-  onSuccess: (paymentResult: any) => void;
+  onSuccess: (paymentResult: { paymentId: string; receiptUrl?: string }) => void;
   onError: (error: Error) => void;
   bookingDetails?: {
     hotelName: string;
@@ -31,11 +51,20 @@ interface BillingInfo {
   country: string;
 }
 
-const PaymentSummary: React.FC<{
+interface BookingSummaryDetails {
+  hotelName: string;
+  checkIn: string;
+  checkOut: string;
+  roomType: string;
+  guestName: string;
+}
+
+type PaymentSummaryProps = {
   amount: number;
   currency: string;
-  bookingDetails?: any;
-}> = ({ amount, currency, bookingDetails }) => {
+  bookingDetails?: BookingSummaryDetails;
+};
+const PaymentSummary: React.FC<PaymentSummaryProps> = ({ amount, currency, bookingDetails }) => {
   const commission = amount * 0.05;
   const rewards = commission; // 100% of commission as rewards
   
@@ -88,8 +117,8 @@ const PaymentSummary: React.FC<{
       </div>
       
       <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>Earn ${rewards.toFixed(2)} in Vibe Rewards!</strong> These points will be added to your account after checkout.
+        <p className="text-sm text-blue-800" aria-live="polite">
+          <strong>Earn ${rewards.toFixed(2)} in Vibe Rewards!</strong> Rewards added after checkout.
         </p>
       </div>
     </div>
@@ -97,6 +126,7 @@ const PaymentSummary: React.FC<{
 };
 
 export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
+  bookingId,
   amount,
   currency = 'USD',
   onSuccess,
@@ -196,22 +226,49 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
     setIsProcessing(true);
 
     try {
-      const result = await card.tokenize();
+  const result = await card.tokenize();
       
       if (result.status === 'OK' && result.token) {
-        // Here you would send the token to your backend
-        // For demo, we'll simulate a successful payment
-        const paymentResult = {
-          token: result.token,
-          billingInfo,
+        // Build payload and validate against shared schema prior to sending
+        const candidate = {
+          bookingId,
+          sourceId: result.token,
           amount,
           currency,
+          provider: 'square' as const,
         };
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        onSuccess(paymentResult);
+        const parsed = CreatePaymentRequestSchema.safeParse(candidate);
+        if (!parsed.success) {
+          throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
+        }
+        // Send token (sourceId) to backend to create Square payment
+        const response = await window.fetch('/api/payments/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Authorization header set by higher-level fetch wrapper if implemented
+          },
+          body: JSON.stringify({
+            ...parsed.data,
+            billingAddress: {
+              firstName: billingInfo.firstName,
+              lastName: billingInfo.lastName,
+              addressLine1: billingInfo.addressLine1,
+              addressLine2: billingInfo.addressLine2,
+              locality: billingInfo.locality,
+              administrativeDistrictLevel1: billingInfo.administrativeDistrictLevel1,
+              postalCode: billingInfo.postalCode,
+              country: billingInfo.country,
+            },
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          onSuccess({ paymentId: data.paymentId, receiptUrl: data.receiptUrl });
+        } else {
+          throw new Error(data.error || 'Payment failed');
+        }
       } else {
         throw new Error(result.errors?.[0]?.message || 'Payment failed');
       }
@@ -224,10 +281,7 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
   };
 
   const handleBillingChange = (field: string, value: string) => {
-    setBillingInfo(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    setBillingInfo((prev) => ({ ...prev, [field]: value }));
   };
 
   if (isLoading) {
@@ -277,8 +331,8 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Card Information
               </label>
-              <div 
-                id="square-card-container" 
+              <div
+                id="square-card-container"
                 className="min-h-[120px] border border-gray-300 rounded-lg p-3"
               />
             </div>
@@ -347,6 +401,7 @@ export const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
                     value={billingInfo.country}
                     onChange={(e) => handleBillingChange('country', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    aria-label="Country"
                   >
                     <option value="US">United States</option>
                     <option value="CA">Canada</option>

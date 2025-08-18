@@ -1,9 +1,18 @@
-import { stripeService } from './stripe';
+// Legacy Stripe import (optional)
+let stripeService: any;
+try {
+  // Dynamically require so absence doesn't break build when stripe not configured
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  stripeService = require('./stripe').stripeService;
+} catch {
+  stripeService = null;
+}
 import { CommissionService } from './commission';
-import { db } from '../database';
-import { bookings, payments, refunds } from '../database/schema';
+import { getDb } from '../database';
+import { bookings, payments, refunds, refundRequests, users } from '../database/schema';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '../utils/logger';
+import { emailService } from './emailService.js';
 
 export interface RefundRequest {
   bookingId: string;
@@ -150,6 +159,9 @@ export class RefundService {
       const paymentData = payment[0];
 
       // Process refund through Stripe
+      if (!stripeService) {
+        throw new Error('Stripe not configured');
+      }
       const stripeRefund = await stripeService.createRefund({
         paymentIntentId: paymentData.transactionId,
         amount: refundAmount,
@@ -234,8 +246,36 @@ export class RefundService {
         calculation: refundCalculation,
       });
 
-      // TODO: Create refund_requests table and insert record
-      // TODO: Send notification to admin team
+      // Create refund request record in database
+      const db = await getDb();
+      const refundRequestRecord = await db
+        .insert(refundRequests)
+        .values({
+          bookingId: refundRequest.bookingId,
+          paymentId: booking.payments[0].id, // Assuming first payment
+          requestedBy: refundRequest.requestedBy,
+          amount: refundCalculation.refundAmount.toString(),
+          reason: refundRequest.reason,
+          status: 'pending',
+        })
+        .returning();
+
+      // Send notification to admin team
+      await emailService.sendEmail({
+        to: process.env.ADMIN_EMAIL || 'admin@vibebooking.com',
+        template: {
+          subject: `New Refund Request - ${refundRequest.bookingId}`,
+          html: `
+            <h2>New Refund Request</h2>
+            <p><strong>Booking ID:</strong> ${refundRequest.bookingId}</p>
+            <p><strong>Amount:</strong> $${refundCalculation.refundAmount.toFixed(2)}</p>
+            <p><strong>Reason:</strong> ${refundRequest.reason}</p>
+            <p><strong>Requested by:</strong> ${user.firstName} ${user.lastName} (${user.email})</p>
+            <p>Please review this refund request in the admin panel.</p>
+          `,
+          text: `New Refund Request\n\nBooking ID: ${refundRequest.bookingId}\nAmount: $${refundCalculation.refundAmount.toFixed(2)}\nReason: ${refundRequest.reason}\nRequested by: ${user.firstName} ${user.lastName} (${user.email})\n\nPlease review this refund request in the admin panel.`,
+        },
+      });
 
       return {
         success: true,
@@ -354,7 +394,14 @@ export class RefundService {
     calculation: RefundCalculation
   ) {
     try {
-      // TODO: Implement email service integration
+      // Send refund notification email to guest
+      await emailService.sendRefundNotification(booking.guestEmail, {
+        bookingId: booking.confirmationNumber,
+        refundAmount: refund.amount / 100,
+        reason: refund.reason || 'Refund processed',
+        processingTime: '3-5 business days',
+        guestName: booking.guestName,
+      });
       logger.info('Sending refund notifications', {
         bookingId: booking.id,
         guestEmail: booking.guestEmail,
@@ -393,7 +440,22 @@ export class RefundService {
         },
       };
 
-      // TODO: Queue email sending
+      // Send admin notification email
+      await emailService.sendEmail({
+        to: adminEmailData.to,
+        template: {
+          subject: adminEmailData.subject,
+          html: `
+            <h2>Refund Processed</h2>
+            <p><strong>Booking:</strong> ${adminEmailData.data.confirmationNumber}</p>
+            <p><strong>Guest:</strong> ${adminEmailData.data.guestName}</p>
+            <p><strong>Hotel:</strong> ${adminEmailData.data.hotelName}</p>
+            <p><strong>Refund Amount:</strong> $${adminEmailData.data.refundAmount.toFixed(2)}</p>
+            <p><strong>Refund ID:</strong> ${adminEmailData.data.refundId}</p>
+          `,
+          text: `Refund Processed\n\nBooking: ${adminEmailData.data.confirmationNumber}\nGuest: ${adminEmailData.data.guestName}\nHotel: ${adminEmailData.data.hotelName}\nRefund Amount: $${adminEmailData.data.refundAmount.toFixed(2)}\nRefund ID: ${adminEmailData.data.refundId}`,
+        },
+      });
       logger.info('Refund notification emails queued', {
         guestEmail: guestEmailData.to,
         adminEmail: adminEmailData.to,

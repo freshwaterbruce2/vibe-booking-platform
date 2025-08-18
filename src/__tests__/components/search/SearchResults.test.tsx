@@ -9,11 +9,11 @@ import { testUtils } from '../../setup';
 vi.mock('@/store/searchStore');
 
 // Mock UI components
-vi.mock('@/components/ui/Button', () => ({
+vi.mock('@vibe/ui', () => ({
   Button: ({ children, onClick, disabled, className, ...props }: any) => (
-    <button 
-      onClick={onClick} 
-      disabled={disabled} 
+    <button
+      onClick={onClick}
+      disabled={disabled}
       className={className}
       {...props}
     >
@@ -133,7 +133,7 @@ describe('SearchResults', () => {
       render(<SearchResults />);
 
       expect(screen.getByText('Searching hotels...')).toBeInTheDocument();
-      
+
       // Should show skeleton cards
       const skeletonCards = screen.getAllByTestId('hotel-card');
       expect(skeletonCards).toHaveLength(6);
@@ -147,7 +147,7 @@ describe('SearchResults', () => {
       });
 
       const { container } = render(<SearchResults />);
-      
+
       const pulseElements = container.querySelectorAll('.animate-pulse');
       expect(pulseElements.length).toBeGreaterThan(0);
     });
@@ -176,7 +176,7 @@ describe('SearchResults', () => {
       });
 
       const { container } = render(<SearchResults />);
-      
+
       // The MapPin icon should be rendered
       expect(container.querySelector('.w-8.h-8')).toBeInTheDocument();
     });
@@ -279,11 +279,11 @@ describe('SearchResults', () => {
     it('should show low availability warning', () => {
       // Mock Math.random to return consistent value
       vi.spyOn(Math, 'random').mockReturnValue(0.5);
-      
+
       render(<SearchResults />);
 
       expect(screen.getByText(/Only \d+ left!/)).toBeInTheDocument();
-      
+
       vi.restoreAllMocks();
     });
   });
@@ -314,7 +314,7 @@ describe('SearchResults', () => {
       render(<SearchResults />);
 
       const hotelCards = screen.getAllByTestId('hotel-card');
-      
+
       // Should not throw error
       await expect(user.click(hotelCards[0])).resolves.not.toThrow();
     });
@@ -323,7 +323,7 @@ describe('SearchResults', () => {
       const user = userEvent.setup();
       render(<SearchResults onHotelSelect={mockOnHotelSelect} />);
 
-      const heartButtons = screen.getAllByRole('button').filter(btn => 
+      const heartButtons = screen.getAllByRole('button').filter(btn =>
         btn.innerHTML.includes('Heart') || btn.getAttribute('class')?.includes('w-4 h-4')
       );
 
@@ -447,10 +447,10 @@ describe('SearchResults', () => {
       render(<SearchResults />);
 
       const images = screen.getAllByRole('img');
-      
+
       // Simulate image load error
       fireEvent.error(images[0]);
-      
+
       await waitFor(() => {
         expect(images[0]).toHaveAttribute('src', '/placeholder-hotel.jpg');
       });
@@ -506,11 +506,11 @@ describe('SearchResults', () => {
     it('should support keyboard navigation', async () => {
       const user = userEvent.setup();
       const mockOnHotelSelect = vi.fn();
-      
+
       render(<SearchResults onHotelSelect={mockOnHotelSelect} />);
 
       const hotelCards = screen.getAllByTestId('hotel-card');
-      
+
       // Hotel cards should be clickable/focusable
       expect(hotelCards[0]).toHaveClass('cursor-pointer');
     });
@@ -577,7 +577,7 @@ describe('SearchResults', () => {
       });
 
       const { container } = render(<SearchResults className="custom-results-class" />);
-      
+
       expect(container.firstChild).toHaveClass('custom-results-class');
     });
   });

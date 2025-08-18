@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { validateRequest } from '../middleware/validateRequest';
 import { aiSearchService } from '../services/aiSearchService';
 import { logger } from '../utils/logger';
+import { getDb } from '../database';
+import { aiFeedback } from '../database/schema';
 
 export const aiRouter = Router();
 
@@ -276,7 +278,26 @@ aiRouter.post('/feedback', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    // TODO: Store feedback in database for analysis and model improvement
+    // Store feedback in database for analysis and model improvement
+    try {
+      const db = await getDb();
+      await db.insert(aiFeedback).values({
+        userId: req.user?.id,
+        feedbackType: feedback.type,
+        rating: feedback.rating,
+        comment: feedback.comment,
+        searchQuery: feedback.searchQuery,
+        aiResponse: feedback.aiResponse,
+        metadata: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          userAgent: req.get('User-Agent'),
+        }),
+      });
+      logger.info('AI feedback stored in database');
+    } catch (dbError) {
+      logger.error('Failed to store AI feedback in database:', dbError);
+      // Continue processing even if database storage fails
+    }
 
     res.json({
       success: true,

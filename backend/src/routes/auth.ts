@@ -8,6 +8,7 @@ import { getDb } from '../database';
 import { users, NewUser } from '../database/schema';
 import { eq } from 'drizzle-orm';
 import { config } from '../config';
+import { emailService } from '../services/emailService.js';
 
 export const authRouter = Router();
 
@@ -413,8 +414,8 @@ authRouter.post('/forgot-password', validateRequest(forgotPasswordSchema), async
       })
       .where(eq(users.id, user.id));
 
-    // TODO: Send email with reset link
-    // await emailService.sendPasswordResetEmail(user.email, resetToken);
+    // Send password reset email
+    await emailService.sendPasswordReset(user.email, resetToken, user.email);
 
     logger.info('Password reset requested', {
       userId: user.id,

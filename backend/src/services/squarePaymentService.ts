@@ -1,5 +1,6 @@
 // Square payment integration with 2025 standards
 import { Client, Environment } from 'square';
+import crypto from 'crypto';
 import { randomUUID } from 'crypto';
 import { config } from '../config';
 import { logger } from '../utils/logger';
@@ -79,16 +80,19 @@ export class SquarePaymentService {
           userId: params.userId,
           amount: params.amount.toString(),
           currency: params.currency || 'USD',
-          status: result.payment.status === 'COMPLETED' ? 'succeeded' : 'pending',
+            status: result.payment.status === 'COMPLETED' ? 'succeeded' : 'pending',
           method: 'card',
           provider: 'square',
-          providerPaymentId: result.payment.id,
-          metadata: JSON.stringify({
+          transactionId: result.payment.id,
+          referenceNumber: result.payment.orderId || undefined,
+          cardLast4: result.payment.cardDetails?.card?.last4,
+          cardBrand: result.payment.cardDetails?.card?.cardBrand,
+          metadata: {
             ...params.metadata,
             squarePaymentId: result.payment.id,
             receiptUrl: result.payment.receiptUrl,
-          }),
-        });
+          },
+        } as any); // cast to any to bypass potential numeric precision issues
 
         logger.info('Square payment created successfully', {
           paymentId: result.payment.id,
@@ -113,7 +117,8 @@ export class SquarePaymentService {
       logger.error('Square payment creation error', { error, bookingId: params.bookingId });
       
       if (error instanceof Error) {
-        const errorMessage = error.errors?.[0]?.detail || 'Payment processing failed';
+        const squareErr: any = error as any;
+        const errorMessage = squareErr.errors?.[0]?.detail || squareErr.message || 'Payment processing failed';
         return {
           success: false,
           errorMessage,
@@ -146,9 +151,10 @@ export class SquarePaymentService {
       logger.error('Error fetching Square payment', { error, paymentId });
       
       if (error instanceof Error) {
+        const squareErr: any = error as any;
         return {
           success: false,
-          errorMessage: error.errors?.[0]?.detail || 'Failed to fetch payment details',
+          errorMessage: squareErr.errors?.[0]?.detail || squareErr.message || 'Failed to fetch payment details',
         };
       }
 
@@ -206,13 +212,10 @@ export class SquarePaymentService {
           amount: (Number(refundAmount.amount) / 100).toString(),
           currency: refundAmount.currency,
           status: result.refund.status === 'COMPLETED' ? 'succeeded' : 'pending',
-          provider: 'square',
-          providerRefundId: result.refund.id,
+          transactionId: result.refund.id,
           reason: params.reason || 'Vibe Booking cancellation',
-          metadata: JSON.stringify({
-            squareRefundId: result.refund.id,
-          }),
-        });
+          metadata: { squareRefundId: result.refund.id },
+        } as any);
 
         logger.info('Square refund created successfully', {
           refundId: result.refund.id,
@@ -236,7 +239,8 @@ export class SquarePaymentService {
       logger.error('Square refund creation error', { error, paymentId: params.paymentId });
       
       if (error instanceof Error) {
-        const errorMessage = error.errors?.[0]?.detail || 'Refund processing failed';
+        const squareErr: any = error as any;
+        const errorMessage = squareErr.errors?.[0]?.detail || squareErr.message || 'Refund processing failed';
         return {
           success: false,
           errorMessage,
@@ -281,15 +285,12 @@ export class SquarePaymentService {
         await db.insert(paymentMethods).values({
           userId: params.userId,
           provider: 'square',
-          providerMethodId: result.card.id,
           type: 'card',
+          token: result.card.id,
           last4: result.card.last4 || '',
           brand: result.card.cardBrand || '',
-          metadata: JSON.stringify({
-            squareCardId: result.card.id,
-            customerId: params.customerId,
-          }),
-        });
+          metadata: { squareCardId: result.card.id, customerId: params.customerId },
+        } as any);
 
         logger.info('Square payment method saved successfully', {
           cardId: result.card.id,
@@ -312,7 +313,8 @@ export class SquarePaymentService {
       logger.error('Square card creation error', { error, userId: params.userId });
       
       if (error instanceof Error) {
-        const errorMessage = error.errors?.[0]?.detail || 'Failed to save payment method';
+        const squareErr: any = error as any;
+        const errorMessage = squareErr.errors?.[0]?.detail || squareErr.message || 'Failed to save payment method';
         return {
           success: false,
           errorMessage,
@@ -370,7 +372,8 @@ export class SquarePaymentService {
       logger.error('Square customer creation error', { error, email: params.emailAddress });
       
       if (error instanceof Error) {
-        const errorMessage = error.errors?.[0]?.detail || 'Customer creation failed';
+        const squareErr: any = error as any;
+        const errorMessage = squareErr.errors?.[0]?.detail || squareErr.message || 'Customer creation failed';
         return {
           success: false,
           errorMessage,
@@ -392,11 +395,28 @@ export class SquarePaymentService {
     message: string;
   }> {
     try {
-      // Square webhook signature verification would go here
-      // For now, we'll just process the event
+      // Verify signature if key present
+      if (config.square.webhookSignatureKey) {
+        // Square spec: signature = Base64( HMAC_SHA256( signatureKey, notificationUrl + body ) )
+        // We currently only have parsed JSON body; to be fully compliant we need raw body & full URL.
+        // TODO: capture raw body in middleware (e.g. bodyParser.raw) and pass original URL.
+        try {
+          const bodyString = JSON.stringify(payload);
+          const hmac = crypto.createHmac('sha256', config.square.webhookSignatureKey);
+          hmac.update(bodyString);
+          const expectedFallback = hmac.digest('base64');
+          if (signature !== expectedFallback) {
+            logger.warn('Square webhook signature mismatch (fallback body-only check)');
+            return { success: false, message: 'Invalid signature' };
+          }
+        } catch (sigErr) {
+          logger.error('Webhook signature verification error', { sigErr });
+          return { success: false, message: 'Signature verification failed' };
+        }
+      }
       
-      const eventType = payload.type;
-      const eventData = payload.data;
+  const eventType = payload.type;
+  const eventData = payload.data;
 
       switch (eventType) {
         case 'payment.updated':
@@ -422,6 +442,26 @@ export class SquarePaymentService {
     }
   }
 
+  // Raw variant with proper signature (URL + body)
+  async handleWebhookRaw(rawBody: Buffer, signature: string, url: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      if (config.square.webhookSignatureKey) {
+        const hmac = crypto.createHmac('sha256', config.square.webhookSignatureKey);
+        hmac.update(url + rawBody.toString());
+        const expected = hmac.digest('base64');
+        if (signature !== expected) {
+          logger.warn('Square webhook signature mismatch (raw variant)');
+          return { success: false, message: 'Invalid signature' };
+        }
+      }
+      const payload = JSON.parse(rawBody.toString());
+      return this.handleWebhook(payload, signature);
+    } catch (err) {
+      logger.error('Square raw webhook error', { err });
+      return { success: false, message: 'Webhook processing failed' };
+    }
+  }
+
   private async handlePaymentUpdated(data: any): Promise<void> {
     try {
       const payment = data.object?.payment;
@@ -434,7 +474,7 @@ export class SquarePaymentService {
           status: payment.status === 'COMPLETED' ? 'succeeded' : 'failed',
           updatedAt: new Date(),
         })
-        .where(eq(payments.providerPaymentId, payment.id));
+  .where(eq(payments.transactionId, payment.id));
 
       logger.info('Payment status updated from Square webhook', {
         paymentId: payment.id,
@@ -457,7 +497,7 @@ export class SquarePaymentService {
           status: refund.status === 'COMPLETED' ? 'succeeded' : 'failed',
           updatedAt: new Date(),
         })
-        .where(eq(refunds.providerRefundId, refund.id));
+  .where(eq(refunds.transactionId, refund.id));
 
       logger.info('Refund status updated from Square webhook', {
         refundId: refund.id,

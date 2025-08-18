@@ -57,7 +57,8 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
 
   const sendConfirmationEmail = async () => {
     try {
-      // TODO: Implement email service call
+      // Email is sent automatically by the backend after payment confirmation
+      // This just updates the UI to show that email was sent
       setTimeout(() => {
         setEmailSent(true);
       }, 2000);
@@ -70,19 +71,28 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
     try {
       setIsGeneratingReceipt(true);
       
-      // TODO: Implement PDF generation
-      // For now, create a downloadable HTML receipt
-      const receiptContent = generateReceiptHTML();
-      const blob = new Blob([receiptContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
+      // Call backend PDF generation service
+      const response = await fetch(`/api/payments/${paymentDetails.id}/receipt`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
       
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `receipt-${bookingDetails.confirmationNumber}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `receipt-${bookingDetails.confirmationNumber}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        throw new Error('Failed to generate PDF receipt');
+      }
       
     } catch (error) {
       console.error('Failed to generate receipt:', error);

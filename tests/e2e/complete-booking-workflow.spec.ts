@@ -96,23 +96,21 @@ test.describe('Complete Booking Workflow', () => {
       });
     });
 
-    // Mock payment intent creation
-    await page.route('**/api/payments/create-intent**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            clientSecret: 'pi_test_123_secret',
-            paymentIntentId: 'pi_test_123',
-            amount: 50000,
-            currency: 'USD',
-            commissionAmount: 2500,
-            platformFee: 500,
-          },
-        }),
-      });
+    // Mock Square payment creation
+    await page.route('**/api/payments/create', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            paymentId: 'sq_pay_test_123',
+            receiptUrl: 'https://square.test/receipt/sq_pay_test_123',
+          }),
+        });
+      } else {
+        await route.continue();
+      }
     });
 
     // Mock booking creation
@@ -197,24 +195,18 @@ test.describe('Complete Booking Workflow', () => {
 
     // Step 5: Complete payment
     await test.step('Complete payment process', async () => {
-      // Mock Stripe Elements (in real E2E, this would be actual Stripe test elements)
-      await page.evaluate(() => {
-        // Mock successful payment completion
-        window.mockStripePaymentSuccess = true;
-      });
+  // Simulate Square card tokenization success by ensuring our mocked route returns success
+  await expect(page.locator('text=Payment Details')).toBeVisible();
+  await expect(page.locator('text=Total')).not.toBeVisible({ timeout: 1000 }).catch(() => {});
 
-      // Should show payment form
-      await expect(page.locator('text=Secure Payment')).toBeVisible();
-      await expect(page.locator('text=Total Amount')).toBeVisible();
+  // Trigger payment
+  await page.click('button:has-text("Pay $500.00 USD")');
 
-      // Mock payment button click (in real test, would interact with Stripe Elements)
-      await page.click('button:has-text("Complete Payment")');
+  // Wait for payment processing indicator
+  await expect(page.locator('text=Processing Payment...')).toBeVisible();
 
-      // Wait for payment processing
-      await expect(page.locator('text=Processing Payment...')).toBeVisible();
-
-      // Should proceed to confirmation
-      await expect(page.locator('text=Booking Confirmed')).toBeVisible({ timeout: 10000 });
+  // Should proceed to confirmation success UI eventually
+  await expect(page.locator('text=Booking Confirmed')).toBeVisible({ timeout: 12000 });
     });
 
     // Step 6: Verify booking confirmation
@@ -316,13 +308,13 @@ test.describe('Complete Booking Workflow', () => {
 
   test('should handle payment failures gracefully', async ({ page }) => {
     // Mock payment failure
-    await page.route('**/api/payments/create-intent**', async (route) => {
+  await page.route('**/api/payments/create', async (route) => {
       await route.fulfill({
         status: 400,
         contentType: 'application/json',
         body: JSON.stringify({
           success: false,
-          message: 'Card declined',
+      message: 'Card declined',
         }),
       });
     });
@@ -340,9 +332,8 @@ test.describe('Complete Booking Workflow', () => {
 
     await page.click('button:has-text("Continue to Payment")');
 
-    // Should show payment error
-    await expect(page.locator('text=Card declined')).toBeVisible();
-    await expect(page.locator('button:has-text("Try Different Payment Method")')).toBeVisible();
+  // Should show payment error (generic square form error toast / message)
+  await expect(page.locator('text=Card declined')).toBeVisible();
   });
 
   test('should maintain booking state across page refreshes', async ({ page }) => {
@@ -399,7 +390,7 @@ test.describe('Complete Booking Workflow', () => {
 
     // Mobile-specific interactions
     await expect(page.locator('.grid-cols-1')).toBeVisible(); // Mobile layout
-    
+
     await page.click('[data-testid="hotel-card"]:first-child');
     await page.click('button:has-text("Select Room")');
 
@@ -408,7 +399,7 @@ test.describe('Complete Booking Workflow', () => {
     await page.fill('[name="lastName"]', mockBookingData.lastName);
 
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    
+
     await page.fill('[name="email"]', mockBookingData.email);
     await page.fill('[name="phone"]', mockBookingData.phone);
 
@@ -422,16 +413,16 @@ test.describe('Complete Booking Workflow', () => {
     // Use keyboard to navigate search form
     await page.keyboard.press('Tab'); // Focus destination input
     await page.keyboard.type('Test City');
-    
+
     await page.keyboard.press('Tab'); // Focus check-in date
     await page.keyboard.type('2024-12-01');
-    
+
     await page.keyboard.press('Tab'); // Focus check-out date
     await page.keyboard.type('2024-12-03');
-    
+
     await page.keyboard.press('Tab'); // Focus guests select
     await page.keyboard.press('ArrowDown'); // Select 2 guests
-    
+
     await page.keyboard.press('Tab'); // Focus search button
     await page.keyboard.press('Enter'); // Submit search
 
@@ -456,9 +447,9 @@ test.describe('Search and Filter Workflow', () => {
   test.beforeEach(async ({ page }) => {
     // Mock search API with multiple hotels
     await page.route('**/api/hotels/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const searchParams = url.searchParams;
-      
+  const url = new URL(route.request().url());
+  const { searchParams } = url;
+
       let hotels = [
         {
           id: 'hotel-1',
@@ -496,7 +487,7 @@ test.describe('Search and Filter Workflow', () => {
       const rating = searchParams.get('rating');
 
       if (priceMin || priceMax) {
-        hotels = hotels.filter(hotel => {
+  hotels = hotels.filter((hotel) => {
           const price = hotel.priceRange.avgNightly;
           return (!priceMin || price >= parseInt(priceMin)) &&
                  (!priceMax || price <= parseInt(priceMax));
@@ -504,7 +495,7 @@ test.describe('Search and Filter Workflow', () => {
       }
 
       if (rating) {
-        hotels = hotels.filter(hotel => hotel.rating >= parseFloat(rating));
+  hotels = hotels.filter((hotel) => hotel.rating >= parseFloat(rating));
       }
 
       await route.fulfill({

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { PaymentForm } from '../components/payment/PaymentForm';
-import { PaymentService } from '../services/payment';
-import { BookingService } from '../services/booking';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { SquarePaymentForm } from '../components/payment/SquarePaymentForm';
+import { PaymentService } from '@/domain/payments';
+import { BookingService } from '@/domain/booking';
 import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -25,61 +25,71 @@ interface BookingDetails {
   paymentStatus: string;
 }
 
+// Raw booking shape returned by BookingService (extend safely with optionals)
+interface RawBooking {
+  id: string;
+  confirmationNumber?: string;
+  hotelName: string;
+  checkIn: string | Date;
+  checkOut: string | Date;
+  guests?: number;
+  totalAmount: number;
+  status: string;
+  roomType?: string;
+  nights?: number;
+  currency?: string;
+  guestFirstName?: string;
+  guestLastName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  paymentStatus?: string;
+}
+
 export const PaymentPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  
+
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
 
-  // Check for payment intent success from URL params
-  const paymentIntentStatus = searchParams.get('payment_intent_status');
-  const paymentIntentId = searchParams.get('payment_intent');
+  // Legacy Stripe payment_intent URL parameter handling removed.
 
-  useEffect(() => {
-    if (!bookingId) {
-      setError('Booking ID is required');
-      setIsLoading(false);
-      return;
-    }
-
-    loadBookingDetails();
-  }, [bookingId]);
-
-  useEffect(() => {
-    // Handle return from Stripe payment flow
-    if (paymentIntentStatus === 'succeeded' && paymentIntentId) {
-      handlePaymentSuccess({ id: paymentIntentId });
-    } else if (paymentIntentStatus === 'processing') {
-      setPaymentStatus('processing');
-      toast.info('Payment is being processed. Please wait...');
-    } else if (paymentIntentStatus === 'requires_payment_method') {
-      setPaymentStatus('error');
-      toast.error('Payment method was declined. Please try a different payment method.');
-    }
-  }, [paymentIntentStatus, paymentIntentId]);
-
-  const loadBookingDetails = async () => {
+  const loadBookingDetails = useCallback(async () => {
     try {
       setIsLoading(true);
-      const bookingData = await BookingService.getBookingById(bookingId!);
-      
+      if (!bookingId) {
+        return;
+      }
+      const bookingData: RawBooking | null = await BookingService.getBooking(bookingId);
+
       if (!bookingData) {
         throw new Error('Booking not found');
       }
 
       // Check if booking is payable
       if (!['pending', 'payment_failed'].includes(bookingData.status)) {
-        throw new Error(`Booking is not available for payment. Current status: ${bookingData.status}`);
+        throw new Error(`Booking not payable. Status: ${bookingData.status}`);
       }
 
       setBooking({
-        ...bookingData,
+        id: bookingData.id,
+        confirmationNumber: bookingData.confirmationNumber || bookingData.id,
+        hotelName: bookingData.hotelName,
+        roomType: bookingData.roomType || 'Standard',
         checkIn: new Date(bookingData.checkIn),
         checkOut: new Date(bookingData.checkOut),
+        guests: bookingData.guests || 1,
+        nights: bookingData.nights || 1,
+        totalAmount: bookingData.totalAmount,
+        currency: bookingData.currency || 'USD',
+        guestFirstName: bookingData.guestFirstName || 'Guest',
+        guestLastName: bookingData.guestLastName || 'User',
+        guestEmail: bookingData.guestEmail || '',
+        guestPhone: bookingData.guestPhone || '',
+        status: bookingData.status,
+        paymentStatus: bookingData.paymentStatus || 'pending',
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load booking details';
@@ -88,12 +98,24 @@ export const PaymentPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bookingId]);
 
-  const handlePaymentSuccess = async (paymentIntent: any) => {
+  // Initial load effect (placed after definition of loadBookingDetails)
+  useEffect(() => {
+    if (!bookingId) {
+      setError('Booking ID is required');
+      setIsLoading(false);
+      return;
+    }
+    loadBookingDetails();
+  }, [bookingId, loadBookingDetails]);
+
+  const handlePaymentSuccess = async (
+    paymentIntent: { paymentId: string; receiptUrl?: string },
+  ) => {
     try {
       setPaymentStatus('success');
-      
+
       // Show success message
       toast.success('Payment completed successfully!', {
         description: 'Your booking has been confirmed. You will receive a confirmation email shortly.',
@@ -221,7 +243,7 @@ export const PaymentPage: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Booking Details
           </button>
-          
+
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -242,25 +264,19 @@ export const PaymentPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Payment Form */}
-        <PaymentForm
+        {/* Payment Form (Square only) */}
+        <SquarePaymentForm
           bookingId={booking.id}
           amount={booking.totalAmount}
           currency={booking.currency}
           onSuccess={handlePaymentSuccess}
-          onError={handlePaymentError}
+          onError={(e) => handlePaymentError(e.message)}
           bookingDetails={{
             hotelName: booking.hotelName,
             roomType: booking.roomType,
-            checkIn: booking.checkIn,
-            checkOut: booking.checkOut,
-            guests: booking.guests,
-            nights: booking.nights,
-          }}
-          billingDetails={{
-            name: `${booking.guestFirstName} ${booking.guestLastName}`,
-            email: booking.guestEmail,
-            phone: booking.guestPhone,
+            checkIn: booking.checkIn.toISOString(),
+            checkOut: booking.checkOut.toISOString(),
+            guestName: `${booking.guestFirstName} ${booking.guestLastName}`,
           }}
         />
       </div>

@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "forceConsistentCasingInFileNames": true,
 
     /* Linting */
     "strict": true,
@@ -24,9 +25,13 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@vibe/contracts": ["./packages/contracts/src"],
+      "@vibe/contracts/*": ["./packages/contracts/src/*"],
+      "@vibe/ui": ["./packages/ui/src"],
+      "@vibe/ui/*": ["./packages/ui/src/*"]
     }
   },
-  "include": ["src", "tests"],
+  "include": ["src", "tests", "packages/contracts/src", "packages/ui/src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

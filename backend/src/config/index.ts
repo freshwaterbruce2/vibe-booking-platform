@@ -49,11 +49,18 @@ const configSchema = z.object({
     baseUrl: z.string().url(),
     timeout: z.number(),
   }),
+  // Stripe (legacy) kept optional for transitional compile; will be removed when fully Square-only
+  stripe: z.object({
+    secretKey: z.string().optional(),
+    webhookSecret: z.string().optional(),
+    currency: z.string().length(3).default('USD'),
+  }).optional(),
   square: z.object({
     accessToken: z.string(),
     applicationId: z.string(),
     environment: z.enum(['sandbox', 'production']),
     locationId: z.string().optional(),
+  webhookSignatureKey: z.string().optional(),
   }),
   email: z.object({
     provider: z.enum(['sendgrid', 'aws-ses', 'smtp']),
@@ -130,11 +137,17 @@ const rawConfig = {
     baseUrl: process.env.LITEAPI_BASE_URL || 'https://api.liteapi.travel/v1',
     timeout: parseInt(process.env.LITEAPI_TIMEOUT || '30000', 10),
   },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    currency: process.env.STRIPE_CURRENCY || 'USD',
+  },
   square: {
     accessToken: process.env.SQUARE_ACCESS_TOKEN || '',
     applicationId: process.env.SQUARE_APPLICATION_ID || '',
     environment: (process.env.SQUARE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production',
     locationId: process.env.SQUARE_LOCATION_ID,
+  webhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY,
   },
   email: {
     provider: (process.env.EMAIL_PROVIDER || 'smtp') as 'sendgrid' | 'aws-ses' | 'smtp',

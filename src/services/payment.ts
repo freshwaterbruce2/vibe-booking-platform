@@ -1,19 +1,8 @@
+﻿import { z } from 'zod';
 import axios from 'axios';
-import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
-
+// NOTE: Legacy Stripe intent logic removed; focusing on Square & PayPal unified flows.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-// Initialize Stripe
-let stripePromise: Promise<Stripe | null>;
-if (STRIPE_PUBLISHABLE_KEY) {
-  stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
-} else {
-  console.warn('Stripe publishable key not found. Payment functionality will be disabled.');
-  stripePromise = Promise.resolve(null);
-}
-
-export { stripePromise };
+// Stripe removed for current scope; reintroduce when provider abstraction in place.
 
 // API client with authentication
 const apiClient = axios.create({
@@ -33,21 +22,11 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // Payment service interface
-export interface PaymentIntent {
-  clientSecret: string;
-  paymentIntentId: string;
-  amount: number;
-  currency: string;
-  commissionAmount: number;
-  platformFee: number;
-}
-
-export interface PaymentStatus {
-  status: string;
-  amount: number;
-  currency: string;
-  created: number;
-  payment: any;
+export interface CreatedPayment {
+  success: boolean;
+  paymentId?: string;
+  receiptUrl?: string;
+  message?: string;
 }
 
 export interface PaymentHistory {
@@ -70,26 +49,35 @@ export interface PaymentHistory {
   };
 }
 
-export interface RefundRequest {
-  paymentIntentId: string;
-  amount?: number;
-  reason?: 'duplicate' | 'fraudulent' | 'requested_by_customer';
-  metadata?: Record<string, string>;
+export type RefundRequest = SharedRefundRequest;
+export type RefundResponse = SharedRefundResponse;
+
+export interface BasicPaymentRecord {
+  id?: string;
+  transactionId?: string;
+  bookingId?: string;
+  amount?: number | string;
+  currency?: string;
+  status?: string;
+  provider?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface RefundResponse {
-  refund: {
-    id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    reason: string;
-  };
+export interface BasicRefundRecord {
+  id?: string;
+  bookingId?: string;
+  amount?: number | string;
+  currency?: string;
+  status?: string;
+  reason?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BookingPayments {
-  payments: Array<any>;
-  refunds: Array<any>;
+  payments: Array<BasicPaymentRecord>;
+  refunds: Array<BasicRefundRecord>;
   summary: {
     totalPaid: number;
     totalRefunded: number;
@@ -98,38 +86,34 @@ export interface BookingPayments {
   };
 }
 
-export interface SetupIntent {
-  clientSecret: string;
-  setupIntentId: string;
-}
+// Removed SetupIntent for Stripe.
 
 export class PaymentService {
   /**
    * Create a payment intent for a booking
    */
-  static async createPaymentIntent(
-    bookingId: string,
-    amount: number,
-    currency = 'USD',
-    metadata: Record<string, string> = {}
-  ): Promise<PaymentIntent> {
+  static async createSquarePayment(payload: {
+    bookingId: string;
+    amount: number;
+    currency?: string;
+    sourceId: string;
+    billingAddress?: Record<string, unknown>;
+  }): Promise<CreatedPayment> {
     try {
-      const response = await apiClient.post('/payments/create-intent', {
-        bookingId,
-        amount,
-        currency,
-        metadata,
-      });
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create payment intent');
+      const candidate = { provider: 'square', currency: 'USD', ...payload };
+      const parsed = CreatePaymentRequestSchema.safeParse(candidate);
+      if (!parsed.success) {
+        throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
       }
-
-      return response.data.data;
+      const response = await apiClient.post('/payments/create', {
+        ...parsed.data,
+        billingAddress: payload.billingAddress,
+      });
+      return response.data;
     } catch (error) {
-      console.error('Failed to create payment intent:', error);
+      console.error('Failed to create Square payment:', error);
       if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data.message || 'Payment setup failed');
+        throw new Error(error.response.data.message || 'Square payment failed');
       }
       throw new Error('Network error occurred');
     }
@@ -138,50 +122,12 @@ export class PaymentService {
   /**
    * Confirm a payment intent
    */
-  static async confirmPaymentIntent(
-    paymentIntentId: string,
-    paymentMethodId?: string
-  ): Promise<any> {
-    try {
-      const response = await apiClient.post('/payments/confirm', {
-        paymentIntentId,
-        paymentMethodId,
-      });
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to confirm payment');
-      }
-
-      return response.data.data;
-    } catch (error) {
-      console.error('Failed to confirm payment:', error);
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data.message || 'Payment confirmation failed');
-      }
-      throw new Error('Network error occurred');
-    }
-  }
+  // confirmPaymentIntent removed (Stripe).
 
   /**
    * Get payment status
    */
-  static async getPaymentStatus(paymentIntentId: string): Promise<PaymentStatus> {
-    try {
-      const response = await apiClient.get(`/payments/status/${paymentIntentId}`);
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to get payment status');
-      }
-
-      return response.data.data;
-    } catch (error) {
-      console.error('Failed to get payment status:', error);
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data.message || 'Failed to retrieve payment status');
-      }
-      throw new Error('Network error occurred');
-    }
-  }
+  // getPaymentStatus removed (Stripe-specific path); could poll /payments/booking/:id if needed.
 
   /**
    * Get payments for a specific booking
@@ -207,15 +153,24 @@ export class PaymentService {
   /**
    * Create a refund
    */
-  static async createRefund(refundRequest: RefundRequest): Promise<RefundResponse> {
+  static async createRefund(request: RefundRequest): Promise<RefundResponse> {
     try {
-      const response = await apiClient.post('/payments/refund', refundRequest);
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create refund');
+      const legacy = request as unknown as {
+        paymentId?: string;
+        paymentIntentId?: string;
+        bookingId?: string;
+      };
+      const parsed = RefundRequestSchema.safeParse({
+        paymentId: legacy.paymentId || legacy.paymentIntentId,
+  bookingId: legacy.bookingId || '',
+        amount: request.amount,
+        reason: request.reason,
+      });
+      if (!parsed.success) {
+        throw new Error(parsed.error.issues.map((i) => i.message).join(', '));
       }
-
-      return response.data.data;
+      const response = await apiClient.post('/payments/refund', parsed.data);
+      return response.data;
     } catch (error) {
       console.error('Failed to create refund:', error);
       if (axios.isAxiosError(error) && error.response) {
@@ -233,7 +188,7 @@ export class PaymentService {
     limit = 10,
     status?: string,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<PaymentHistory> {
     try {
       const params = new URLSearchParams({
@@ -241,9 +196,15 @@ export class PaymentService {
         limit: limit.toString(),
       });
 
-      if (status) params.append('status', status);
-      if (startDate) params.append('startDate', startDate.toISOString());
-      if (endDate) params.append('endDate', endDate.toISOString());
+      if (status) {
+        params.append('status', status);
+      }
+      if (startDate) {
+        params.append('startDate', startDate.toISOString());
+      }
+      if (endDate) {
+        params.append('endDate', endDate.toISOString());
+      }
 
       const response = await apiClient.get(`/payments/history?${params}`);
 
@@ -264,68 +225,12 @@ export class PaymentService {
   /**
    * Create a setup intent for saving payment methods
    */
-  static async createSetupIntent(metadata: Record<string, string> = {}): Promise<SetupIntent> {
-    try {
-      const response = await apiClient.post('/payments/setup-intent', { metadata });
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create setup intent');
-      }
-
-      return response.data.data;
-    } catch (error) {
-      console.error('Failed to create setup intent:', error);
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data.message || 'Setup intent creation failed');
-      }
-      throw new Error('Network error occurred');
-    }
-  }
+  // createSetupIntent removed.
 
   /**
    * Process payment with Stripe Elements
    */
-  static async processPayment(
-    stripe: Stripe,
-    elements: StripeElements,
-    clientSecret: string,
-    billingDetails: {
-      name: string;
-      email: string;
-      phone?: string;
-      address?: {
-        line1: string;
-        city: string;
-        state: string;
-        postal_code: string;
-        country: string;
-      };
-    }
-  ) {
-    try {
-      const cardElement = elements.getElement('card');
-      
-      if (!cardElement) {
-        throw new Error('Card element not found');
-      }
-
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-          billing_details: billingDetails,
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Payment failed');
-      }
-
-      return paymentIntent;
-    } catch (error) {
-      console.error('Payment processing failed:', error);
-      throw error;
-    }
-  }
+  // processPayment removed (Stripe Elements specific).
 
   /**
    * Format currency amount for display
@@ -349,14 +254,14 @@ export class PaymentService {
    */
   static getPaymentMethodIcon(brand: string): string {
     const icons: Record<string, string> = {
-      visa: '💳',
-      mastercard: '💳',
-      amex: '💳',
-      discover: '💳',
-      diners: '💳',
-      jcb: '💳',
-      unionpay: '💳',
-      unknown: '💳',
+      visa: 'ðŸ’³',
+      mastercard: 'ðŸ’³',
+      amex: 'ðŸ’³',
+      discover: 'ðŸ’³',
+      diners: 'ðŸ’³',
+      jcb: 'ðŸ’³',
+      unionpay: 'ðŸ’³',
+      unknown: 'ðŸ’³',
     };
 
     return icons[brand.toLowerCase()] || icons.unknown;

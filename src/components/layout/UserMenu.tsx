@@ -1,5 +1,5 @@
-import { User, LogIn } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+﻿import { User, LogIn } from 'lucide-react';
+import { Button } from '../ui/Button';
 
 export function UserMenu() {
   // In a real app, this would check authentication state

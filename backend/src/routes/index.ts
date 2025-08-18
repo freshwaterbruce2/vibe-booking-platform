@@ -3,6 +3,7 @@ import { authRouter } from './auth';
 import { hotelsRouter } from './hotels';
 import { bookingsRouter } from './bookings';
 import { paymentsRouter } from './payments';
+import { squarePaymentService } from '../services/squarePaymentService';
 import { usersRouter } from './users';
 import { reviewsRouter } from './reviews';
 import { aiRouter } from './ai';
@@ -19,6 +20,22 @@ apiRouter.use('/reviews', reviewsRouter);
 
 // Protected routes
 apiRouter.use('/bookings', authenticate, bookingsRouter);
+// Public Square webhook (must come before protected /payments to avoid auth)
+apiRouter.post('/payments/webhook/square', async (req, res) => {
+  try {
+    // Raw body is a Buffer because of express.raw middleware
+    const rawBody = req.body instanceof Buffer ? req.body : Buffer.from(JSON.stringify(req.body));
+    const signature = (req.headers['x-square-hmacsha256-signature'] as string) || '';
+    const result = await squarePaymentService.handleWebhookRaw(rawBody, signature, `${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    if (result.success) {
+      return res.json({ received: true });
+    }
+    return res.status(400).json({ error: 'Webhook processing failed' });
+  } catch (error) {
+    return res.status(400).json({ error: 'Webhook processing error' });
+  }
+});
+
 apiRouter.use('/payments', authenticate, paymentsRouter);
 apiRouter.use('/users', authenticate, usersRouter);
 

@@ -73,26 +73,6 @@ Object.defineProperty(window, 'sessionStorage', {
 // Mock fetch
 global.fetch = vi.fn();
 
-// Mock Stripe
-vi.mock('@stripe/stripe-js', () => ({
-  loadStripe: vi.fn(() => Promise.resolve({
-    elements: vi.fn(() => ({
-      create: vi.fn(() => ({
-        mount: vi.fn(),
-        unmount: vi.fn(),
-        destroy: vi.fn(),
-        update: vi.fn(),
-        on: vi.fn(),
-        off: vi.fn(),
-      })),
-      getElement: vi.fn(),
-    })),
-    confirmPayment: vi.fn(),
-    confirmSetup: vi.fn(),
-    createPaymentMethod: vi.fn(),
-    retrievePaymentIntent: vi.fn(),
-  })),
-}));
 
 // Mock React Router
 vi.mock('react-router-dom', async () => {
@@ -238,7 +218,7 @@ export const testUtils = {
   mockSearchResults,
   mockBookingData,
   mockPaymentIntent,
-  
+
   // Helper to create mock fetch responses
   createMockResponse: (data: any, status = 200) => {
     return Promise.resolve({
@@ -248,10 +228,10 @@ export const testUtils = {
       text: () => Promise.resolve(JSON.stringify(data)),
     } as Response);
   },
-  
+
   // Helper to wait for async updates
   waitForNextTick: () => new Promise(resolve => setTimeout(resolve, 0)),
-  
+
   // Helper to mock API responses
   mockApiCall: (endpoint: string, response: any, status = 200) => {
     const mockFetch = global.fetch as any;
@@ -265,6 +245,6 @@ export const testUtils = {
 };
 
 // Set default fetch mock
-(global.fetch as any).mockImplementation(() => 
+(global.fetch as any).mockImplementation(() =>
   Promise.reject(new Error('Unmocked fetch call'))
 );
