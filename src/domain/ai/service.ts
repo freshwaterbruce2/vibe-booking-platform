@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { ProcessedQuery } from '@/types/api';
 
 class AIService {
-  private baseURL = '/api';
+  private baseURL = import.meta.env.VITE_API_URL || '/api';
 
   async processNaturalLanguage(query: string): Promise<ProcessedQuery> {
     try {
