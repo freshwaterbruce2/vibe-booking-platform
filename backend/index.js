@@ -42,10 +42,39 @@ const server = http.createServer((req, res) => {
           name: 'Demo Hotel',
           city: 'New York',
           price: 150,
-          rating: 4.5
+          rating: 4.5,
+          description: 'A beautiful demo hotel for testing',
+          amenities: ['WiFi', 'Pool', 'Gym'],
+          images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop']
         }
       ]
     }));
+    return;
+  }
+
+  // AI natural language processing
+  if (path === '/api/ai/process-query' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          processedQuery: {
+            destination: data.query || 'New York',
+            intent: 'hotel_search',
+            suggestions: ['luxury hotels', 'budget hotels', 'business hotels']
+          }
+        }));
+      } catch (e) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      }
+    });
     return;
   }
 
@@ -53,7 +82,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200);
   res.end(JSON.stringify({
     message: 'Vibe Booking API',
-    endpoints: ['/api/health', '/api/hotels/search']
+    endpoints: ['/api/health', '/api/hotels/search', '/api/ai/process-query']
   }));
 });
 
