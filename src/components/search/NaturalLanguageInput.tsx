@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { Search, Mic, Sparkles } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { useSearchStore } from '@/store/searchStore';
 import { aiService } from '@/services/aiService';
 import { cn } from '@/utils/cn';

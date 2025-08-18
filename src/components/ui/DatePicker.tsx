@@ -2,7 +2,7 @@
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Minus, Plus } from 'lucide-react';
 import { Button } from './Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from './Button';
+import { Input } from './Input';
 import { useSearchStore } from '@/store/searchStore';
 import { cn } from '@/utils/cn';
 

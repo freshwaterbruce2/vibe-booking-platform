@@ -2,7 +2,7 @@
 import { ChevronLeft, ChevronRight, Check, AlertCircle, CreditCard, User, Calendar, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { useBookingStore } from '@/store/bookingStore';
 import { useSearchStore } from '@/store/searchStore';
 import { useHotelStore } from '@/store/hotelStore';
