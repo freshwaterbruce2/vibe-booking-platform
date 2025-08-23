@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
 import { logger } from './utils/logger';
+import { phase2Integration } from './utils/phase2Integration';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,9 +17,60 @@ const queryClient = new QueryClient({
   },
 });
 
+// Initialize Phase 2 optimizations and service worker
+const initializeApp = async () => {
+  try {
+    // Initialize Phase 2 optimizations
+    await phase2Integration.initialize({
+      analytics: {
+        enabled: true,
+        userId: localStorage.getItem('user-id') || undefined,
+      },
+      cache: {
+        enabled: true,
+        preloadCritical: true,
+      },
+      websocket: {
+        enabled: process.env.NODE_ENV === 'production',
+        url: process.env.VITE_WEBSOCKET_URL,
+      },
+      images: {
+        progressive: true,
+        preload: [
+          '/images/hero-bg.jpg',
+          'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
+          'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400',
+        ],
+      },
+      security: {
+        enabled: true,
+        strictMode: process.env.NODE_ENV === 'production',
+      },
+      seo: {
+        enabled: true,
+        autoUpdate: true,
+      },
+    });
+
+    logger.info('Phase 2 optimizations initialized', { 
+      component: 'MainApp',
+      performance: await phase2Integration.getPerformanceMetrics(),
+    });
+
+  } catch (error) {
+    logger.error('Phase 2 initialization failed, continuing with basic functionality', {
+      component: 'MainApp',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
 // Register service worker for offline support and caching
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
+    // Initialize Phase 2 optimizations first
+    await initializeApp();
+
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
@@ -50,6 +102,9 @@ if ('serviceWorker' in navigator) {
       });
     }
   });
+} else {
+  // Initialize Phase 2 even without service worker
+  window.addEventListener('DOMContentLoaded', initializeApp);
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

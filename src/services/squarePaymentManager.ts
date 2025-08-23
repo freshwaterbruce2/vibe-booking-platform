@@ -3,7 +3,7 @@
  * Handles both real Square payments and intelligent demo mode fallback
  */
 
-import { paymentConfig } from '@/utils/paymentConfig';
+import { paymentConfig } from '../utils/paymentConfig';
 
 export interface PaymentResult {
   success: boolean;
