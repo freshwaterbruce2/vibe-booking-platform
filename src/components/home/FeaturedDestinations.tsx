@@ -1,5 +1,4 @@
 import React from 'react';
-import { OptimizedImage } from '../ui/OptimizedImage';
 
 interface Destination {
   id: string;
@@ -24,7 +23,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '1',
       name: 'Paris',
       country: 'France',
-      image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=250&fit=crop',
+      image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=800&h=500&fit=crop&crop=center',
       description: 'The City of Light, famous for its iconic landmarks, art, and cuisine.',
       hotelCount: 1200,
       averagePrice: 180,
@@ -34,7 +33,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '2',
       name: 'Tokyo',
       country: 'Japan',
-      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=250&fit=crop',
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=500&fit=crop&crop=center',
       description: 'A vibrant metropolis blending traditional culture with modern innovation.',
       hotelCount: 800,
       averagePrice: 220,
@@ -44,7 +43,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '3',
       name: 'New York',
       country: 'USA',
-      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=250&fit=crop',
+      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=500&fit=crop&crop=center',
       description: 'The city that never sleeps, offering endless entertainment and culture.',
       hotelCount: 950,
       averagePrice: 280,
@@ -54,7 +53,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '4',
       name: 'Bali',
       country: 'Indonesia',
-      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=400&h=250&fit=crop',
+      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=800&h=500&fit=crop&crop=center',
       description: 'Tropical paradise with stunning beaches, temples, and rice terraces.',
       hotelCount: 600,
       averagePrice: 120,
@@ -64,7 +63,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '5',
       name: 'Rome',
       country: 'Italy',
-      image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=250&fit=crop',
+      image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&h=500&fit=crop&crop=center',
       description: 'The Eternal City, home to ancient history and incredible architecture.',
       hotelCount: 750,
       averagePrice: 160,
@@ -74,7 +73,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
       id: '6',
       name: 'Dubai',
       country: 'UAE',
-      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=250&fit=crop',
+      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=500&fit=crop&crop=center',
       description: 'A modern oasis of luxury, shopping, and architectural marvels.',
       hotelCount: 400,
       averagePrice: 250,
@@ -105,14 +104,11 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
             >
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="relative">
-                  <OptimizedImage
+                  <img
                     src={destination.image}
                     alt={destination.name}
-                    className="w-full h-48 group-hover:brightness-110 transition-all duration-300"
-                    aspectRatio="5/3"
-                    objectFit="cover"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    fallbackSrc="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop"
+                    className="w-full h-48 object-cover group-hover:brightness-110 transition-all duration-300"
+                    loading="eager"
                   />
                   <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-full px-3 py-1">
                     <span className="text-sm font-semibold text-gray-800">
