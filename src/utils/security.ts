@@ -256,7 +256,7 @@ class SecurityManager {
     return {
       csp: {
         enabled: true,
-        reportOnly: process.env.NODE_ENV === 'development',
+        reportOnly: import.meta.env.MODE === 'development',
         directives: {
           defaultSrc: ["'self'"],
           scriptSrc: [
@@ -347,7 +347,7 @@ class SecurityManager {
     });
 
     // Add nonce for inline scripts in production
-    if (process.env.NODE_ENV === 'production' && this.nonceValue) {
+    if (import.meta.env.MODE === 'production' && this.nonceValue) {
       const scriptSrcIndex = policy.findIndex(directive => directive.startsWith('script-src'));
       if (scriptSrcIndex > -1) {
         policy[scriptSrcIndex] += ` 'nonce-${this.nonceValue}'`;

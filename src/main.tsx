@@ -31,8 +31,8 @@ const initializeApp = async () => {
         preloadCritical: true,
       },
       websocket: {
-        enabled: process.env.NODE_ENV === 'production',
-        url: process.env.VITE_WEBSOCKET_URL,
+        enabled: import.meta.env.MODE === 'production',
+        url: import.meta.env.VITE_WEBSOCKET_URL,
       },
       images: {
         progressive: true,
@@ -44,7 +44,7 @@ const initializeApp = async () => {
       },
       security: {
         enabled: true,
-        strictMode: process.env.NODE_ENV === 'production',
+        strictMode: import.meta.env.MODE === 'production',
       },
       seo: {
         enabled: true,

@@ -253,7 +253,7 @@ class AnalyticsManager {
     this.eventQueue = [];
 
     // In production, send to analytics service
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') {
       logger.info('Analytics events (dev mode)', {
         component: 'Analytics',
         count: events.length,
@@ -278,7 +278,7 @@ class AnalyticsManager {
     });
 
     // Send to performance monitoring service
-    if (process.env.NODE_ENV !== 'development') {
+    if (import.meta.env.MODE !== 'development') {
       this.sendToPerformanceService(metrics);
     }
   }

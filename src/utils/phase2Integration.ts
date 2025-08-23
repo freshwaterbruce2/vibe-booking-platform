@@ -203,8 +203,8 @@ class Phase2IntegrationManager {
         preloadCritical: true,
       },
       websocket: {
-        enabled: process.env.NODE_ENV === 'production',
-        url: process.env.VITE_WEBSOCKET_URL || 'wss://api.vibebooking.com/ws',
+        enabled: import.meta.env.MODE === 'production',
+        url: import.meta.env.VITE_WEBSOCKET_URL || 'wss://api.vibebooking.com/ws',
       },
       images: {
         progressive: true,
@@ -216,7 +216,7 @@ class Phase2IntegrationManager {
       },
       security: {
         enabled: true,
-        strictMode: process.env.NODE_ENV === 'production',
+        strictMode: import.meta.env.MODE === 'production',
       },
       seo: {
         enabled: true,
