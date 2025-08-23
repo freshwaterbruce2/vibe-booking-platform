@@ -11,7 +11,7 @@ describe('UserStore', () => {
   const initialPreferences = {
     currency: 'USD',
     locale: 'en-US',
-    theme: 'system',
+    theme: 'system' as const,
     notifications: {
       email: true,
       push: true,
@@ -250,8 +250,17 @@ describe('UserStore', () => {
       const { addToSearchHistory } = useUserStore.getState();
       
       const searchItem = {
+        id: 'search-1',
         query: 'Paris hotels',
-        filters: { priceRange: [100, 300] },
+        filters: { 
+          priceRange: [100, 300] as [number, number],
+          starRating: [4, 5],
+          amenities: [],
+          location: { center: { lat: 48.8566, lng: 2.3522 }, radius: 10 },
+          accessibility: { wheelchairAccessible: false, hearingAccessible: false, visualAccessible: false },
+          sustainability: false,
+          passions: []
+        },
         timestamp: new Date().toISOString(),
         resultsCount: 25,
       };
@@ -266,8 +275,36 @@ describe('UserStore', () => {
     it('should maintain search history order (most recent first)', () => {
       const { addToSearchHistory } = useUserStore.getState();
       
-      const firstSearch = { query: 'First search', timestamp: '2024-01-01' };
-      const secondSearch = { query: 'Second search', timestamp: '2024-01-02' };
+      const firstSearch = { 
+        id: 'search-1',
+        query: 'First search', 
+        timestamp: '2024-01-01',
+        filters: { 
+          priceRange: [100, 300] as [number, number],
+          starRating: [4, 5],
+          amenities: [],
+          location: { center: { lat: 48.8566, lng: 2.3522 }, radius: 10 },
+          accessibility: { wheelchairAccessible: false, hearingAccessible: false, visualAccessible: false },
+          sustainability: false,
+          passions: []
+        },
+        resultsCount: 10
+      };
+      const secondSearch = { 
+        id: 'search-2',
+        query: 'Second search', 
+        timestamp: '2024-01-02',
+        filters: { 
+          priceRange: [200, 400] as [number, number],
+          starRating: [3, 4],
+          amenities: [],
+          location: { center: { lat: 51.5074, lng: -0.1278 }, radius: 15 },
+          accessibility: { wheelchairAccessible: false, hearingAccessible: false, visualAccessible: false },
+          sustainability: false,
+          passions: []
+        },
+        resultsCount: 20
+      };
       
       addToSearchHistory(firstSearch);
       addToSearchHistory(secondSearch);
@@ -282,7 +319,21 @@ describe('UserStore', () => {
       
       // Add 55 items
       for (let i = 0; i < 55; i++) {
-        addToSearchHistory({ query: `Search ${i}`, timestamp: new Date().toISOString() });
+        addToSearchHistory({ 
+          id: `search-${i}`,
+          query: `Search ${i}`, 
+          timestamp: new Date().toISOString(),
+          filters: { 
+            priceRange: [100, 300] as [number, number],
+            starRating: [4, 5],
+            amenities: [],
+            location: { center: { lat: 48.8566, lng: 2.3522 }, radius: 10 },
+            accessibility: { wheelchairAccessible: false, hearingAccessible: false, visualAccessible: false },
+            sustainability: false,
+            passions: []
+          },
+          resultsCount: 10
+        });
       }
       
       const state = useUserStore.getState();
@@ -293,7 +344,21 @@ describe('UserStore', () => {
     it('should clear search history', () => {
       const { addToSearchHistory, clearSearchHistory } = useUserStore.getState();
       
-      addToSearchHistory({ query: 'Test search', timestamp: new Date().toISOString() });
+      addToSearchHistory({ 
+        id: 'search-1',
+        query: 'Test search', 
+        timestamp: new Date().toISOString(),
+        filters: { 
+          priceRange: [100, 300] as [number, number],
+          starRating: [4, 5],
+          amenities: [],
+          location: { center: { lat: 48.8566, lng: 2.3522 }, radius: 10 },
+          accessibility: { wheelchairAccessible: false, hearingAccessible: false, visualAccessible: false },
+          sustainability: false,
+          passions: []
+        },
+        resultsCount: 10
+      });
       clearSearchHistory();
       
       const state = useUserStore.getState();
@@ -307,12 +372,13 @@ describe('UserStore', () => {
       
       const bookingItem = {
         bookingId: 'BOOK123',
-        hotelId: 'hotel-456',
         hotelName: 'Test Hotel',
+        location: 'Test City',
         checkIn: '2024-12-01',
         checkOut: '2024-12-03',
         totalAmount: 500,
-        status: 'confirmed',
+        currency: 'USD',
+        status: 'completed' as const,
         timestamp: new Date().toISOString(),
       };
       
@@ -326,8 +392,28 @@ describe('UserStore', () => {
     it('should maintain booking history order (most recent first)', () => {
       const { addToBookingHistory } = useUserStore.getState();
       
-      const firstBooking = { bookingId: 'BOOK1', timestamp: '2024-01-01' };
-      const secondBooking = { bookingId: 'BOOK2', timestamp: '2024-01-02' };
+      const firstBooking = { 
+        bookingId: 'BOOK1', 
+        hotelName: 'First Hotel', 
+        location: 'New York',
+        checkIn: '2024-01-01',
+        checkOut: '2024-01-03',
+        status: 'completed' as const,
+        totalAmount: 300,
+        currency: 'USD',
+        timestamp: '2024-01-01'
+      };
+      const secondBooking = { 
+        bookingId: 'BOOK2', 
+        hotelName: 'Second Hotel', 
+        location: 'Paris',
+        checkIn: '2024-01-02',
+        checkOut: '2024-01-04',
+        status: 'completed' as const,
+        totalAmount: 450,
+        currency: 'USD',
+        timestamp: '2024-01-02'
+      };
       
       addToBookingHistory(firstBooking);
       addToBookingHistory(secondBooking);
@@ -340,7 +426,17 @@ describe('UserStore', () => {
     it('should clear booking history', () => {
       const { addToBookingHistory, clearBookingHistory } = useUserStore.getState();
       
-      addToBookingHistory({ bookingId: 'BOOK123', timestamp: new Date().toISOString() });
+      addToBookingHistory({ 
+        bookingId: 'BOOK123', 
+        hotelName: 'Test Hotel', 
+        location: 'Test City',
+        checkIn: '2024-01-01',
+        checkOut: '2024-01-03',
+        status: 'completed',
+        totalAmount: 300,
+        currency: 'USD',
+        timestamp: new Date().toISOString()
+      });
       clearBookingHistory();
       
       const state = useUserStore.getState();
@@ -491,8 +587,17 @@ describe('UserStore', () => {
       
       // 2. User performs searches
       store.addToSearchHistory({
+        id: 'search-tuscany-1',
         query: 'Romantic spa hotels in Tuscany',
-        filters: { priceRange: [300, 800], starRating: [4, 5] },
+        filters: { 
+          priceRange: [300, 800] as [number, number], 
+          starRating: [4, 5],
+          amenities: ['spa', 'restaurant'],
+          location: { center: { lat: 43.7711, lng: 11.2486 }, radius: 50 },
+          accessibility: { wheelchairAccessible: false, hearingAccessible: false, visualAccessible: false },
+          sustainability: false,
+          passions: ['romantic-escape', 'wellness-retreat']
+        },
         timestamp: '2024-12-01T10:00:00Z',
         resultsCount: 15,
       });
@@ -507,12 +612,13 @@ describe('UserStore', () => {
       // 5. User makes a booking
       store.addToBookingHistory({
         bookingId: 'BOOK456',
-        hotelId: 'hotel-tuscany-spa-001',
         hotelName: 'Tuscany Wellness Spa Resort',
+        location: 'Tuscany, Italy',
         checkIn: '2024-12-15',
         checkOut: '2024-12-18',
         totalAmount: 1200,
-        status: 'confirmed',
+        currency: 'USD',
+        status: 'completed' as const,
         timestamp: '2024-12-01T15:30:00Z',
       });
       

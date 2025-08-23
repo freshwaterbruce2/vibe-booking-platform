@@ -22,6 +22,7 @@ export interface SearchResponse {
 
 export interface ProcessedQuery {
   intent: string
+  originalQuery?: string
   extractedDetails: {
     location?: string
     dates?: {

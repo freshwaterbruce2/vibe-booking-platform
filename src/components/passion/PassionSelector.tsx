@@ -176,7 +176,7 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
                   : canSelect
                     ? 'hover:shadow-lg hover:scale-105'
                     : 'opacity-50 cursor-not-allowed',
-                !canSelect && 'pointer-events-none'
+                !canSelect && 'pointer-events-none',
               )}
               onClick={() => canSelect && handlePassionToggle(passion.id)}
               onMouseEnter={() => setHoveredPassion(passion.id)}
@@ -186,7 +186,7 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
               <div className={cn(
                 'absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300',
                 passion.gradient,
-                (isSelected || isHovered) && 'opacity-10'
+                (isSelected || isHovered) && 'opacity-10',
               )} />
 
               {/* Selection Indicator */}
@@ -203,7 +203,7 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
                   'w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-all duration-300',
                   isSelected || isHovered
                     ? `bg-gradient-to-br ${passion.gradient} text-white`
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
                 )}>
                   <IconComponent className="w-6 h-6" />
                 </div>
@@ -214,7 +214,7 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
                     'font-semibold mb-2 transition-colors',
                     isSelected
                       ? 'text-primary-700 dark:text-primary-400'
-                      : 'text-gray-900 dark:text-white'
+                      : 'text-gray-900 dark:text-white',
                   )}>
                     {passion.name}
                   </h3>
@@ -255,7 +255,9 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {selectedPassions.map((passionId) => {
               const passion = passionOptions.find((p) => p.id === passionId);
-              if (!passion) return null;
+              if (!passion) {
+return null;
+}
               const IconComponent = passion.icon;
 
               return (
@@ -265,7 +267,7 @@ export const PassionSelector: React.FC<PassionSelectorProps> = ({
                 >
                   <div className={cn(
                     'w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br text-white',
-                    passion.gradient
+                    passion.gradient,
                   )}>
                     <IconComponent className="w-4 h-4" />
                   </div>

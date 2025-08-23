@@ -156,7 +156,7 @@ return;
             onClick={handleSearch}
             disabled={!naturalLanguageQuery.trim() || isProcessing}
             loading={isProcessing}
-            size={size === 'lg' ? 'default' : 'sm'}
+            size={size === 'lg' ? 'md' : 'sm'}
             className="bg-primary-600 hover:bg-primary-700"
           >
             <Search className="h-4 w-4" />

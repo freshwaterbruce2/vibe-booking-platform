@@ -32,16 +32,15 @@ export function Header() {
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
           {/* Search button for mobile */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            asChild
-          >
-            <Link to="/search">
+          <Link to="/search">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+            >
               <Search className="h-4 w-4" />
-            </Link>
-          </Button>
+            </Button>
+          </Link>
 
           {/* Favorites */}
           <Button variant="ghost" size="icon">

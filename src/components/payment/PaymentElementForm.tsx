@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  PaymentElement,
-  useStripe,
-  useElements,
-} from '@stripe/react-stripe-js';
+// Note: This component appears to be for Stripe integration but the project uses Square
+// Consider removing this component or implementing Square payment instead
+// import {
+//   PaymentElement,
+//   useStripe,
+//   useElements,
+// } from '@stripe/react-stripe-js';
 import { PaymentService } from '../../services/payment';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
@@ -31,15 +33,15 @@ export const PaymentElementForm: React.FC<PaymentElementFormProps> = ({
   bookingId,
   amount,
   currency,
-  onSuccess,
+  onSuccess: _onSuccess,
   onError,
   billingDetails = {
     name: 'John Doe',
     email: 'john@example.com',
   },
 }) => {
-  const stripe = useStripe();
-  const elements = useElements();
+  // const stripe = useStripe();
+  // const elements = useElements();
 
   const [clientSecret, setClientSecret] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -56,15 +58,15 @@ export const PaymentElementForm: React.FC<PaymentElementFormProps> = ({
         setIsInitializing(true);
         setError('');
 
-        const result = await PaymentService.createPaymentIntent(
+        const result = await PaymentService.createPaymentIntent({
           bookingId,
           amount,
           currency,
-          {
+          metadata: {
             guestName: billingDetails.name,
             guestEmail: billingDetails.email,
-          }
-        );
+          },
+        });
 
         if (isMounted) {
           setClientSecret(result.clientSecret);
@@ -95,7 +97,9 @@ export const PaymentElementForm: React.FC<PaymentElementFormProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements || !clientSecret) {
+    // TODO: Replace with Square payment integration
+    // if (!stripe || !elements || !clientSecret) {
+    if (!clientSecret) {
       setError('Payment system not ready. Please try again.');
       return;
     }
@@ -104,42 +108,45 @@ export const PaymentElementForm: React.FC<PaymentElementFormProps> = ({
     setError('');
 
     try {
-      // Confirm payment with Stripe
-      const { error: submitError } = await elements.submit();
-      
-      if (submitError) {
-        throw new Error(submitError.message || 'Payment validation failed');
-      }
+      // TODO: Replace with Square payment confirmation
+      // const { error: submitError } = await elements.submit();
 
-      const { error: confirmError, paymentIntent: confirmedPayment } = await stripe.confirmPayment({
-        elements,
-        clientSecret,
-        confirmParams: {
-          return_url: `${window.location.origin}/payment/success`,
-          payment_method_data: {
-            billing_details: {
-              name: billingDetails.name,
-              email: billingDetails.email,
-              phone: billingDetails.phone,
-              address: billingDetails.address,
-            },
-          },
-        },
-        redirect: 'if_required',
-      });
+      // if (submitError) {
+      //   throw new Error(submitError.message || 'Payment validation failed');
+      // }
 
-      if (confirmError) {
-        throw new Error(confirmError.message || 'Payment confirmation failed');
-      }
+      // const { error: confirmError, paymentIntent: confirmedPayment } = await stripe.confirmPayment({
+      //   elements,
+      //   clientSecret,
+      //   confirmParams: {
+      //     return_url: `${window.location.origin}/payment/success`,
+      //     payment_method_data: {
+      //       billing_details: {
+      //         name: billingDetails.name,
+      //         email: billingDetails.email,
+      //         phone: billingDetails.phone,
+      //         address: billingDetails.address,
+      //       },
+      //     },
+      //   },
+      //   redirect: 'if_required',
+      // });
 
-      if (confirmedPayment && confirmedPayment.status === 'succeeded') {
-        onSuccess(confirmedPayment);
-      } else if (confirmedPayment && confirmedPayment.status === 'requires_action') {
-        // Handle 3D Secure or other authentication
-        setError('Additional authentication required. Please complete the verification.');
-      } else {
-        throw new Error('Payment was not completed successfully');
-      }
+      // TODO: Implement Square payment processing here
+      throw new Error('Stripe payment integration not implemented. Please use Square payment instead.');
+
+      // if (confirmError) {
+      //   throw new Error(confirmError.message || 'Payment confirmation failed');
+      // }
+
+      // if (confirmedPayment && confirmedPayment.status === 'succeeded') {
+      //   onSuccess(confirmedPayment);
+      // } else if (confirmedPayment && confirmedPayment.status === 'requires_action') {
+      //   // Handle 3D Secure or other authentication
+      //   setError('Additional authentication required. Please complete the verification.');
+      // } else {
+      //   throw new Error('Payment was not completed successfully');
+      // }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Payment failed';
       setError(errorMessage);
@@ -179,7 +186,13 @@ export const PaymentElementForm: React.FC<PaymentElementFormProps> = ({
       {/* Payment Element */}
       {clientSecret && (
         <div className="border border-gray-200 rounded-lg p-4">
-          <PaymentElement
+          {/* TODO: Replace with Square payment form */}
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+            <p className="text-yellow-800">
+              Stripe payment form not implemented. Please use Square payment instead.
+            </p>
+          </div>
+          {/* <PaymentElement
             options={{
               layout: 'tabs',
               defaultValues: {
@@ -191,7 +204,7 @@ export const PaymentElementForm: React.FC<PaymentElementFormProps> = ({
                 },
               },
             }}
-          />
+          /> */}
         </div>
       )}
 
@@ -230,9 +243,9 @@ export const PaymentElementForm: React.FC<PaymentElementFormProps> = ({
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={!stripe || !elements || isLoading || !clientSecret}
+        disabled={isLoading || !clientSecret}
         className={`w-full flex items-center justify-center px-6 py-3 rounded-lg font-medium text-white transition-colors ${
-          !stripe || !elements || isLoading || !clientSecret
+          isLoading || !clientSecret
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
         }`}

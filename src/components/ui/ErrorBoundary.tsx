@@ -18,20 +18,41 @@ interface ErrorBoundaryProps {
 interface ErrorFallbackProps {
   error: Error;
   resetError: () => void;
-  errorInfo?: React.ErrorInfo;
+  errorInfo?: React.ErrorInfo | null;
 }
 
 const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
   error,
   resetError,
-  errorInfo
+  errorInfo,
 }) => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   const handleReportError = () => {
-    // In a real app, this would send the error to your error reporting service
-    console.error('Error reported:', { error, errorInfo });
-    // You could integrate with services like Sentry, LogRocket, etc.
+    // Enhanced error reporting with more context
+    const errorReport = {
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      },
+      errorInfo,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+    };
+    
+    // In production, send to error reporting service
+    if (process.env.NODE_ENV === 'production') {
+      // Integration with error reporting service would go here
+      // Example: Sentry.captureException(error, { extra: errorReport });
+    } else {
+      console.error('Error reported:', errorReport);
+    }
   };
 
   return (
@@ -201,7 +222,7 @@ export const useErrorHandler = () => {
 // Higher-order component for wrapping components with error boundary
 export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
-  fallback?: React.ComponentType<ErrorFallbackProps>
+  fallback?: React.ComponentType<ErrorFallbackProps>,
 ) => {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary fallback={fallback}>

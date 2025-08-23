@@ -171,7 +171,7 @@ export const BookingConfirmationPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
             Loading Confirmation
           </h2>
@@ -199,7 +199,7 @@ export const BookingConfirmationPage: React.FC = () => {
             </p>
             <button
               onClick={handleGoHome}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
             >
               <Home className="h-4 w-4 mr-2" />
               Go to Home Page
@@ -234,7 +234,7 @@ export const BookingConfirmationPage: React.FC = () => {
             <li>
               <button
                 onClick={handleGoHome}
-                className="hover:text-blue-600 transition-colors"
+                className="hover:text-primary transition-colors"
               >
                 Home
               </button>
@@ -243,7 +243,7 @@ export const BookingConfirmationPage: React.FC = () => {
             <li>
               <button
                 onClick={() => navigate('/bookings')}
-                className="hover:text-blue-600 transition-colors"
+                className="hover:text-primary transition-colors"
               >
                 My Bookings
               </button>

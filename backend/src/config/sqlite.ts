@@ -82,16 +82,8 @@ const sqliteConfigSchema = z.object({
   }),
 });
 
-// Ensure D: drive directory exists
-const databaseDir = 'D:/';
-if (!fs.existsSync(databaseDir)) {
-  // If D: drive doesn't exist (e.g., on Linux/macOS), use a fallback path
-  console.warn('D: drive not found, using local database directory instead');
-}
-
-const dbPath = fs.existsSync(databaseDir) 
-  ? path.join(databaseDir, 'vibe-booking.db')
-  : path.join(process.cwd(), 'data', 'vibe-booking.db');
+// Use the DATABASE_URL from environment or fallback to local path
+const dbPath = process.env.DATABASE_URL || path.join(process.cwd(), 'data', 'vibe-booking.db');
 
 // Ensure the database directory exists
 const dbDir = path.dirname(dbPath);

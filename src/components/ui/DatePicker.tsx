@@ -1,5 +1,5 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Minus, Plus } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, Minus, Plus } from 'lucide-react';
 import { Button } from './Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from './Input';
@@ -29,13 +29,19 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
   const increment = (type: 'adults' | 'children' | 'rooms') => {
     switch (type) {
       case 'adults':
-        if (adults < 10) onGuestChange(adults + 1, children, rooms);
+        if (adults < 10) {
+onGuestChange(adults + 1, children, rooms);
+}
         break;
       case 'children':
-        if (children < 8) onGuestChange(adults, children + 1, rooms);
+        if (children < 8) {
+onGuestChange(adults, children + 1, rooms);
+}
         break;
       case 'rooms':
-        if (rooms < 5) onGuestChange(adults, children, rooms + 1);
+        if (rooms < 5) {
+onGuestChange(adults, children, rooms + 1);
+}
         break;
     }
   };
@@ -43,26 +49,32 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
   const decrement = (type: 'adults' | 'children' | 'rooms') => {
     switch (type) {
       case 'adults':
-        if (adults > 1) onGuestChange(adults - 1, children, rooms);
+        if (adults > 1) {
+onGuestChange(adults - 1, children, rooms);
+}
         break;
       case 'children':
-        if (children > 0) onGuestChange(adults, children - 1, rooms);
+        if (children > 0) {
+onGuestChange(adults, children - 1, rooms);
+}
         break;
       case 'rooms':
-        if (rooms > 1) onGuestChange(adults, children, rooms - 1);
+        if (rooms > 1) {
+onGuestChange(adults, children, rooms - 1);
+}
         break;
     }
   };
 
   return (
     <div className={cn('space-y-4', className)}>
-      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Guests & Rooms</h3>
+      <h3 className="font-semibold text-foreground mb-4">Guests & Rooms</h3>
 
       {/* Adults */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="font-medium text-gray-900 dark:text-white">Adults</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Ages 13+</div>
+          <div className="font-medium text-foreground">Adults</div>
+          <div className="text-sm text-muted-foreground">Ages 13+</div>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -74,7 +86,7 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
           >
             <Minus className="w-4 h-4" />
           </Button>
-          <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
+          <span className="w-8 text-center font-medium text-foreground">
             {adults}
           </span>
           <Button
@@ -92,8 +104,8 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
       {/* Children */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="font-medium text-gray-900 dark:text-white">Children</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Ages 0-12</div>
+          <div className="font-medium text-foreground">Children</div>
+          <div className="text-sm text-muted-foreground">Ages 0-12</div>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -105,7 +117,7 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
           >
             <Minus className="w-4 h-4" />
           </Button>
-          <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
+          <span className="w-8 text-center font-medium text-foreground">
             {children}
           </span>
           <Button
@@ -123,8 +135,8 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
       {/* Rooms */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="font-medium text-gray-900 dark:text-white">Rooms</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Maximum 5 rooms</div>
+          <div className="font-medium text-foreground">Rooms</div>
+          <div className="text-sm text-muted-foreground">Maximum 5 rooms</div>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -136,7 +148,7 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
           >
             <Minus className="w-4 h-4" />
           </Button>
-          <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
+          <span className="w-8 text-center font-medium text-foreground">
             {rooms}
           </span>
           <Button
@@ -162,12 +174,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     selectedDateRange,
     guestCount,
     setDateRange,
-    setGuestCount
+    setGuestCount,
   } = useSearchStore();
 
   const [checkInDate, setCheckInDate] = useState(selectedDateRange.checkIn || '');
   const [checkOutDate, setCheckOutDate] = useState(selectedDateRange.checkOut || '');
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // const [currentMonth, setCurrentMonth] = useState(new Date());
   const [localGuestCount, setLocalGuestCount] = useState(guestCount);
   const [activeTab, setActiveTab] = useState<'dates' | 'guests'>('dates');
 
@@ -176,7 +188,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   // Calculate nights
   const calculateNights = (checkIn: string, checkOut: string) => {
-    if (!checkIn || !checkOut) return 0;
+    if (!checkIn || !checkOut) {
+return 0;
+}
     const start = new Date(checkIn);
     const end = new Date(checkOut);
     const diffTime = end.getTime() - start.getTime();
@@ -198,7 +212,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   // Validate dates
   const isValidDateRange = () => {
-    if (!checkInDate || !checkOutDate) return false;
+    if (!checkInDate || !checkOutDate) {
+return false;
+}
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
     return checkOut > checkIn;
@@ -217,7 +233,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   const formatDateDisplay = (date: string) => {
-    if (!date) return '';
+    if (!date) {
+return '';
+}
     return new Date(date).toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -239,7 +257,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Select Dates & Guests
             </h2>
           </div>
@@ -263,7 +281,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
               activeTab === 'dates'
                 ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white',
             )}
           >
             Dates
@@ -274,7 +292,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
               activeTab === 'guests'
                 ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white',
             )}
           >
             Guests
@@ -288,7 +306,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               {/* Date Inputs */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Check-in
                   </label>
                   <Input
@@ -299,14 +317,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     className="w-full"
                   />
                   {checkInDate && (
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {formatDateDisplay(checkInDate)}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Check-out
                   </label>
                   <Input
@@ -317,7 +335,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     className="w-full"
                   />
                   {checkOutDate && (
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {formatDateDisplay(checkOutDate)}
                     </div>
                   )}
@@ -335,7 +353,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
               {/* Quick Date Shortcuts */}
               <div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="text-sm font-medium text-foreground mb-2">
                   Quick Select
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -390,15 +408,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
         {/* Summary */}
         <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Your Selection:</div>
+          <div className="text-sm text-muted-foreground mb-1">Your Selection:</div>
           <div className="space-y-1">
             {checkInDate && checkOutDate && (
-              <div className="text-sm font-medium text-gray-900 dark:text-white">
+              <div className="text-sm font-medium text-foreground">
                 {formatDateDisplay(checkInDate)} - {formatDateDisplay(checkOutDate)}
-                {nights > 0 && <span className="text-gray-500"> ({nights} night{nights > 1 ? 's' : ''})</span>}
+                {nights > 0 && <span className="text-muted-foreground"> ({nights} night{nights > 1 ? 's' : ''})</span>}
               </div>
             )}
-            <div className="text-sm font-medium text-gray-900 dark:text-white">
+            <div className="text-sm font-medium text-foreground">
               {getGuestSummary()}
             </div>
           </div>

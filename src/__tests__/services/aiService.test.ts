@@ -4,8 +4,20 @@ import { aiService } from '@/services/aiService';
 import type { ProcessedQuery } from '@/types/api';
 
 // Mock axios
-vi.mock('axios');
-const mockedAxios = vi.mocked(axios);
+vi.mock('axios', () => ({
+  default: {
+    post: vi.fn(),
+    get: vi.fn(),
+    create: vi.fn(() => ({
+      post: vi.fn(),
+      get: vi.fn(),
+    })),
+  },
+}));
+
+const mockedAxios = axios as any;
+mockedAxios.post = vi.fn();
+mockedAxios.get = vi.fn();
 
 describe('AIService', () => {
   beforeEach(() => {
@@ -15,27 +27,27 @@ describe('AIService', () => {
 
   describe('processNaturalLanguage', () => {
     const mockProcessedQuery: ProcessedQuery = {
-      city: 'Paris',
-      dates: {
-        checkIn: '2024-12-01',
-        checkOut: '2024-12-03',
+      intent: 'search_hotels',
+      originalQuery: 'Hotels in Paris for 2 adults',
+      extractedDetails: {
+        location: 'Paris',
+        dates: {
+          checkIn: '2024-12-01',
+          checkOut: '2024-12-03',
+        },
+        guests: {
+          adults: 2,
+          children: 0,
+          rooms: 1
+        },
+        preferences: ['luxury', 'spa'],
+        budget: {
+          min: 200,
+          max: 500,
+          currency: 'USD'
+        }
       },
-      guests: {
-        adults: 2,
-        children: 0,
-      },
-      preferences: ['luxury', 'spa'],
-      budget: {
-        min: 200,
-        max: 500,
-      },
-      confidence: 0.95,
-      entities: {
-        location: ['Paris'],
-        dates: ['December 1st', 'December 3rd'],
-        people: ['2 adults'],
-        amenities: ['spa'],
-      },
+      confidence: 0.9
     };
 
     it('should process natural language query successfully', async () => {
@@ -413,7 +425,7 @@ describe('AIService', () => {
     });
 
     it('should handle concurrent requests properly', async () => {
-      mockedAxios.post.mockImplementation((url) => {
+      mockedAxios.post.mockImplementation((url: string) => {
         return new Promise(resolve => {
           setTimeout(() => {
             resolve({ data: { result: `response for ${url}` } });

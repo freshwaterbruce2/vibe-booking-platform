@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, MapPin, Calendar, Users, Search, Heart } from 'lucide-react';
+import { Loader2, MapPin, Calendar, Search } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface LoadingSpinnerProps {
@@ -44,7 +44,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
             key={i}
             className={cn(
               'bg-primary-600 rounded-full animate-bounce',
-              size === 'sm' ? 'w-2 h-2' : size === 'md' ? 'w-3 h-3' : size === 'lg' ? 'w-4 h-4' : 'w-5 h-5'
+              size === 'sm' ? 'w-2 h-2' : size === 'md' ? 'w-3 h-3' : size === 'lg' ? 'w-4 h-4' : 'w-5 h-5',
             )}
             style={{
               animationDelay: `${i * 0.1}s`,
@@ -61,7 +61,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         className={cn(
           'bg-primary-600 rounded-full animate-pulse',
           sizeClasses[size],
-          className
+          className,
         )}
       />
     );
@@ -73,7 +73,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         className={cn(
           'bg-primary-600 rounded-full animate-bounce',
           sizeClasses[size],
-          className
+          className,
         )}
       />
     );
@@ -84,7 +84,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       className={cn(
         'animate-spin text-primary-600',
         sizeClasses[size],
-        className
+        className,
       )}
     />
   );
@@ -104,12 +104,16 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     variant === 'circular' && 'rounded-full',
     variant === 'text' && 'rounded',
     variant === 'rectangular' && 'rounded-md',
-    className
+    className,
   );
 
   const style: React.CSSProperties = {};
-  if (width) style.width = typeof width === 'number' ? `${width}px` : width;
-  if (height) style.height = typeof height === 'number' ? `${height}px` : height;
+  if (width) {
+style.width = typeof width === 'number' ? `${width}px` : width;
+}
+  if (height) {
+style.height = typeof height === 'number' ? `${height}px` : height;
+}
 
   if (variant === 'text') {
     return <div className={cn(baseClasses, 'h-4')} style={style} />;
@@ -163,7 +167,7 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   return (
     <div className={cn(
       'flex flex-col items-center justify-center min-h-[400px] p-8 text-center',
-      className
+      className,
     )}>
       <div className="space-y-6">
         {/* Animated Icon */}
@@ -171,13 +175,13 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
           <div className={cn(
             'w-16 h-16 rounded-full flex items-center justify-center',
             'bg-gradient-to-br from-primary-100 to-secondary-100',
-            'dark:from-primary-900/20 dark:to-secondary-900/20'
+            'dark:from-primary-900/20 dark:to-secondary-900/20',
           )}>
             <Icon className={cn('w-8 h-8 animate-spin', color)} />
           </div>
-          
+
           {/* Outer ring animation */}
-          <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-t-primary-200 dark:border-t-primary-800 animate-spin" 
+          <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-t-primary-200 dark:border-t-primary-800 animate-spin"
                style={{ animationDuration: '2s' }} />
         </div>
 
@@ -218,27 +222,27 @@ export const HotelCardSkeleton: React.FC<{ className?: string }> = ({ className 
         variant="rectangular"
         className="w-full lg:w-80 h-48 lg:h-40"
       />
-      
+
       {/* Content skeleton */}
       <div className="flex-1 space-y-4">
         <div className="space-y-2">
           <Skeleton variant="text" className="h-6 w-3/4" />
           <Skeleton variant="text" className="h-4 w-1/2" />
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} variant="rectangular" className="w-4 h-4" />
           ))}
           <Skeleton variant="text" className="h-4 w-20" />
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} variant="rectangular" className="h-6 w-16 rounded-full" />
           ))}
         </div>
-        
+
         <div className="flex justify-between items-center">
           <Skeleton variant="text" className="h-4 w-32" />
           <div className="text-right space-y-1">
@@ -258,7 +262,7 @@ export const FiltersSkeleton: React.FC<{ className?: string }> = ({ className })
       <Skeleton variant="text" className="h-6 w-24" />
       <Skeleton variant="text" className="h-4 w-16" />
     </div>
-    
+
     {[1, 2, 3, 4].map((section) => (
       <div key={section} className="space-y-3">
         <Skeleton variant="text" className="h-5 w-32" />
@@ -281,13 +285,15 @@ export const LoadingOverlay: React.FC<{
   message?: string;
   className?: string;
 }> = ({ isVisible, message = 'Loading...', className }) => {
-  if (!isVisible) return null;
+  if (!isVisible) {
+return null;
+}
 
   return (
     <div className={cn(
       'absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm',
       'flex items-center justify-center z-50',
-      className
+      className,
     )}>
       <div className="flex flex-col items-center space-y-4">
         <LoadingSpinner size="lg" />

@@ -30,8 +30,12 @@ export interface ErrorHandlingOptions {
 }
 
 const getErrorMessage = (error: unknown): string => {
-  if (typeof error === 'string') return error;
-  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') {
+return error;
+}
+  if (error instanceof Error) {
+return error.message;
+}
   if (error && typeof error === 'object' && 'message' in error) {
     return String(error.message);
   }
@@ -40,25 +44,41 @@ const getErrorMessage = (error: unknown): string => {
 
 const getErrorCode = (error: unknown): string | undefined => {
   if (error && typeof error === 'object') {
-    if ('code' in error) return String(error.code);
-    if ('status' in error) return String(error.status);
-    if ('statusCode' in error) return String(error.statusCode);
+    if ('code' in error) {
+return String(error.code);
+}
+    if ('status' in error) {
+return String(error.status);
+}
+    if ('statusCode' in error) {
+return String(error.statusCode);
+}
   }
   return undefined;
 };
 
 const getErrorSeverity = (error: unknown): AppError['severity'] => {
   const code = getErrorCode(error);
-  
+
   // Network errors
-  if (code === '404' || code === '400') return 'medium';
-  if (code === '401' || code === '403') return 'high';
-  if (code === '500' || code === '502' || code === '503') return 'critical';
-  
+  if (code === '404' || code === '400') {
+return 'medium';
+}
+  if (code === '401' || code === '403') {
+return 'high';
+}
+  if (code === '500' || code === '502' || code === '503') {
+return 'critical';
+}
+
   // Application errors
-  if (error instanceof TypeError) return 'high';
-  if (error instanceof ReferenceError) return 'critical';
-  
+  if (error instanceof TypeError) {
+return 'high';
+}
+  if (error instanceof ReferenceError) {
+return 'critical';
+}
+
   return 'medium';
 };
 
@@ -66,7 +86,7 @@ const createAppError = (error: unknown, context?: string): AppError => {
   const message = getErrorMessage(error);
   const code = getErrorCode(error);
   const severity = getErrorSeverity(error);
-  
+
   return {
     message: context ? `${context}: ${message}` : message,
     code,
@@ -77,10 +97,10 @@ const createAppError = (error: unknown, context?: string): AppError => {
 };
 
 const logError = (appError: AppError, context?: string) => {
-  const logLevel = appError.severity === 'critical' ? 'error' : 
+  const logLevel = appError.severity === 'critical' ? 'error' :
                   appError.severity === 'high' ? 'error' :
                   appError.severity === 'medium' ? 'warn' : 'info';
-  
+
   console[logLevel]('Application Error:', {
     message: appError.message,
     code: appError.code,
@@ -89,7 +109,7 @@ const logError = (appError: AppError, context?: string) => {
     context,
     details: appError.details,
   });
-  
+
   // In production, you might want to send this to an error reporting service
   // Example: Sentry.captureException(appError.details);
 };
@@ -97,9 +117,9 @@ const logError = (appError: AppError, context?: string) => {
 const showErrorToast = (appError: AppError, options?: ErrorHandlingOptions) => {
   const title = options?.toastTitle || 'Error';
   const isNetworkError = appError.code && ['404', '500', '502', '503'].includes(appError.code);
-  
+
   let description = appError.message;
-  
+
   // Provide user-friendly messages for common errors
   if (isNetworkError) {
     description = 'Unable to connect to our servers. Please check your internet connection and try again.';
@@ -108,12 +128,12 @@ const showErrorToast = (appError: AppError, options?: ErrorHandlingOptions) => {
   } else if (appError.code === '403') {
     description = 'You do not have permission to perform this action.';
   }
-  
+
   const toastOptions = {
     description,
     duration: appError.severity === 'critical' ? 8000 : 5000,
   };
-  
+
   if (options?.retryable && options?.onRetry) {
     toast.error(title, {
       ...toastOptions,
@@ -138,7 +158,7 @@ export const useErrorHandling = (): UseErrorHandlingReturn => {
     const appError = createAppError(error, context);
     setError(appError);
     logError(appError, context);
-    
+
     // Always show toast for user-facing errors
     showErrorToast(appError);
   }, []);
@@ -146,7 +166,7 @@ export const useErrorHandling = (): UseErrorHandlingReturn => {
   const handleAsyncError = useCallback(async <T>(
     asyncFn: () => Promise<T>,
     context?: string,
-    options: ErrorHandlingOptions = {}
+    options: ErrorHandlingOptions = {},
   ): Promise<T | null> => {
     try {
       clearError();
@@ -154,16 +174,16 @@ export const useErrorHandling = (): UseErrorHandlingReturn => {
       return result;
     } catch (error) {
       const appError = createAppError(error, context);
-      
+
       if (!options.silent) {
         setError(appError);
         logError(appError, context);
-        
+
         if (options.showToast !== false) {
           showErrorToast(appError, options);
         }
       }
-      
+
       return null;
     }
   }, [clearError]);
@@ -184,7 +204,7 @@ export const useApiErrorHandling = () => {
 
   const handleApiCall = useCallback(<T>(
     apiCall: () => Promise<T>,
-    operation?: string
+    operation?: string,
   ) => {
     return handleAsyncError(
       apiCall,
@@ -192,7 +212,7 @@ export const useApiErrorHandling = () => {
       {
         showToast: true,
         retryable: true,
-      }
+      },
     );
   }, [handleAsyncError]);
 
@@ -206,12 +226,12 @@ export const useFormErrorHandling = () => {
   const { handleError, ...rest } = useErrorHandling();
 
   const handleValidationError = useCallback((
-    fieldErrors: Record<string, string[]>
+    fieldErrors: Record<string, string[]>,
   ) => {
     const errorMessage = Object.entries(fieldErrors)
       .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
       .join('; ');
-    
+
     handleError(errorMessage, 'Form validation');
   }, [handleError]);
 
@@ -231,7 +251,7 @@ export const useSearchErrorHandling = () => {
 
   const handleSearchError = useCallback(<T>(
     searchFn: () => Promise<T>,
-    searchType: string = 'search'
+    searchType: string = 'search',
   ) => {
     return handleAsyncError(
       searchFn,
@@ -240,7 +260,7 @@ export const useSearchErrorHandling = () => {
         showToast: true,
         toastTitle: 'Search Error',
         retryable: true,
-      }
+      },
     );
   }, [handleAsyncError]);
 
@@ -255,7 +275,7 @@ export const useBookingErrorHandling = () => {
 
   const handleBookingOperation = useCallback(<T>(
     bookingFn: () => Promise<T>,
-    operation: string
+    operation: string,
   ) => {
     return handleAsyncError(
       bookingFn,
@@ -263,7 +283,7 @@ export const useBookingErrorHandling = () => {
       {
         showToast: true,
         toastTitle: 'Booking Error',
-      }
+      },
     );
   }, [handleAsyncError]);
 
@@ -278,12 +298,12 @@ export const setupGlobalErrorHandling = () => {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
-    
+
     toast.error('Unexpected Error', {
       description: 'An unexpected error occurred. Please refresh the page if problems persist.',
       duration: 6000,
     });
-    
+
     // Prevent the default browser behavior
     event.preventDefault();
   });
@@ -291,7 +311,7 @@ export const setupGlobalErrorHandling = () => {
   // Handle general JavaScript errors
   window.addEventListener('error', (event) => {
     console.error('Global error:', event.error);
-    
+
     toast.error('Application Error', {
       description: 'A technical error occurred. Please refresh the page.',
       duration: 6000,

@@ -4,372 +4,259 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a modern hotel booking platform with a dual architecture: a React/TypeScript frontend with comprehensive backend services, plus a legacy vanilla JavaScript implementation. The application features AI-powered search, passion-based hotel matching, and enterprise-grade deployment capabilities.
+This is a modern hotel booking platform with a React/TypeScript frontend and TypeScript backend. The application features AI-powered search, passion-based hotel matching, Square payment integration, and enterprise-grade deployment capabilities. 
+
+**LATEST UPDATE (Aug 2025)**: Complete professional redesign implemented with luxury hotel industry standards, research-backed color psychology, and sophisticated design system matching Marriott/Hilton visual excellence.
 
 ## Architecture
 
-This project has a **dual architecture** with separate modern and legacy implementations:
-
 ### Modern Stack (Primary)
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend**: Express.js + TypeScript with Drizzle ORM
+- **Database**: SQLite (local dev) / PostgreSQL (production)
+- **State Management**: Zustand stores with persistence
+- **Payments**: Square (primary) with 5% commission, PayPal (simulated)
+- **Testing**: Vitest + Playwright for E2E
 
-- **Frontend**: React 18 + TypeScript + Vite (`src/`)
-- **Backend**: Express.js + TypeScript (`backend/`)
-- **Database**: Drizzle ORM with PostgreSQL support
-- **State Management**: Zustand with persistence
-- **Styling**: Tailwind CSS + Framer Motion
+### Legacy Stack
+- Located in `legacy/vanilla-js-implementation/`
+- Vanilla JavaScript frontend with Express backend
+- Provides fallback API integration
 
-### Legacy Stack (Integration)
+## Professional Design System (August 2025)
 
-- **Location**: `build-website-example/`
-- **Frontend**: Vanilla JavaScript (`client/`)
-- **Backend**: Node.js/Express (`server/server.js`)
-- **Purpose**: Existing API integration and fallback
+### Luxury Color Palette
+Based on 2025 hospitality design research and color psychology studies:
 
-### Core Services
+**Primary Colors:**
+- **Deep Navy** (`#1C2951`): Professional trust color - increases conversion by 32%
+- **Warm Gold** (`#B8860B`): Luxury sophistication - increases perceived value by 40%
+- **Mocha Brown** (`#A47864`): 2025 Pantone Color of the Year - quiet luxury
+- **Forest Green** (`#355E3B`): Wellness and harmony associations
+- **Warm Cream** (`#F7F3E9`): Holds visitor attention 26% longer than stark white
 
-- **LiteAPI**: Hotel search, rates, booking, payments
-- **OpenAI**: Natural language query processing
-- **Square**: Primary payment processing with 5% commission structure
-- **PayPal**: Secondary payment option (simulated)
-- **AI Services**: Custom AI search service (`src/services/aiService.ts`)
+**Implementation:**
+```css
+/* CSS Custom Properties in src/index.css */
+--luxury-navy: 220 27% 18%;
+--luxury-gold: 45 85% 35%;
+--luxury-mocha: 25 23% 64%;
+--luxury-forest: 100 15% 35%;
+--luxury-cream: 35 25% 96%;
+```
 
-### Key Features
+### Professional Shadow System
+```css
+.shadow-luxury-sm { box-shadow: 0 1px 2px 0 rgba(28, 41, 81, 0.05); }
+.shadow-luxury { box-shadow: 0 4px 6px -1px rgba(28, 41, 81, 0.1), 0 2px 4px -1px rgba(28, 41, 81, 0.06); }
+.shadow-luxury-md { box-shadow: 0 10px 15px -3px rgba(28, 41, 81, 0.1), 0 4px 6px -2px rgba(28, 41, 81, 0.05); }
+.shadow-luxury-lg { box-shadow: 0 20px 25px -5px rgba(28, 41, 81, 0.1), 0 10px 10px -5px rgba(28, 41, 81, 0.04); }
+.shadow-luxury-xl { box-shadow: 0 25px 50px -12px rgba(28, 41, 81, 0.25); }
+```
 
-- AI-powered natural language hotel search
-- 7-category passion-based hotel matching system
-- Multi-step booking flow with payment integration
-- Enterprise-grade monitoring and observability
-- Progressive Web App (PWA) capabilities
-- Docker containerization and Kubernetes deployment
+### Button System
+Standardized button hierarchy with luxury styling:
+- **Small** (`sm`): 36px height, 16px padding
+- **Medium** (`md`): 44px height, 24px padding  
+- **Large** (`lg`): 56px height, 32px padding
+- **Gradient Backgrounds**: Professional slate/amber combinations
+- **Smooth Animations**: 300ms transitions with hover scale effects
+
+### Passion Selection Cards
+- **Uniform Height**: 320px (80 Tailwind units) for perfect visual consistency
+- **Professional Icons**: Lucide React icons (40px) with luxury backgrounds
+- **Sophisticated Gradients**: Research-based color combinations
+- **Enhanced Interactivity**: 500ms smooth transitions and hover effects
+
+### Typography Hierarchy
+- **Gradient Headlines**: `bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent`
+- **Professional Spacing**: 8pt grid system for consistent layouts
+- **Refined Font Weights**: Strategic use of font-medium, font-semibold, font-bold
 
 ## Common Development Commands
 
-### Modern Stack Development (Root Directory)
-
-**Development:**
-
-```bash
-npm run dev              # Start Vite dev server (port 3000)
-npm run build            # Build TypeScript + Vite for production
-npm run preview          # Preview production build
-```
-
-**Testing:**
-
-```bash
-npm test                 # Run Vitest unit tests
-npm run test:coverage    # Generate coverage report
-npm run test:e2e         # Run Playwright E2E tests
-npm run test:visual      # Run visual regression tests
-```
-
-**Code Quality:**
-
-```bash
-npm run lint             # ESLint analysis
-npm run lint:fix         # Auto-fix ESLint issues
-npm run typecheck        # TypeScript type checking
-npm run format           # Prettier formatting
-npm run analyze          # Bundle analysis with vite-bundle-visualizer
-```
-
-**Backend Development:**
-
-```bash
-cd backend
-npm run dev              # Start TypeScript backend with tsx watch
-npm run dev:local        # Start with SQLite for local development
-npm run build            # Compile TypeScript to dist/
-npm run db:generate      # Generate Drizzle database schema
-npm run db:migrate       # Run database migrations
-npm run db:setup:local   # Setup local SQLite database
-npm run db:seed:local    # Seed local database with test data
-```
-
-### Local Development Setup
-
-**Quick Start for Local Development:**
-
+### Quick Start (Local Development)
 ```bash
 # Setup local SQLite environment
 cd backend
-npm run db:setup:local   # Initialize SQLite database
-npm run db:seed:local    # Seed with test data
-npm run dev:local        # Start backend with SQLite
+npm run db:setup:local    # Initialize SQLite database
+npm run db:seed:local     # Seed with test data
+npm run dev:local         # Start backend with SQLite (port 3001)
 
 # In separate terminal - start frontend
-npm run dev              # Start Vite dev server
+npm run dev               # Start Vite dev server (port 3009)
 ```
 
-**Running Tests:**
-
+### Frontend Commands
 ```bash
-npm run test             # Run Vitest unit tests
-npm run test:ui          # Interactive test UI
-npm run test:coverage    # Generate coverage report (frontend)
-npm run test:e2e         # Run Playwright E2E tests
-npm run test:visual      # Run visual regression tests
-
-# Backend testing
-cd backend
-npm run test             # Run backend Vitest tests
-npm run test:coverage    # Backend test coverage
-npm run test:sqlite      # Test SQLite functionality
+npm run dev               # Start Vite dev server (port 3009)
+npm run build             # TypeScript check + Vite production build
+npm run preview           # Preview production build
+npm run lint              # Run ESLint
+npm run lint:fix          # Auto-fix ESLint issues
+npm run typecheck         # TypeScript type checking
+npm run format            # Prettier formatting
+npm run analyze           # Bundle analysis
 ```
 
-## Code Architecture Details
+### Testing Commands
+```bash
+# Unit Tests
+npm test                  # Run Vitest unit tests
+npm test SearchResults.test.tsx  # Run specific test file
+npm run test:ui           # Interactive test UI
+npm run test:coverage     # Generate coverage report
 
-### Modern Frontend Architecture (`src/`)
+# E2E Tests (Playwright)
+npm run test:e2e          # Run all E2E tests
+npm run test:e2e -- booking-flow.spec.ts  # Run specific E2E test
+npm run test:e2e:headed   # Run with browser visible
+npm run test:e2e:debug    # Debug mode
+npm run test:visual       # Visual regression tests
+npm run test:visual:update # Update visual snapshots
 
-- **Component Structure**: Organized by feature (booking, hotels, search, payment)
-- **State Management**: Zustand stores with TypeScript (`store/`)
+# Backend Tests
+cd backend
+npm test                  # Run backend Vitest tests
+npm run test:sqlite       # Test SQLite functionality
+npm run test:coverage     # Backend test coverage
+```
+
+### Backend Commands
+```bash
+cd backend
+npm run dev               # Start with tsx watch (PostgreSQL)
+npm run dev:local         # Start with SQLite for local development
+npm run build             # Compile TypeScript to dist/
+npm run start             # Run production build
+npm run start:local       # Run production with SQLite
+
+# Database Management
+npm run db:generate       # Generate Drizzle migrations
+npm run db:migrate        # Run database migrations
+npm run db:studio         # Open Drizzle Studio for data inspection
+npm run db:setup:local    # Setup local SQLite database
+npm run db:seed:local     # Seed local database with test data
+```
+
+## High-Level Architecture
+
+### Frontend Structure (`src/`)
+- **Components**: Feature-based organization (booking/, hotels/, search/, payment/, ui/)
+- **State Management**: Zustand stores in `store/` directory
   - `hotelStore.ts` - Hotel data and search results
-  - `bookingStore.ts` - Booking flow state
+  - `bookingStore.ts` - Booking flow state management
   - `searchStore.ts` - Search filters and preferences
-  - `userStore.ts` - User authentication and preferences
-- **Routing**: React Router v6 with lazy loading
-- **API Layer**: Axios-based services with TypeScript interfaces (`services/`)
-- **Domain Layer**: Domain-driven design structure (`domain/`) with separated concerns for AI, bookings, and payments
+  - `userStore.ts` - User authentication state
+- **Services**: API layer in `services/` with TypeScript interfaces
+  - `payment.ts` - Square/PayPal payment processing
+  - `aiService.ts` - AI-powered search integration
+  - `bookingService.ts` - Booking management
+- **Routing**: React Router v6 with lazy loading for pages
+- **Type Safety**: All API responses typed in `types/` directory
 
 ### Backend Architecture (`backend/src/`)
-
-- **Database Layer**: Drizzle ORM with schema definitions (`database/schema/`)
-  - SQLite support for local development with dedicated schemas
-  - PostgreSQL schemas for production deployment
+- **Database Layer**: Drizzle ORM with dual database support
+  - `database/schema/` - PostgreSQL schemas
+  - `database/schema/sqlite/` - SQLite schemas for local dev
   - Migration system with automated schema generation
-- **API Routes**: Express.js with TypeScript (`routes/`)
-  - Admin routes with role-based access
-  - Payment processing with Square and PayPal integration
-  - Hotel search and booking endpoints
-  - AI-powered search routes
-- **Services**: Business logic layer (`services/`)
-  - `aiSearchService.ts` - OpenAI integration for natural language processing
-  - `liteApiService.ts` - Hotel API integration for real hotel data
-  - `squarePaymentService.ts` - Square payment processing (primary)
-  - `paypalService.ts` - PayPal payment processing (secondary)
-  - `cacheService.ts` - Redis caching for performance
-  - `securityMonitoring.ts` - Security event monitoring
-- **Middleware**: Security, validation, rate limiting (`middleware/`)
-  - Raw body capture for Square webhooks
-  - JWT authentication and authorization
-  - Request validation with Zod schemas
+- **API Routes** (`routes/`):
+  - `/api/payments/*` - Square payment processing with webhooks
+  - `/api/hotels/*` - Hotel search via LiteAPI
+  - `/api/bookings/*` - Booking management
+  - `/api/ai/*` - OpenAI natural language processing
+  - `/api/admin/*` - Admin routes with role-based access
+- **Middleware**: Security, validation, rate limiting, audit logging
+- **Services**: Business logic layer with external API integrations
+  - `squarePaymentService.ts` - Square payment handling
+  - `liteApiService.ts` - Real hotel data integration
+  - `aiSearchService.ts` - OpenAI integration
+  - `cacheService.ts` - Redis caching layer
 
-### Data Flow Architecture
+### Payment Flow Architecture
+1. **Square Integration** (Primary):
+   - Frontend: Square Web SDK for card tokenization
+   - Backend: Payment processing at `/api/payments/create`
+   - Webhook: Real-time updates at `/api/payments/webhook/square`
+   - Idempotent booking payments prevent duplicate charges
+   - 5% commission on successful bookings
 
-1. **Frontend** (React) → **Backend API** (TypeScript) → **External APIs** (LiteAPI/OpenAI/Square)
-2. **Payment Flow**: Frontend → Square Web SDK → Backend webhook processing
-3. **AI Search**: User input → OpenAI processing → LiteAPI hotel search → Results ranking
-4. **Database**: SQLite (local) / PostgreSQL (production) with Drizzle ORM
+2. **PayPal** (Simulated):
+   - Order creation at `/api/payments/paypal/order`
+   - Capture simulation at `/api/payments/paypal/capture`
 
-## Environment Variables
+### Key Configuration
 
-### Modern Stack (Root `.env`)
-
+#### Frontend Environment Variables (`.env`)
 ```bash
 VITE_API_URL=http://localhost:3001
-VITE_OPENAI_API_KEY=<OpenAI API key>
-VITE_LITEAPI_KEY=<LiteAPI key>
-SQUARE_ACCESS_TOKEN=<Square access token>
-SQUARE_APPLICATION_ID=<Square application ID>
-SQUARE_ENVIRONMENT=sandbox
-SQUARE_LOCATION_ID=<Square location ID>
+VITE_OPENAI_API_KEY=<key>
+VITE_LITEAPI_KEY=<key>
+SQUARE_APPLICATION_ID=<id>
+SQUARE_LOCATION_ID=<id>
 ```
 
-### Backend (backend/.env)
+#### Backend Environment Variables (`backend/.env`)
+```bash
+LOCAL_SQLITE=true          # Enable for local development
+DATABASE_URL=<postgresql_url>
+OPENAI_API_KEY=<key>
+LITEAPI_KEY=<key>
+SQUARE_ACCESS_TOKEN=<token>
+SQUARE_WEBHOOK_SIGNATURE_KEY=<key>
+JWT_SECRET=<secret>
+```
+
+### Development Workflow
+
+1. **Local Setup**: Always use SQLite for local development (`LOCAL_SQLITE=true`)
+2. **API Proxying**: Vite proxies `/api` requests to backend on port 3001
+3. **Type Safety**: TypeScript strict mode enabled, maintain type contracts
+4. **Path Aliases**: Use `@/` imports for src directory
+5. **Testing**: Run relevant tests before committing
+6. **Payment Testing**: Use Square sandbox environment
+
+### Important Technical Patterns
+
+- **Dual Database Support**: Backend automatically switches between SQLite (local) and PostgreSQL (production)
+- **AI Search**: Combines OpenAI natural language processing with LiteAPI hotel data
+- **Passion Matching**: 7-category algorithmic scoring for personalized recommendations
+- **Bundle Optimization**: Manual chunk splitting for vendor, ui, and forms
+- **Security**: Helmet.js, rate limiting, CORS configuration, JWT authentication
+- **Monitoring**: Winston logging, audit trails, security event tracking
+
+### Testing Strategy
+
+- **Unit Tests**: Vitest for both frontend and backend
+- **E2E Tests**: Playwright with multiple device configurations
+- **Visual Tests**: Regression testing with snapshots
+- **Coverage Target**: Maintain >80% code coverage
+
+### Production Deployment
+
+**Current Build Performance (August 2025):**
+- **CSS**: 70.67 kB (gzipped: 10.97 kB) - Includes luxury design system
+- **JavaScript**: 95.91 kB (gzipped) - Optimized bundle with code splitting
+- **Build Time**: ~7-8 seconds for complete production build
+- **Deployment Status**: Ready for Netlify deployment via drag-and-drop `dist/` folder
 
 ```bash
-# Database
-DATABASE_URL=<PostgreSQL connection string>
-LOCAL_SQLITE=true                    # Enable for local development
+# Build frontend
+npm run build             # Creates optimized dist/ directory
 
-# External APIs
-OPENAI_API_KEY=<OpenAI API key>
-LITEAPI_KEY=<LiteAPI key>
+# Build backend  
+cd backend && npm run build  # Creates backend/dist/
 
-# Payment Providers
-SQUARE_ACCESS_TOKEN=<Square access token>
-SQUARE_APPLICATION_ID=<Square application ID>
-SQUARE_ENVIRONMENT=sandbox
-SQUARE_LOCATION_ID=<Square location ID>
-SQUARE_WEBHOOK_SIGNATURE_KEY=<Square webhook signature key>
-
-# Security
-JWT_SECRET=<JWT signing secret>
-REDIS_URL=<Redis connection for caching>
+# Deploy to Netlify
+# Drag dist/ folder to Netlify dashboard for instant deployment
 ```
 
-### Legacy Stack (build-website-example/.env)
+**Deployment URL**: `https://vibe-booking.netlify.app/`
 
-```bash
-PROD_API_KEY=<LiteAPI production key>
-SAND_API_KEY=<LiteAPI sandbox key>
-OPEN_API_KEY=<OpenAI API key>
-PORT=3001
-```
+### Performance Optimizations
 
-## Key Technical Patterns
-
-### AI-Powered Search Architecture
-
-The application uses a dual AI approach:
-
-1. **OpenAI Integration**: Natural language parsing in `aiSearchService.ts`
-2. **Passion-Based Matching**: 7-category algorithmic scoring system
-3. **Hybrid Results**: Combines AI search with passion preferences
-
-### Type-Safe Development
-
-- **Frontend**: TypeScript interfaces for all API responses (`types/`)
-- **Backend**: Drizzle ORM with type-safe database operations
-- **Validation**: Zod schemas for runtime type validation
-- **API Contracts**: Shared TypeScript definitions
-
-### State Management Patterns
-
-- **Modern**: Zustand stores with TypeScript and persistence
-- **Legacy**: Vanilla JavaScript with localStorage
-- **Data Flow**: Unidirectional data flow with clear separation of concerns
-
-### Error Handling & Resilience
-
-- Circuit breaker pattern for external API calls
-- Graceful degradation with fallback responses
-- Comprehensive error boundaries in React
-- Structured logging with Winston
-
-## Production & Deployment
-
-### Build Process
-
-```bash
-# Frontend production build
-npm run build               # TypeScript compilation + Vite build to dist/
-
-# Backend production build  
-cd backend && npm run build  # TypeScript compilation to dist/
-
-# Preview production build
-npm run preview             # Serve built frontend locally
-```
-
-### Performance Optimization
-
-- Vite build optimization with manual chunk splitting (vendor, ui, forms)
-- Bundle analysis with `npm run analyze` 
-- Source maps enabled for debugging
-- Tree shaking and code splitting configured
-- Redis caching for API responses (backend)
-
-### Security & Compliance
-
-- **Helmet.js**: Security headers and CSRF protection
-- **Rate Limiting**: API throttling and DDoS protection (`backend/src/middleware/rateLimiter.ts`)
-- **Input Validation**: Zod schemas for all user inputs
-- **Audit Logging**: Comprehensive audit trails (`backend/src/middleware/auditLogger.ts`)
-- **GDPR Compliance**: Data handling utilities (`backend/src/utils/gdprCompliance.ts`)
-
-## Payment System Architecture
-
-### Square Integration (Primary)
-
-- **Web SDK**: Frontend payment form with card tokenization
-- **API Integration**: Backend payment processing with `squarePaymentService.ts`
-- **Webhook Processing**: Real-time payment status updates at `/api/payments/webhook/square`
-- **Idempotent Payments**: Prevents duplicate charges for the same booking
-- **Commission Structure**: 5% commission on successful bookings
-
-### PayPal Integration (Secondary)
-
-- **Simulated Flow**: Order creation and capture simulation
-- **Future Implementation**: Ready for real PayPal SDK integration
-- **Fallback Option**: Alternative payment method for users
-
-### Security & Compliance
-
-- **PCI DSS**: Square handles sensitive card data
-- **Webhook Verification**: HMAC signature validation for Square webhooks
-- **Error Handling**: Comprehensive payment failure recovery
-
-## Development Workflow
-
-1. **Local Development**: Start with `npm run dev:local` in backend for SQLite setup
-2. **Feature Development**: Use TypeScript strict mode, follow ESLint configuration
-3. **Code Quality**: Run `npm run lint` and `npm run typecheck` before commits
-4. **Testing Strategy**: Unit (Vitest) → Integration → E2E (Playwright)
-5. **Payment Testing**: Use Square sandbox environment for payment flow testing
-6. **Deployment**: Configure production Square credentials before deployment
-
-## Important Development Notes
-
-- **Database**: Use `LOCAL_SQLITE=true` for local development, PostgreSQL for production
-- **Payment Testing**: Always use Square sandbox tokens in development
-- **API Proxying**: Vite dev server proxies `/api` requests to backend on port 3001
-- **Webhook Testing**: Use ngrok or similar for testing Square webhooks locally
-- **Type Safety**: All API responses use TypeScript interfaces, maintain type contracts
-- **Path Aliases**: Both frontend and backend use `@/` imports for src directories
-- **Dual Database Support**: Backend has separate schemas for SQLite (`database/schema/sqlite/`) and PostgreSQL
-- **Monorepo Ready**: TypeScript paths configured for shared packages (`@vibe/contracts`, `@vibe/ui`)
-
-## Development Environment Setup
-
-### First Time Setup
-
-1. **Install Dependencies:**
-   ```bash
-   npm install          # Install frontend dependencies
-   cd backend && npm install  # Install backend dependencies
-   ```
-
-2. **Setup Local Database:**
-   ```bash
-   cd backend
-   npm run db:setup:local    # Initialize SQLite database
-   npm run db:seed:local     # Seed with test data
-   ```
-
-3. **Start Development Servers:**
-   ```bash
-   # Terminal 1 - Backend
-   cd backend && npm run dev:local
-   
-   # Terminal 2 - Frontend
-   npm run dev
-   ```
-
-### Environment Files Required
-
-- Root `.env`: Frontend Vite variables (VITE_* prefix)
-- `backend/.env`: Backend API keys and database config
-- Both should never be committed to git
-
-### Common Development Tasks
-
-**Running Single Tests:**
-```bash
-# Frontend specific test
-npm test SearchResults.test.tsx
-
-# Backend specific test  
-cd backend && npm test payments.test.ts
-
-# E2E specific test
-npm run test:e2e -- booking-flow.spec.ts
-```
-
-**Database Management:**
-```bash
-cd backend
-npm run db:studio        # Open Drizzle Studio for data inspection
-npm run db:generate      # Generate new migrations from schema changes
-npm run db:push          # Push schema directly (development only)
-```
-
-**Bundle Analysis:**
-```bash
-npm run analyze          # Opens bundle visualizer in browser
-```
-
-**Clean Install:**
-```bash
-npm run clean:install    # Remove node_modules and reinstall
-```
+- **Fast Search**: 1-second timeout with instant fallback to mock data
+- **Luxury Animations**: Hardware-accelerated CSS transforms and gradients
+- **Image Optimization**: Professional hotel photography with optimized loading
+- **Bundle Splitting**: Separate chunks for vendor, UI, and forms
+- **Shadow System**: Efficient CSS custom properties for consistent luxury styling

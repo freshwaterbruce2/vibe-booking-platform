@@ -1,4 +1,5 @@
-import { useForm, UseFormReturn, FieldValues, Path } from 'react-hook-form';
+import type { UseFormReturn, FieldValues, Path } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCallback } from 'react';
@@ -77,7 +78,7 @@ export function useFormValidation<T extends FieldValues>(
     onError?: (errors: any) => void;
     showToastOnError?: boolean;
     mode?: 'onChange' | 'onBlur' | 'onSubmit';
-  }
+  },
 ): UseFormReturn<T> & {
   submitWithValidation: (onValidSubmit: (data: T) => Promise<void> | void) => (e?: React.BaseSyntheticEvent) => Promise<void>;
   validateField: (fieldName: Path<T>) => Promise<boolean>;
@@ -116,9 +117,9 @@ export function useFormValidation<T extends FieldValues>(
             }
           }
           options?.onError?.(errors);
-        }
+        },
       ),
-    [form, options]
+    [form, options],
   );
 
   const validateField = useCallback(
@@ -126,7 +127,7 @@ export function useFormValidation<T extends FieldValues>(
       const result = await form.trigger(fieldName);
       return result;
     },
-    [form]
+    [form],
   );
 
   const getFieldError = useCallback(
@@ -134,14 +135,14 @@ export function useFormValidation<T extends FieldValues>(
       const error = form.formState.errors[fieldName];
       return error?.message as string | undefined;
     },
-    [form.formState.errors]
+    [form.formState.errors],
   );
 
   const hasError = useCallback(
     (fieldName: Path<T>): boolean => {
       return !!form.formState.errors[fieldName];
     },
-    [form.formState.errors]
+    [form.formState.errors],
   );
 
   return {
@@ -218,10 +219,10 @@ export function useSearchValidation(options?: {
 // Hook for real-time validation feedback
 export function useValidationFeedback<T extends FieldValues>(
   form: UseFormReturn<T>,
-  fieldName: Path<T>
+  fieldName: Path<T>,
 ) {
   const error = form.formState.errors[fieldName];
-  const isDirty = form.formState.dirtyFields[fieldName];
+  const isDirty = (form.formState.dirtyFields as any)[fieldName];
   const isValid = !error && isDirty;
 
   return {
@@ -243,10 +244,10 @@ export function getFormFieldProps<T extends FieldValues>(
     required?: boolean;
     placeholder?: string;
     type?: string;
-  }
+  },
 ) {
   const validation = useValidationFeedback(form, fieldName);
-  
+
   return {
     ...form.register(fieldName),
     ...validation,

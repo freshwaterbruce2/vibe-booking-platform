@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '../../services/payment';
-import { PaymentElementForm } from './PaymentElementForm';
+// Note: This component is for Stripe integration but the project uses Square
+// import { Elements } from '@stripe/react-stripe-js';
+// import { stripePromise } from '../../services/payment';
+// import { PaymentElementForm } from './PaymentElementForm';
 import { PaymentSummary } from './PaymentSummary';
 import { Loader2, CreditCard, Shield, Lock } from 'lucide-react';
 
@@ -34,31 +35,33 @@ interface PaymentFormProps {
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
-  bookingId,
+  bookingId: _bookingId,
   amount,
   currency = 'USD',
-  onSuccess,
-  onError,
+  onSuccess: _onSuccess,
+  onError: _onError,
   bookingDetails,
-  billingDetails,
+  billingDetails: _billingDetails,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [stripeError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Note: Stripe configuration commented out - using Square instead
     // Check if Stripe is properly configured
-    stripePromise
-      .then((stripe) => {
-        if (!stripe) {
-          setStripeError('Payment system is not properly configured');
-        }
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Failed to load Stripe:', error);
-        setStripeError('Failed to load payment system');
-        setIsLoading(false);
-      });
+    // stripePromise
+    //   .then((stripe) => {
+    //     if (!stripe) {
+    //       setStripeError('Payment system is not properly configured');
+    //     }
+    //     setIsLoading(false);
+    //   })
+    //   .catch((error) => {
+    //     console.error('Failed to load Stripe:', error);
+    //     setStripeError('Failed to load payment system');
+    //     setIsLoading(false);
+    //   });
+    setIsLoading(false); // Temporary fix
   }, []);
 
   if (isLoading) {
@@ -88,54 +91,54 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     );
   }
 
-  const appearance = {
-    theme: 'stripe' as const,
-    variables: {
-      colorPrimary: '#2563eb',
-      colorBackground: '#ffffff',
-      colorText: '#374151',
-      colorDanger: '#ef4444',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      spacingUnit: '4px',
-      borderRadius: '6px',
-    },
-    rules: {
-      '.Tab': {
-        border: '1px solid #e5e7eb',
-        borderRadius: '6px',
-        padding: '12px',
-        backgroundColor: '#f9fafb',
-      },
-      '.Tab:hover': {
-        backgroundColor: '#f3f4f6',
-      },
-      '.Tab--selected': {
-        backgroundColor: '#eff6ff',
-        borderColor: '#2563eb',
-      },
-      '.Input': {
-        border: '1px solid #d1d5db',
-        borderRadius: '6px',
-        padding: '12px',
-        fontSize: '14px',
-      },
-      '.Input:focus': {
-        borderColor: '#2563eb',
-        boxShadow: '0 0 0 1px #2563eb',
-      },
-      '.Label': {
-        fontSize: '14px',
-        fontWeight: '500',
-        color: '#374151',
-        marginBottom: '6px',
-      },
-    },
-  };
+  // const appearance = {
+  //   theme: 'stripe' as const,
+  //   variables: {
+  //     colorPrimary: '#2563eb',
+  //     colorBackground: '#ffffff',
+  //     colorText: '#374151',
+  //     colorDanger: '#ef4444',
+  //     fontFamily: 'Inter, system-ui, sans-serif',
+  //     spacingUnit: '4px',
+  //     borderRadius: '6px',
+  //   },
+  //   rules: {
+  //     '.Tab': {
+  //       border: '1px solid #e5e7eb',
+  //       borderRadius: '6px',
+  //       padding: '12px',
+  //       backgroundColor: '#f9fafb',
+  //     },
+  //     '.Tab:hover': {
+  //       backgroundColor: '#f3f4f6',
+  //     },
+  //     '.Tab--selected': {
+  //       backgroundColor: '#eff6ff',
+  //       borderColor: '#2563eb',
+  //     },
+  //     '.Input': {
+  //       border: '1px solid #d1d5db',
+  //       borderRadius: '6px',
+  //       padding: '12px',
+  //       fontSize: '14px',
+  //     },
+  //     '.Input:focus': {
+  //       borderColor: '#2563eb',
+  //       boxShadow: '0 0 0 1px #2563eb',
+  //     },
+  //     '.Label': {
+  //       fontSize: '14px',
+  //       fontWeight: '500',
+  //       color: '#374151',
+  //       marginBottom: '6px',
+  //     },
+  //   },
+  // };
 
-  const options = {
-    appearance,
-    loader: 'auto' as const,
-  };
+  // const options = {
+  //   appearance,
+  //   loader: 'auto' as const,
+  // };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -162,17 +165,26 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Payment Details
               </h3>
-              
+
               {/* Security badges */}
               <div className="flex items-center space-x-4 mb-6 p-3 bg-gray-50 rounded-lg">
                 <Lock className="h-5 w-5 text-green-600" />
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">SSL Encrypted</span> • 
+                  <span className="font-medium">SSL Encrypted</span> •
                   <span className="ml-1">PCI DSS Compliant</span>
                 </div>
               </div>
 
-              <Elements stripe={stripePromise} options={options}>
+              {/* TODO: Replace with Square payment integration */}
+              <div className="p-8 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                <p className="text-yellow-800 text-lg font-medium">
+                  Stripe Elements integration not implemented
+                </p>
+                <p className="text-yellow-700 mt-2">
+                  Please use the Square payment integration instead.
+                </p>
+              </div>
+              {/* <Elements stripe={stripePromise} options={options}>
                 <PaymentElementForm
                   bookingId={bookingId}
                   amount={amount}
@@ -181,7 +193,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   onError={onError}
                   billingDetails={billingDetails}
                 />
-              </Elements>
+              </Elements> */}
             </div>
           </div>
 

@@ -12,6 +12,8 @@ export interface Hotel {
   availability: AvailabilityStatus
   virtualTourUrl?: string
   sustainabilityScore?: number
+  topReview?: Review
+  deals?: { discountPercent: number; description: string }[]
 }
 
 export interface Location {
@@ -30,6 +32,7 @@ export interface PriceRange {
   max: number
   currency: string
   avgNightly: number
+  originalPrice?: number
 }
 
 export interface Amenity {
@@ -128,4 +131,5 @@ export interface Review {
   comment: string
   date: string
   helpful: number
+  quote?: string
 }

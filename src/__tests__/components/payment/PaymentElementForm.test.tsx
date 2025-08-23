@@ -3,7 +3,6 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PaymentElementForm } from '@/components/payment/PaymentElementForm';
 import { PaymentService } from '@/services/payment';
-import { testUtils } from '../../setup';
 
 // Mock Stripe hooks
 const mockStripe = {
@@ -438,8 +437,8 @@ describe('PaymentElementForm', () => {
 
   describe('Cleanup and Memory Management', () => {
     it('should handle component unmounting during initialization', async () => {
-      let resolvePayment: (value: any) => void;
-      const paymentPromise = new Promise(resolve => {
+      let resolvePayment: (value: { clientSecret: string; id: string }) => void;
+      const paymentPromise = new Promise<{ clientSecret: string; id: string }>(resolve => {
         resolvePayment = resolve;
       });
 

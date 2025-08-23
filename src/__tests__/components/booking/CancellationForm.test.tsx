@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -209,7 +208,7 @@ describe('CancellationForm Component', () => {
       const user = userEvent.setup();
       
       // Mock a delayed onCancel function
-      const delayedOnCancel = vi.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const delayedOnCancel = vi.fn<[], Promise<void>>(() => new Promise(resolve => setTimeout(resolve, 100)));
       const propsWithDelay = { ...mockProps, onCancel: delayedOnCancel };
       
       render(<CancellationForm {...propsWithDelay} />);
@@ -459,7 +458,7 @@ describe('CancellationForm Component', () => {
         booking: {
           ...mockBookingCancellable,
           cancellationPolicy: null,
-          totalAmount: undefined,
+          totalAmount: 0,
         },
       };
       

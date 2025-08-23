@@ -81,7 +81,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   return (
     <div className={cn(
       'bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6',
-      className
+      className,
     )}>
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">

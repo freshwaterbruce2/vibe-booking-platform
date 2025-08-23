@@ -1,51 +1,253 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 98%;
+    --background: 35 25% 96%; /* Warm Cream #F7F3E9 */
+    --foreground: 220 27% 18%; /* Deep Navy #1C2951 */
+    --muted: 35 15% 90%; /* Soft Gray #E8E5E1 */
     --muted-foreground: 215.4 16.3% 46.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --popover: 35 25% 96%; /* Warm Cream */
+    --popover-foreground: 220 27% 18%; /* Deep Navy */
+    --card: 0 0% 100%; /* Pure white for contrast */
+    --card-foreground: 220 27% 18%; /* Deep Navy */
+    --border: 35 15% 85%; /* Soft border */
+    --input: 35 15% 85%; /* Soft input border */
+    --primary: 220 27% 18%; /* Deep Navy #1C2951 - Professional trust */
+    --primary-foreground: 0 0% 100%; /* White text */
+    --secondary: 45 85% 35%; /* Warm Gold #B8860B - Luxury */
+    --secondary-foreground: 0 0% 100%; /* White text */
+    --accent: 100 15% 35%; /* Deep Forest Green #355E3B - Wellness */
+    --accent-foreground: 0 0% 100%; /* White text */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --ring: 220 27% 18%; /* Deep Navy ring */
+    --radius: 0.75rem; /* More refined radius */
+    
+    /* Luxury hotel color palette */
+    --luxury-navy: 220 27% 18%; /* #1C2951 */
+    --luxury-gold: 45 85% 35%; /* #B8860B */
+    --luxury-mocha: 25 23% 64%; /* #A47864 - 2025 Pantone */
+    --luxury-forest: 100 15% 35%; /* #355E3B */
+    --luxury-cream: 35 25% 96%; /* #F7F3E9 */
+    --luxury-rose-gold: 15 60% 70%; /* #C5A572 */
   }
 
+  /* Uniform Typography System */
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Luxury Brand Typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  /* Professional animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .animate-slideInRight {
+    animation: slideInRight 0.5s ease-out;
+  }
+
+  /* Stagger animation delays for lists */
+  .animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .animate-stagger > *:nth-child(2) { animation-delay: 100ms; }
+  .animate-stagger > *:nth-child(3) { animation-delay: 200ms; }
+  .animate-stagger > *:nth-child(4) { animation-delay: 300ms; }
+  .animate-stagger > *:nth-child(5) { animation-delay: 400ms; }
+  .animate-stagger > *:nth-child(6) { animation-delay: 500ms; }
+
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --background: 220 30% 8%; /* Dark Navy Background */
+    --foreground: 35 25% 96%; /* Warm Cream Text */
+    --muted: 220 25% 12%; /* Dark muted */
     --muted-foreground: 215 20.2% 65.1%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --popover: 220 30% 8%; /* Dark Navy */
+    --popover-foreground: 35 25% 96%; /* Warm Cream */
+    --card: 220 25% 10%; /* Slightly lighter than background */
+    --card-foreground: 35 25% 96%; /* Warm Cream */
+    --border: 220 20% 18%; /* Dark border */
+    --input: 220 20% 18%; /* Dark input */
+    --primary: 45 85% 45%; /* Brighter Gold for dark mode */
+    --primary-foreground: 220 30% 8%; /* Dark Navy text */
+    --secondary: 220 27% 25%; /* Lighter Navy for dark mode */
+    --secondary-foreground: 35 25% 96%; /* Warm Cream text */
+    --accent: 100 20% 45%; /* Brighter Forest Green */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --ring: 217.2 91.2% 59.8%;
+    --ring: 45 85% 45%; /* Gold ring */
+    
+    /* Dark mode luxury colors */
+    --luxury-navy: 220 30% 15%; /* Lighter for dark mode */
+    --luxury-gold: 45 85% 50%; /* Brighter gold */
+    --luxury-mocha: 25 23% 70%; /* Lighter mocha */
+    --luxury-forest: 100 20% 45%; /* Brighter forest */
+    --luxury-cream: 35 15% 20%; /* Dark cream */
+    --luxury-rose-gold: 15 60% 75%; /* Brighter rose gold */
+  }
+
+  /* Professional shadow system */
+  .shadow-luxury-sm { box-shadow: 0 1px 2px 0 rgba(28, 41, 81, 0.05); }
+  .shadow-luxury { box-shadow: 0 4px 6px -1px rgba(28, 41, 81, 0.1), 0 2px 4px -1px rgba(28, 41, 81, 0.06); }
+  .shadow-luxury-md { box-shadow: 0 10px 15px -3px rgba(28, 41, 81, 0.1), 0 4px 6px -2px rgba(28, 41, 81, 0.05); }
+  .shadow-luxury-lg { box-shadow: 0 20px 25px -5px rgba(28, 41, 81, 0.1), 0 10px 10px -5px rgba(28, 41, 81, 0.04); }
+  .shadow-luxury-xl { box-shadow: 0 25px 50px -12px rgba(28, 41, 81, 0.25); }
+  
+  /* Luxury gradients */
+  .bg-luxury-gradient { background: linear-gradient(135deg, hsl(var(--luxury-navy)) 0%, hsl(var(--luxury-mocha)) 100%); }
+  .bg-luxury-gold-gradient { background: linear-gradient(135deg, hsl(var(--luxury-gold)) 0%, hsl(var(--luxury-rose-gold)) 100%); }
+  .bg-luxury-forest-gradient { background: linear-gradient(135deg, hsl(var(--luxury-forest)) 0%, hsl(var(--accent)) 100%); }
+
+  /* VIBE HOTELS - Harmonized with Site's Navy Blue */
+  @keyframes neonHotelPulse {
+    0%, 100% { 
+      filter: drop-shadow(0 0 6px rgba(28, 41, 81, 0.6)) drop-shadow(0 0 12px rgba(28, 41, 81, 0.4));
+    }
+    50% { 
+      filter: drop-shadow(0 0 10px rgba(28, 41, 81, 0.9)) drop-shadow(0 0 18px rgba(28, 41, 81, 0.6));
+    }
+  }
+
+  /* VH Monogram - Blended with Site Colors */
+  .vh-neon-logo {
+    background: linear-gradient(135deg, #1C2951 0%, #374151 50%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 900;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.08em;
+    position: relative;
+  }
+
+  .vh-neon-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(135deg, #1C2951 0%, #374151 50%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: blur(2.5px);
+    opacity: 0.7;
+    animation: neonHotelPulse 4s ease-in-out infinite;
+  }
+
+  /* 3D Hotel Logo Shadow - Site Navy */
+  .vh-3d-shadow {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    background: linear-gradient(135deg, rgba(28, 41, 81, 0.4) 0%, rgba(55, 65, 81, 0.4) 50%, rgba(6, 182, 212, 0.4) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    z-index: -1;
+  }
+
+  /* VIBE HOTELS Brand Text - Harmonized */
+  .vh-brand-gradient {
+    background: linear-gradient(135deg, #1C2951 0%, #374151 40%, #4b5563 70%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Luxury Hotel Subtitle */
+  .vh-luxury-text {
+    color: #6b7280;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* Interactive Hover Effects */
+  .vh-logo-container:hover .vh-neon-glow {
+    animation-duration: 2s;
+    opacity: 0.9;
+  }
+
+  /* Neon Border Effect - Site Navy Theme */
+  .vh-luxury-border {
+    position: relative;
+  }
+
+  .vh-luxury-border::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #1C2951 30%, #06b6d4 70%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .vh-logo-container:hover .vh-luxury-border::after {
+    opacity: 0.6;
   }
 }
 
@@ -66,6 +268,50 @@
 }
 
 @layer components {
+  /* Uniform Button System - Following Luxury Hotel Standards */
+  .btn-primary {
+    @apply px-6 py-3 bg-gray-900 text-white text-xs font-medium tracking-wider uppercase transition-all duration-200 hover:bg-gray-800;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 border border-gray-900 text-gray-900 text-xs font-medium tracking-wider uppercase transition-all duration-200 hover:bg-gray-900 hover:text-white;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-gray-700 text-xs font-medium tracking-wider uppercase transition-colors duration-200 hover:text-gray-900;
+  }
+
+  /* Uniform Input System */
+  .input-luxury {
+    @apply px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-gray-900 transition-colors duration-200;
+  }
+
+  /* Uniform Card System */
+  .card-luxury {
+    @apply bg-white rounded-none shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-100;
+  }
+
+  /* Uniform Text Styles */
+  .text-luxury-heading {
+    @apply text-3xl md:text-4xl font-light tracking-tight text-gray-900;
+  }
+
+  .text-luxury-subheading {
+    @apply text-xl md:text-2xl font-light tracking-wide text-gray-700;
+  }
+
+  .text-luxury-body {
+    @apply text-base font-light leading-relaxed text-gray-600;
+  }
+
+  .text-luxury-caption {
+    @apply text-xs font-medium tracking-wider uppercase text-gray-500;
+  }
+
+  /* Uniform Link Styles */
+  .link-luxury {
+    @apply text-gray-700 hover:text-gray-900 transition-colors duration-200 underline-offset-4 hover:underline;
+  }
   .glass-morphism {
     @apply border border-white/30 bg-white/20 backdrop-blur-md;
   }

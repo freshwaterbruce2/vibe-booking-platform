@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { axe, toHaveNoViolations } from 'jest-axe';
@@ -8,7 +7,6 @@ import { BookingFlow } from '@/components/booking/BookingFlow';
 import { useBookingStore } from '@/store/bookingStore';
 import { useSearchStore } from '@/store/searchStore';
 import { useHotelStore } from '@/store/hotelStore';
-import { testUtils } from '../../setup';
 
 expect.extend(toHaveNoViolations);
 
@@ -76,6 +74,15 @@ const mockHotelStore = {
       country: 'TC',
       neighborhood: 'Downtown',
     },
+    priceRange: {
+      avgNightly: 200,
+      currency: 'USD',
+      min: 150,
+      max: 300,
+    },
+    images: [
+      { url: '/test-image.jpg', alt: 'Test Hotel' },
+    ],
   },
 };
 
@@ -89,6 +96,7 @@ const mockRoom = {
   currency: 'USD',
   images: ['room-image.jpg'],
   amenities: ['WiFi', 'Air Conditioning', 'Mini Bar'],
+  availability: true,
 };
 
 describe('BookingFlow Component', () => {
@@ -491,7 +499,6 @@ describe('BookingFlow Component', () => {
     });
 
     it('shows loading state during booking completion', async () => {
-      const user = userEvent.setup();
       const storeWithLoading = {
         ...mockBookingStore,
         currentStep: 'confirmation',
@@ -546,7 +553,7 @@ describe('BookingFlow Component', () => {
 
     it('does not show Cancel button when onCancel prop is not provided', () => {
       const propsWithoutCancel = { ...mockProps };
-      delete propsWithoutCancel.onCancel;
+      delete (propsWithoutCancel as any).onCancel;
       
       render(<BookingFlow {...propsWithoutCancel} />);
       

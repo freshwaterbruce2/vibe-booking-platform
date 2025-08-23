@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SearchResults from '@/components/search/SearchResults';
 import { useSearchStore } from '@/store/searchStore';
-import { testUtils } from '../../setup';
+// import { testUtils } from '../../setup';
 
 // Mock the search store
 vi.mock('@/store/searchStore');
@@ -504,7 +504,7 @@ describe('SearchResults', () => {
     });
 
     it('should support keyboard navigation', async () => {
-      const user = userEvent.setup();
+      // const user = userEvent.setup();
       const mockOnHotelSelect = vi.fn();
 
       render(<SearchResults onHotelSelect={mockOnHotelSelect} />);

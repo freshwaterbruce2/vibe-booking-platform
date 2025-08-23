@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { PaymentService } from '../../services/payment';
-import { 
-  CheckCircle, 
-  Download, 
-  Mail, 
-  Calendar, 
-  MapPin, 
-  Users, 
+import {
+  CheckCircle,
+  Download,
+  Mail,
+  Calendar,
+  MapPin,
+  Users,
   CreditCard,
   Receipt,
   Phone,
   Printer,
-  Share2
+  Share2,
 } from 'lucide-react';
 
 interface PaymentConfirmationProps {
@@ -70,19 +70,19 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
   const generatePDFReceipt = async () => {
     try {
       setIsGeneratingReceipt(true);
-      
+
       // Call backend PDF generation service
-      const response = await fetch(`/api/payments/${paymentDetails.id}/receipt`, {
+      const response = await fetch(`/api/payments/${paymentIntent.id}/receipt`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        
+
         const link = document.createElement('a');
         link.href = url;
         link.download = `receipt-${bookingDetails.confirmationNumber}.pdf`;
@@ -93,7 +93,7 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
       } else {
         throw new Error('Failed to generate PDF receipt');
       }
-      
+
     } catch (error) {
       console.error('Failed to generate receipt:', error);
     } finally {
@@ -104,11 +104,11 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
   // Helper function to escape HTML content and prevent XSS
   const escapeHtml = (unsafe: string): string => {
     return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   };
 
   const generateReceiptHTML = () => {
@@ -122,7 +122,7 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
     const safeConfirmationNumber = escapeHtml(bookingDetails.confirmationNumber);
     const safeSpecialRequests = bookingDetails.specialRequests ? escapeHtml(bookingDetails.specialRequests) : '';
     const safePaymentIntentId = escapeHtml(paymentIntent.id);
-    
+
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -220,16 +220,16 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
 
       // Safely construct the receipt content using DOM methods
       const receiptHTML = generateReceiptHTML();
-      
+
       // Create a blob URL for the content
       const blob = new Blob([receiptHTML], { type: 'text/html;charset=utf-8' });
       const blobUrl = URL.createObjectURL(blob);
-      
+
       // Navigate to the blob URL instead of using document.write
-      printWindow.location.href = blobUrl;
-      
+      (printWindow as any).location.href = blobUrl;
+
       // Clean up and print when loaded
-      printWindow.onload = () => {
+      (printWindow as any).onload = () => {
         try {
           printWindow.focus();
           printWindow.print();
@@ -243,12 +243,12 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
           URL.revokeObjectURL(blobUrl);
         }
       };
-      
+
       // Fallback cleanup in case onload doesn't fire
       setTimeout(() => {
         URL.revokeObjectURL(blobUrl);
       }, 10000);
-      
+
     } catch (error) {
       console.error('Failed to generate print receipt:', error);
     }
@@ -272,7 +272,7 @@ Confirmation: ${bookingDetails.confirmationNumber}
 Hotel: ${bookingDetails.hotelName}
 Dates: ${format(bookingDetails.checkIn, 'MMM dd')} - ${format(bookingDetails.checkOut, 'MMM dd, yyyy')}
 Total: ${PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetails.currency)}`;
-      
+
       navigator.clipboard.writeText(shareText);
       alert('Booking details copied to clipboard!');
     }
@@ -293,22 +293,22 @@ Total: ${PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetail
 
       {/* Confirmation Details */}
       <div className="p-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+        <div className="bg-accent-50 border border-accent-200 rounded-lg p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-blue-900 mb-2">
+              <h2 className="text-xl font-semibold text-accent-900 mb-2">
                 Booking Confirmed
               </h2>
-              <p className="text-blue-700">
+              <p className="text-accent-700">
                 <strong>Confirmation Number:</strong> {bookingDetails.confirmationNumber}
               </p>
-              <p className="text-blue-700">
+              <p className="text-accent-700">
                 <strong>Transaction ID:</strong> {paymentIntent.id}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-blue-600">Total Paid</p>
-              <p className="text-2xl font-bold text-blue-900">
+              <p className="text-sm text-accent-600">Total Paid</p>
+              <p className="text-2xl font-bold text-accent-900">
                 {PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetails.currency)}
               </p>
             </div>
@@ -383,14 +383,14 @@ Total: ${PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetail
               </h3>
               <div className="space-y-2">
                 <p className="text-gray-600">
-                  <strong>Payment Method:</strong> {paymentIntent.payment_method?.card?.brand?.toUpperCase()} 
+                  <strong>Payment Method:</strong> {paymentIntent.payment_method?.card?.brand?.toUpperCase()}
                   ****{paymentIntent.payment_method?.card?.last4}
                 </p>
                 <p className="text-gray-600">
                   <strong>Payment Date:</strong> {format(new Date(paymentIntent.created * 1000), 'PPP')}
                 </p>
                 <p className="text-gray-600">
-                  <strong>Status:</strong> 
+                  <strong>Status:</strong>
                   <span className="ml-1 px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
                     Paid
                   </span>
@@ -451,7 +451,7 @@ Total: ${PaymentService.formatCurrency(bookingDetails.totalAmount, bookingDetail
           <button
             onClick={generatePDFReceipt}
             disabled={isGeneratingReceipt}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
           >
             <Download className="h-5 w-5 mr-2" />
             {isGeneratingReceipt ? 'Generating...' : 'Download Receipt'}

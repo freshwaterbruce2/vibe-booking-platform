@@ -408,7 +408,7 @@ test.describe('Hotel Booking Performance Tests', () => {
   test.describe('Bundle Size and Asset Performance', () => {
     test('Should load critical resources efficiently', async ({ page }) => {
       const resourceSizes: Record<string, number> = {};
-      const resourceTimings: Record<string, number> = {};
+      // const resourceTimings: Record<string, number> = {};
       
       page.on('response', async (response) => {
         const url = response.url();
@@ -597,7 +597,7 @@ test.describe('Hotel Booking Performance Tests', () => {
 
     test('Should handle network timeouts gracefully', async ({ page }) => {
       // Mock timeout scenario
-      await page.route('**/api/hotels/search**', async (route) => {
+      await page.route('**/api/hotels/search**', async () => {
         // Never respond to simulate timeout
         await new Promise(() => {}); // Infinite promise
       });

@@ -60,15 +60,12 @@ describe('Accessibility Tests', () => {
       expect(form).toBeInTheDocument();
 
       // Check for proper labeling
-      const destinationInput = container.querySelector('input[placeholder="Where are you going?"]');
       const destinationLabel = container.querySelector('label:has(+ div input[placeholder="Where are you going?"])');
       expect(destinationLabel).toHaveTextContent('Destination');
 
-      const checkInInput = container.querySelector('input[type="date"]:first-of-type');
       const checkInLabel = container.querySelector('label[for="check-in"], label:has(+ div input[type="date"]:first-of-type)');
       expect(checkInLabel).toHaveTextContent('Check-in Date');
 
-      const guestsSelect = container.querySelector('select');
       const guestsLabel = container.querySelector('label:has(+ div select)');
       expect(guestsLabel).toHaveTextContent('Guests');
 

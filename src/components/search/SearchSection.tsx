@@ -20,32 +20,41 @@ const SearchSection: React.FC<SearchSectionProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="search-destination" className="block text-sm font-medium text-gray-700 mb-2">
               Destination
             </label>
             <input
               type="text"
+              id="search-destination"
+              name="destination"
               placeholder="Where are you going?"
+              autoComplete="address-level2"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="search-checkin" className="block text-sm font-medium text-gray-700 mb-2">
               Check-in Date
             </label>
             <input
               type="date"
+              id="search-checkin"
+              name="checkin"
+              autoComplete="checkin"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="search-checkout" className="block text-sm font-medium text-gray-700 mb-2">
               Check-out Date
             </label>
             <input
               type="date"
+              id="search-checkout"
+              name="checkout"
+              autoComplete="checkout"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>

@@ -1,14 +1,13 @@
 import React from 'react';
-import { format, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import { PaymentService } from '../../services/payment';
-import { 
-  Calendar, 
-  Users, 
-  BedDouble, 
-  Building2, 
+import {
+  Calendar,
+  Users,
+  Building2,
   Receipt,
   Info,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 interface PaymentSummaryProps {
@@ -42,7 +41,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             <Receipt className="h-5 w-5 mr-2" />
             Booking Summary
           </h3>
-          
+
           <div className="space-y-4">
             {/* Hotel Information */}
             <div className="flex items-start space-x-3">
@@ -84,7 +83,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Price Breakdown
         </h3>
-        
+
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Room Rate</span>
@@ -92,14 +91,14 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
               {PaymentService.formatCurrency(baseAmount, currency)}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Taxes & Fees</span>
             <span className="font-medium">
               {PaymentService.formatCurrency(taxAmount, currency)}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <span className="text-gray-600">Service Fee (5%)</span>
@@ -109,7 +108,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
               {PaymentService.formatCurrency(commissionAmount, currency)}
             </span>
           </div>
-          
+
           <div className="border-t pt-3">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-900">Total</span>
@@ -127,7 +126,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
           <CheckCircle className="h-5 w-5 mr-2" />
           Secure Payment Features
         </h4>
-        
+
         <ul className="space-y-2 text-sm text-green-700">
           <li className="flex items-center">
             <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
@@ -154,7 +153,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
           Cancellation Policy
         </h4>
         <p className="text-sm text-blue-700">
-          Free cancellation until 24 hours before check-in. 
+          Free cancellation until 24 hours before check-in.
           Cancel after that for a partial refund minus processing fees.
         </p>
       </div>

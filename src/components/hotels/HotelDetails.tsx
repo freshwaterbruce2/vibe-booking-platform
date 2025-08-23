@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Star,
@@ -44,14 +45,15 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
   onBackToResults,
   className = '',
 }) => {
-  const { selectedHotel, loading: hotelLoading } = useHotelStore();
+  const navigate = useNavigate();
+  const { selectedHotel, loading: hotelLoading, setSelectedHotel } = useHotelStore();
   const { selectedDateRange, guestCount } = useSearchStore();
 
   const hotel = (providedHotel || selectedHotel) as HotelDetails | null;
   const loading = isLoading || hotelLoading;
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'amenities' | 'location' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'amenities' | 'location' | 'reviews'>('rooms');
   const [showAllImages, setShowAllImages] = useState(false);
 
   const renderStars = (rating: number) => {
@@ -80,10 +82,10 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
       return 'from-purple-500 to-pink-500';
     }
     if (score >= 0.6) {
-      return 'from-blue-500 to-purple-500';
+      return 'from-secondary-500 to-purple-500';
     }
     if (score >= 0.4) {
-      return 'from-green-500 to-blue-500';
+      return 'from-accent-500 to-secondary-500';
     }
     return 'from-gray-400 to-gray-500';
   };
@@ -388,7 +390,16 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
               </div>
             )}
 
-            <Button className="w-full mb-3" size="lg">
+            <Button
+              className="w-full mb-3"
+              size="lg"
+              onClick={() => {
+                if (hotel) {
+                  setSelectedHotel(hotel);
+                  navigate('/booking');
+                }
+              }}
+            >
               <Calendar className="w-4 h-4 mr-2" />
               Book Now
             </Button>
@@ -480,7 +491,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                   ) => (
                   <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     {policy.type === 'cancellation' ? (
-                      <Shield className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <Shield className="w-5 h-5 text-secondary-500 mt-0.5 flex-shrink-0" />
                     ) : (
                       <Check className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                     )}
@@ -562,7 +573,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">
+                        <div className="text-2xl font-bold text-secondary-600">
                           {formatPrice(room.price, room.currency)}
                         </div>
                         <div className="text-sm text-gray-500">per night</div>
@@ -575,7 +586,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                         {room.amenities.map((amenity: string, index: number) => (
                           <span
                             key={index}
-                            className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                            className="px-2 py-1 bg-secondary-100 text-secondary-800 text-sm rounded-full"
                           >
                             {amenity}
                           </span>
@@ -586,7 +597,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                     <button
                       onClick={() => onBookRoom && onBookRoom(room.id)}
                       disabled={!room.availability}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {room.availability ? 'Book This Room' : 'Not Available'}
                     </button>
@@ -642,7 +653,7 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                       <div className="font-medium text-gray-900">{attraction.name}</div>
                       <div className="text-sm text-gray-600">{attraction.type}</div>
                     </div>
-                    <div className="text-sm font-medium text-blue-600">
+                    <div className="text-sm font-medium text-secondary-600">
                       {attraction.distance}
                     </div>
                   </div>
@@ -668,4 +679,4 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
   );
 };
 
-export default HotelDetails;
+export default memo(HotelDetails);

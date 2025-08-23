@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import type { BookingStore } from './types';
 import type { GuestDetails, PaymentInfo } from '@/types/booking';
 
@@ -38,7 +38,8 @@ const bookingSteps = ['room-selection', 'guest-details', 'payment', 'confirmatio
 
 export const useBookingStore = create<BookingStore>()(
   devtools(
-    (set, get) => ({
+    persist(
+      (set, get) => ({
       // Initial state
       currentStep: 'room-selection',
       guestDetails: initialGuestDetails,
@@ -155,6 +156,16 @@ export const useBookingStore = create<BookingStore>()(
         return isValid;
       },
     }),
-    { name: 'BookingStore' },
+    {
+      name: 'booking-store',
+      // Only persist certain parts of the booking state
+      partialize: (state) => ({
+        guestDetails: state.guestDetails,
+        selectedRoom: state.selectedRoom,
+        currentStep: state.currentStep,
+      }),
+    },
   ),
+  { name: 'BookingStore' },
+),
 );

@@ -273,10 +273,9 @@ export const PaymentPage: React.FC = () => {
           onError={(e) => handlePaymentError(e.message)}
           bookingDetails={{
             hotelName: booking.hotelName,
-            roomType: booking.roomType,
             checkIn: booking.checkIn.toISOString(),
             checkOut: booking.checkOut.toISOString(),
-            guestName: `${booking.guestFirstName} ${booking.guestLastName}`,
+            guests: booking.guests
           }}
         />
       </div>

@@ -1,5 +1,4 @@
 import winston from 'winston';
-import { config } from '../config';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
@@ -20,7 +19,7 @@ const logFormat = printf(({ level, message, timestamp, stack, ...metadata }) => 
 
 // Create logger instance
 export const logger = winston.createLogger({
-  level: config.monitoring.logLevel,
+  level: process.env.LOG_LEVEL || 'info',
   format: combine(
     errors({ stack: true }),
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -36,8 +35,8 @@ export const logger = winston.createLogger({
         logFormat
       ),
     }),
-    // File transport for errors
-    new winston.transports.File({
+    // File transport for errors (only if LOG_FILE is set)
+    ...(process.env.LOG_FILE ? [new winston.transports.File({
       filename: 'logs/error.log',
       level: 'error',
       maxsize: 5242880, // 5MB
@@ -48,7 +47,7 @@ export const logger = winston.createLogger({
       filename: 'logs/combined.log',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-    }),
+    })] : []),
   ],
   // Handle uncaught exceptions
   exceptionHandlers: [

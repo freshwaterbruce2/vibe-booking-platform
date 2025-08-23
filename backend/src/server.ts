@@ -46,26 +46,68 @@ export class HotelBookingServer {
   }
 
   private async initializeMiddleware(): Promise<void> {
-    // Security middleware
+    // Security middleware with relaxed CSP for development
     this.app.use(helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", "data:", "https:"],
-          connectSrc: ["'self'", "wss:", "https:"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+          imgSrc: ["'self'", "data:", "https:", "blob:"],
+          connectSrc: ["'self'", "wss:", "ws:", "https:", "http://localhost:*"],
+          fontSrc: ["'self'", "https:", "data:"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'self'"],
         },
       },
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     }));
 
-    // CORS configuration
+    // CORS configuration with proper headers to prevent CORB
     this.app.use(cors({
-      origin: this.config.cors.origin,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or Postman)
+        if (!origin) return callback(null, true);
+        
+        // Allow localhost origins for development
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+          return callback(null, true);
+        }
+        
+        // Check against configured origins
+        const allowedOrigins = Array.isArray(this.config.cors.origin) 
+          ? this.config.cors.origin 
+          : [this.config.cors.origin];
+        
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        
+        // Log rejected origin for debugging
+        logger.warn(`CORS: Rejected origin ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      },
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Accept', 'Origin'],
+      exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+      maxAge: 86400, // 24 hours
     }));
+    
+    // Add middleware to set proper content-type headers
+    this.app.use((req, res, next) => {
+      // Set X-Content-Type-Options to prevent MIME sniffing
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      
+      // Ensure JSON responses have correct content-type
+      if (req.path.startsWith('/api')) {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      }
+      
+      next();
+    });
 
   // Raw body capture for Square webhooks BEFORE json parsing
   this.app.use('/api/payments/webhook/square', express.raw({ type: '*/*', limit: '1mb' }));

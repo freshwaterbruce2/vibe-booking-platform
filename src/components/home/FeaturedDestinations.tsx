@@ -1,4 +1,5 @@
 import React from 'react';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 interface Destination {
   id: string;
@@ -104,13 +105,14 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
             >
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="relative">
-                  <img
+                  <OptimizedImage
                     src={destination.image}
                     alt={destination.name}
-                    className="w-full h-48 object-cover group-hover:brightness-110 transition-all duration-300"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop';
-                    }}
+                    className="w-full h-48 group-hover:brightness-110 transition-all duration-300"
+                    aspectRatio="5/3"
+                    objectFit="cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    fallbackSrc="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop"
                   />
                   <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-full px-3 py-1">
                     <span className="text-sm font-semibold text-gray-800">

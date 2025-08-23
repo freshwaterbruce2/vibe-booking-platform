@@ -109,8 +109,15 @@ describe('SearchStore', () => {
       setQuery('test query');
       setResults(testUtils.mockSearchResults);
       setError('test error');
-      setPagination({ page: 1, limit: 10, total: 100 });
-      setAiProcessedQuery({ city: 'Paris', dates: { checkIn: '2024-12-01', checkOut: '2024-12-03' } });
+      setPagination({ page: 1, limit: 10, total: 100, totalPages: 10, hasNext: true, hasPrev: false });
+      setAiProcessedQuery({ 
+        intent: 'search_hotels',
+        extractedDetails: {
+          location: 'Paris',
+          dates: { checkIn: '2024-12-01', checkOut: '2024-12-03' }
+        },
+        confidence: 0.9
+      });
       
       // Clear search
       clearSearch();
@@ -257,7 +264,7 @@ describe('SearchStore', () => {
     it('should set pagination correctly', () => {
       const { setPagination } = useSearchStore.getState();
       
-      const paginationData = { page: 2, limit: 20, total: 150 };
+      const paginationData = { page: 2, limit: 20, total: 150, totalPages: 8, hasNext: true, hasPrev: true };
       setPagination(paginationData);
       
       const state = useSearchStore.getState();
@@ -268,10 +275,14 @@ describe('SearchStore', () => {
       const { setAiProcessedQuery } = useSearchStore.getState();
       
       const aiQuery = {
-        city: 'Paris',
-        dates: { checkIn: '2024-12-01', checkOut: '2024-12-03' },
-        guests: { adults: 2, children: 0 },
-        preferences: ['luxury', 'spa'],
+        intent: 'search_hotels',
+        extractedDetails: {
+          location: 'Paris',
+          dates: { checkIn: '2024-12-01', checkOut: '2024-12-03' },
+          guests: { adults: 2, children: 0, rooms: 1 },
+          preferences: ['luxury', 'spa'],
+        },
+        confidence: 0.9,
       };
       
       setAiProcessedQuery(aiQuery);
@@ -293,10 +304,14 @@ describe('SearchStore', () => {
       
       // AI processing
       store.setAiProcessedQuery({
-        city: 'Paris',
-        dates: { checkIn: '2024-12-01', checkOut: '2024-12-03' },
-        guests: { adults: 2, children: 0 },
-        preferences: ['luxury'],
+        intent: 'search_hotels',
+        extractedDetails: {
+          location: 'Paris',
+          dates: { checkIn: '2024-12-01', checkOut: '2024-12-03' },
+          guests: { adults: 2, children: 0, rooms: 1 },
+          preferences: ['luxury'],
+        },
+        confidence: 0.95,
       });
       
       // Apply filters
@@ -308,7 +323,7 @@ describe('SearchStore', () => {
       
       // Complete search
       store.setResults(testUtils.mockSearchResults);
-      store.setPagination({ page: 1, limit: 10, total: 25 });
+      store.setPagination({ page: 1, limit: 10, total: 25, totalPages: 3, hasNext: true, hasPrev: false });
       store.setLoading(false);
       
       const state = useSearchStore.getState();
@@ -317,7 +332,7 @@ describe('SearchStore', () => {
       expect(state.results).toEqual(testUtils.mockSearchResults);
       expect(state.pagination?.total).toBe(25);
       expect(state.filters.priceRange).toEqual([200, 800]);
-      expect(state.aiProcessedQuery?.city).toBe('Paris');
+      expect(state.aiProcessedQuery?.extractedDetails.location).toBe('Paris');
     });
 
     it('should handle search error scenario', () => {
@@ -343,12 +358,12 @@ describe('SearchStore', () => {
       
       // Initial search
       store.setResults([testUtils.mockSearchResults[0]]);
-      store.setPagination({ page: 1, limit: 1, total: 2 });
+      store.setPagination({ page: 1, limit: 1, total: 2, totalPages: 2, hasNext: true, hasPrev: false });
       
       // Load next page
       store.setLoading(true);
       store.addToResults([testUtils.mockSearchResults[1]]);
-      store.setPagination({ page: 2, limit: 1, total: 2 });
+      store.setPagination({ page: 2, limit: 1, total: 2, totalPages: 2, hasNext: false, hasPrev: true });
       store.setLoading(false);
       
       const state = useSearchStore.getState();

@@ -2,18 +2,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import axios from 'axios';
 import { PaymentService } from '@/services/payment';
 import type { 
-  PaymentIntent, 
-  PaymentStatus, 
+  CreatedPayment,
   RefundRequest, 
   RefundResponse,
   PaymentHistory,
   BookingPayments,
-  SetupIntent 
+  PaymentStatus,
+  SetupIntent
 } from '@/services/payment';
 
 // Mock axios
-vi.mock('axios');
-const mockedAxios = vi.mocked(axios);
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(),
+    post: vi.fn(),
+    get: vi.fn(),
+  },
+}));
+const mockedAxios = axios as any;
 
 // Mock environment variables
 vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:3001/api');
@@ -46,7 +52,7 @@ describe('PaymentService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedAxios.create.mockReturnValue(mockApiClient as any);
+    mockedAxios.create = vi.fn().mockReturnValue(mockApiClient as any);
     mockLocalStorage.getItem.mockReturnValue('mock-auth-token');
   });
 
@@ -76,38 +82,37 @@ describe('PaymentService', () => {
   });
 
   describe('createPaymentIntent', () => {
-    const mockPaymentIntent: PaymentIntent = {
+    const mockPaymentIntent: CreatedPayment = {
+      success: true,
+      id: 'pi_test_123',
       clientSecret: 'pi_test_123_secret',
-      paymentIntentId: 'pi_test_123',
       amount: 50000,
       currency: 'USD',
-      commissionAmount: 2500,
-      platformFee: 500,
     };
 
     it('should create payment intent successfully', async () => {
       mockApiClient.post.mockResolvedValue({
-        data: {
-          success: true,
-          data: mockPaymentIntent,
-        },
+        data: mockPaymentIntent,
       });
 
-      const result = await PaymentService.createPaymentIntent(
-        'booking-123',
-        50000,
-        'USD',
-        { guestName: 'John Doe' }
-      );
-
-      expect(mockApiClient.post).toHaveBeenCalledWith('/payments/create-intent', {
+      const result = await PaymentService.createPaymentIntent({
         bookingId: 'booking-123',
         amount: 50000,
         currency: 'USD',
-        metadata: { guestName: 'John Doe' },
+        metadata: { guestName: 'John Doe' }
       });
 
-      expect(result).toEqual(mockPaymentIntent);
+      expect(mockApiClient.post).toHaveBeenCalledWith('/payments/create', {
+        provider: 'square',
+        currency: 'USD',
+        bookingId: 'booking-123',
+        amount: 50000,
+        metadata: { guestName: 'John Doe' },
+        sourceId: 'mock-source-id',
+        billingAddress: undefined,
+      });
+
+      expect(result).toEqual({ clientSecret: 'pi_mock_client_secret', id: 'pi_test_123' });
     });
 
     it('should handle API error response', async () => {
@@ -119,7 +124,10 @@ describe('PaymentService', () => {
       });
 
       await expect(
-        PaymentService.createPaymentIntent('invalid-booking', 50000)
+        PaymentService.createPaymentIntent({
+          bookingId: 'invalid-booking',
+          amount: 50000
+        })
       ).rejects.toThrow('Invalid booking ID');
     });
 
@@ -128,7 +136,10 @@ describe('PaymentService', () => {
       mockApiClient.post.mockRejectedValue(networkError);
 
       await expect(
-        PaymentService.createPaymentIntent('booking-123', 50000)
+        PaymentService.createPaymentIntent({
+          bookingId: 'booking-123',
+          amount: 50000
+        })
       ).rejects.toThrow('Network error occurred');
     });
 
@@ -145,25 +156,30 @@ describe('PaymentService', () => {
       mockedAxios.isAxiosError.mockReturnValue(true);
 
       await expect(
-        PaymentService.createPaymentIntent('booking-123', 10)
+        PaymentService.createPaymentIntent({
+          bookingId: 'booking-123',
+          amount: 10
+        })
       ).rejects.toThrow('Payment amount too low');
     });
 
     it('should use default currency when not specified', async () => {
       mockApiClient.post.mockResolvedValue({
-        data: {
-          success: true,
-          data: mockPaymentIntent,
-        },
+        data: mockPaymentIntent,
       });
 
-      await PaymentService.createPaymentIntent('booking-123', 50000);
+      await PaymentService.createPaymentIntent({
+        bookingId: 'booking-123',
+        amount: 50000
+      });
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/payments/create-intent', {
+      expect(mockApiClient.post).toHaveBeenCalledWith('/payments/create', {
+        provider: 'square',
+        currency: 'USD',
         bookingId: 'booking-123',
         amount: 50000,
-        currency: 'USD',
-        metadata: {},
+        sourceId: 'mock-source-id',
+        billingAddress: undefined,
       });
     });
   });
@@ -317,6 +333,8 @@ describe('PaymentService', () => {
     };
 
     const mockRefundResponse: RefundResponse = {
+      success: true,
+      refundId: 're_test_123',
       refund: {
         id: 're_test_123',
         amount: 25000,
@@ -328,15 +346,17 @@ describe('PaymentService', () => {
 
     it('should create refund successfully', async () => {
       mockApiClient.post.mockResolvedValue({
-        data: {
-          success: true,
-          data: mockRefundResponse,
-        },
+        data: mockRefundResponse,
       });
 
       const result = await PaymentService.createRefund(mockRefundRequest);
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/payments/refund', mockRefundRequest);
+      expect(mockApiClient.post).toHaveBeenCalledWith('/payments/refund', {
+        paymentId: 'pi_test_123',
+        bookingId: '',
+        amount: 25000,
+        reason: 'requested_by_customer',
+      });
       expect(result).toEqual(mockRefundResponse);
     });
 
@@ -568,11 +588,11 @@ describe('PaymentService', () => {
   describe('Error Handling Patterns', () => {
     it('should consistently handle API errors across methods', async () => {
       const methods = [
-        () => PaymentService.createPaymentIntent('booking-123', 50000),
+        () => PaymentService.createPaymentIntent({ bookingId: 'booking-123', amount: 50000 }),
         () => PaymentService.confirmPaymentIntent('pi_test_123'),
         () => PaymentService.getPaymentStatus('pi_test_123'),
         () => PaymentService.getBookingPayments('booking-123'),
-        () => PaymentService.createRefund({ paymentIntentId: 'pi_test_123' }),
+        () => PaymentService.createRefund({ paymentIntentId: 'pi_test_123', amount: 100 }),
         () => PaymentService.getPaymentHistory(),
         () => PaymentService.createSetupIntent(),
       ];
@@ -601,11 +621,11 @@ describe('PaymentService', () => {
       mockApiClient.post.mockRejectedValue(new Error('Test error'));
 
       await expect(
-        PaymentService.createPaymentIntent('booking-123', 50000)
+        PaymentService.createPaymentIntent({ bookingId: 'booking-123', amount: 50000 })
       ).rejects.toThrow();
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to create payment intent:',
+        'Failed to create Square payment:',
         expect.any(Error)
       );
 

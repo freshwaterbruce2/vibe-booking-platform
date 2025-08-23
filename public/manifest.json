@@ -14,74 +14,74 @@
   
   "icons": [
     {
-      "src": "https://via.placeholder.com/72x72?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "badge"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "https://via.placeholder.com/96x96?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "96x96",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://via.placeholder.com/128x128?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "128x128",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://via.placeholder.com/144x144?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "144x144",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://via.placeholder.com/152x152?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "152x152",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://via.placeholder.com/192x192?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "https://via.placeholder.com/384x384?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "384x384",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://via.placeholder.com/512x512?text=V&color=3b82f6&background=ffffff",
+      "src": "/icon.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
   
   "screenshots": [
     {
-      "src": "https://via.placeholder.com/390x844?text=Vibe+Hotel+Search&color=3b82f6&background=ffffff",
+      "src": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=390&h=844&fit=crop&crop=center",
       "sizes": "390x844",
-      "type": "image/png",
+      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "AI-powered hotel search matching your unique vibe"
     },
     {
-      "src": "https://via.placeholder.com/390x844?text=Hotel+Vibes&color=3b82f6&background=ffffff",
+      "src": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=390&h=844&fit=crop&crop=center",
       "sizes": "390x844", 
-      "type": "image/png",
+      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Passion-based hotel recommendations with 5% rewards"
     },
     {
-      "src": "https://via.placeholder.com/1024x768?text=Vibe+Hotels+Desktop&color=3b82f6&background=ffffff",
+      "src": "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1024&h=768&fit=crop&crop=center",
       "sizes": "1024x768",
-      "type": "image/png", 
+      "type": "image/jpeg", 
       "form_factor": "wide",
       "label": "Immersive desktop experience for finding your perfect vibe"
     }
@@ -95,8 +95,9 @@
       "url": "/search",
       "icons": [
         {
-          "src": "https://via.placeholder.com/96x96?text=S&color=3b82f6&background=ffffff",
-          "sizes": "96x96"
+          "src": "/icon.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
         }
       ]
     },
@@ -107,8 +108,9 @@
       "url": "/bookings",
       "icons": [
         {
-          "src": "https://via.placeholder.com/96x96?text=B&color=3b82f6&background=ffffff",
-          "sizes": "96x96"
+          "src": "/icon.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
         }
       ]
     },
@@ -119,8 +121,9 @@
       "url": "/rewards",
       "icons": [
         {
-          "src": "https://via.placeholder.com/96x96?text=R&color=3b82f6&background=ffffff",
-          "sizes": "96x96"
+          "src": "/icon.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
         }
       ]
     }
@@ -152,6 +155,7 @@
   "share_target": {
     "action": "/",
     "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
     "params": {
       "title": "title",
       "text": "text",

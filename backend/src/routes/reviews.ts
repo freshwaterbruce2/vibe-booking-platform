@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { validateRequest } from '../middleware/validateRequest';
 import { logger } from '../utils/logger';
 import { getDb } from '../database';
-import { reviews, bookings, users, reviewVotes, NewReview } from '../database/schema';
+import { reviews, bookings, users, NewReview } from '../database/schema';
+import { reviewVotes } from '../database/schema/reviewVotes';
 import { eq, and, desc, avg, count, gte, lte } from 'drizzle-orm';
 
 export const reviewsRouter = Router();

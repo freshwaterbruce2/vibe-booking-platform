@@ -1,8 +1,12 @@
-﻿import React from 'react';
-import { Star, MapPin, Heart, Share2, ChevronRight, Sparkles } from 'lucide-react';
+﻿import React, { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Star, MapPin, Heart, Share2, Sparkles, Camera, Wifi, Car, Coffee } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '@/components/ui/Card';
+import { TrustBadge } from '../ui/TrustBadge';
+import { UrgencyIndicator } from '../ui/UrgencyIndicator';
 import { useSearchStore } from '@/store/searchStore';
+import { useHotelStore } from '@/store/hotelStore';
 import type { Hotel } from '@/types/hotel';
 import { cn } from '@/utils/cn';
 
@@ -15,7 +19,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   onHotelSelect,
   className = '',
 }) => {
+  const navigate = useNavigate();
   const { results: hotels, loading: isLoading, pagination } = useSearchStore();
+  const { setSelectedHotel } = useHotelStore();
   const renderStars = (rating: number) => {
     return (
       <div className="flex items-center gap-1">
@@ -26,7 +32,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               'w-4 h-4',
               i < Math.floor(rating)
                 ? 'text-yellow-400 fill-current'
-                : 'text-gray-300'
+                : 'text-gray-300',
             )}
           />
         ))}
@@ -131,41 +137,71 @@ const SearchResults: React.FC<SearchResultsProps> = ({
       {/* Hotel Cards */}
       <div className="grid gap-6">
         {hotels.map((hotel) => {
-          const primaryImage = hotel.images?.find(img => img.isPrimary) || hotel.images?.[0];
+          const primaryImage = hotel.images?.find((img) => img.isPrimary) || hotel.images?.[0];
           const passionScore = hotel.passionScore ? Math.max(...Object.values(hotel.passionScore)) : 0;
 
           return (
             <Card
               key={hotel.id}
-              className="group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-0 shadow-lg"
+              className={cn(
+                'group hover:shadow-2xl hover:scale-[1.01] transition-all duration-500 cursor-pointer overflow-hidden shadow-lg bg-white transform animate-fadeInUp',
+                passionScore > 0.8 ? 'border-2 border-primary ring-2 ring-primary/20' : 'border-0',
+              )}
               onClick={() => onHotelSelect && onHotelSelect(hotel)}
             >
+              {/* Featured Deal Banner */}
+              {passionScore > 0.8 && (
+                <div className="bg-gradient-to-r from-primary to-primary-600 text-white px-4 py-2 text-center">
+                  <span className="text-sm font-bold">⭐ FEATURED DEAL - Perfect Match for You!</span>
+                </div>
+              )}
               <div className="flex flex-col lg:flex-row gap-0">
-                {/* Hotel Image */}
-                <div className="relative w-full lg:w-80 h-48 lg:h-40 overflow-hidden">
+                {/* Hotel Image - Mobile optimized */}
+                <div className="relative w-full lg:w-96 h-48 sm:h-56 lg:h-48 overflow-hidden">
                   <img
-                    src={primaryImage?.url || '/placeholder-hotel.jpg'}
+                    src={primaryImage?.url || 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop'}
                     alt={primaryImage?.alt || hotel.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop';
                     }}
                   />
 
-                  {/* Passion Score Badge */}
-                  {passionScore > 0.7 && (
-                    <div className="absolute top-3 left-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      {Math.round(passionScore * 100)}% Match
-                    </div>
-                  )}
+                  {/* Urgency Indicators */}
+                  <div className="absolute top-3 left-3 flex flex-col gap-2">
+                    {passionScore > 0.7 && (
+                      <TrustBadge
+                        type="favorite"
+                        text={`${Math.round(passionScore * 100)}% Match`}
+                        className="shadow-lg"
+                      />
+                    )}
+                    <UrgencyIndicator
+                      type="viewing"
+                      count={Math.floor(Math.random() * 15) + 5}
+                      className="shadow-lg"
+                    />
+                  </div>
 
                   {/* Availability Badge */}
                   {hotel.availability.lowAvailability && (
-                    <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                      Only {Math.floor(Math.random() * 3) + 1} left!
+                    <div className="absolute top-3 right-3">
+                      <UrgencyIndicator
+                        type="limited"
+                        count={Math.floor(Math.random() * 3) + 1}
+                        className="shadow-lg"
+                      />
                     </div>
                   )}
+
+                  {/* Recently Booked */}
+                  <div className="absolute bottom-3 left-3">
+                    <UrgencyIndicator
+                      type="recently_booked"
+                      timeframe={`${Math.floor(Math.random() * 6) + 1} hours ago`}
+                      className="shadow-lg"
+                    />
+                  </div>
 
                   {/* Action Buttons */}
                   <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -194,36 +230,56 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                   </div>
                 </div>
 
-                {/* Hotel Information */}
-                <div className="flex-1 p-6">
+                {/* Hotel Information - Mobile optimized */}
+                <div className="flex-1 p-4 sm:p-6">
                   <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors line-clamp-1">
+                    {/* Header - Stack on mobile */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-3 sm:gap-0">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors line-clamp-2">
                           {hotel.name}
                         </h4>
                         <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 mt-1">
-                          <MapPin className="w-4 h-4" />
-                          <span className="text-sm">
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
+                          <span className="text-sm truncate">
                             {hotel.location.neighborhood || hotel.location.city}, {hotel.location.country}
                           </span>
                         </div>
                       </div>
 
-                      {/* Price */}
-                      <div className="text-right ml-4">
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {/* Price - Centered on mobile */}
+                      <div className="text-center sm:text-right sm:ml-4 order-first sm:order-last">
+                        {/* Deal Badge */}
+                        {hotel.deals && hotel.deals.length > 0 && (
+                          <div className="mb-2">
+                            <span className="bg-accent text-white text-xs font-bold px-2 py-1 rounded-full">
+                              {hotel.deals[0].discountPercent}% OFF TODAY
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Original Price (if discounted) */}
+                        {hotel.priceRange.originalPrice && hotel.priceRange.originalPrice > hotel.priceRange.avgNightly && (
+                          <div className="text-sm text-gray-400 line-through">
+                            {formatPrice(hotel.priceRange.originalPrice, hotel.priceRange.currency)}
+                          </div>
+                        )}
+
+                        {/* Current Price */}
+                        <div className="text-3xl font-bold text-gray-900 dark:text-white">
                           {formatPrice(hotel.priceRange.avgNightly, hotel.priceRange.currency)}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">per night</div>
-                        {hotel.availability.priceChange && (
-                          <div className={cn(
-                            'text-xs font-medium',
-                            hotel.availability.priceChange > 0 ? 'text-red-500' : 'text-green-500'
-                          )}>
-                            {hotel.availability.priceChange > 0 ? '+' : ''}
-                            {formatPrice(hotel.availability.priceChange, hotel.priceRange.currency)}
+
+                        {/* Total Price Hint */}
+                        <div className="text-xs text-gray-400 mt-1">
+                          {formatPrice(hotel.priceRange.avgNightly * 3, hotel.priceRange.currency)} total (3 nights)
+                        </div>
+
+                        {/* Savings Amount */}
+                        {hotel.priceRange.originalPrice && hotel.priceRange.originalPrice > hotel.priceRange.avgNightly && (
+                          <div className="text-xs font-medium text-accent mt-1">
+                            Save {formatPrice(hotel.priceRange.originalPrice - hotel.priceRange.avgNightly, hotel.priceRange.currency)}
                           </div>
                         )}
                       </div>
@@ -247,45 +303,102 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                       {hotel.description}
                     </p>
 
-                    {/* Amenities */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {hotel.amenities.slice(0, 4).map((amenity) => (
+                    {/* Key Amenities */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {/* Top amenities with icons */}
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Wifi className="w-4 h-4 text-blue-500" />
+                        <span>Free WiFi</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Car className="w-4 h-4 text-green-500" />
+                        <span>Free Parking</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Coffee className="w-4 h-4 text-amber-500" />
+                        <span>Breakfast</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Sparkles className="w-4 h-4 text-purple-500" />
+                        <span>Spa</span>
+                      </div>
+                    </div>
+
+                    {/* Additional Amenities */}
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {hotel.amenities.slice(0, 3).map((amenity) => (
                         <span
                           key={amenity.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200"
                         >
-                          {amenity.icon && <span>{amenity.icon}</span>}
                           {amenity.name}
                         </span>
                       ))}
-                      {hotel.amenities.length > 4 && (
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full">
-                          +{hotel.amenities.length - 4} more
+                      {hotel.amenities.length > 3 && (
+                        <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full border border-gray-200">
+                          +{hotel.amenities.length - 3} more
                         </span>
                       )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                        {hotel.virtualTourUrl && (
-                          <button className="hover:text-primary-600 transition-colors">
-                            Virtual Tour
-                          </button>
-                        )}
-                        <button className="hover:text-primary-600 transition-colors">
-                          View on Map
-                        </button>
-                      </div>
+                    {/* Quote & Actions */}
+                    <div className="flex flex-col gap-3 mt-auto">
+                      {/* Best Review Quote */}
+                      {hotel.topReview && (
+                        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <p className="text-sm italic text-gray-700 dark:text-gray-300 line-clamp-2">
+                            "{hotel.topReview.quote}"
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            - {hotel.topReview.author}
+                          </p>
+                        </div>
+                      )}
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary-600 hover:text-primary-700 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20"
-                      >
-                        View Details
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
+                      {/* Actions Row - Mobile optimized */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                        {/* Secondary Actions - Hidden on mobile, visible on tablet+ */}
+                        <div className="hidden sm:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          {hotel.virtualTourUrl && (
+                            <button className="hover:text-primary-600 transition-colors flex items-center gap-1">
+                              <Camera className="w-4 h-4" />
+                              Virtual Tour
+                            </button>
+                          )}
+                          <button className="hover:text-primary-600 transition-colors">
+                            View on Map
+                          </button>
+                        </div>
+
+                        {/* Primary Actions - Full width on mobile */}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="sm:hidden w-full text-gray-600 hover:text-primary-600 order-2 sm:order-1"
+                          >
+                            View Details & Map
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hidden sm:block text-gray-600 hover:text-primary-600"
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="w-full sm:w-auto bg-primary text-white hover:bg-primary-600 px-6 font-bold shadow-lg hover:shadow-xl transform hover:scale-105 order-1 sm:order-2 h-12 sm:h-auto text-lg sm:text-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedHotel(hotel);
+                              navigate('/booking');
+                            }}
+                          >
+                            Book Now
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -314,7 +427,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               return (
                 <Button
                   key={pageNum}
-                  variant={pagination.page === pageNum ? 'default' : 'outline'}
+                  variant={pagination.page === pageNum ? 'primary' : 'outline'}
                   size="sm"
                   className="w-10"
                   onClick={() => {
@@ -343,4 +456,4 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 };
 
 export { SearchResults };
-export default SearchResults;
+export default memo(SearchResults);

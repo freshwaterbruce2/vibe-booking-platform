@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { format, differenceInHours } from 'date-fns';
 import { PaymentService } from '../../services/payment';
-import { 
-  AlertTriangle, 
-  Calendar, 
-  Clock, 
-  DollarSign, 
+import {
+  AlertTriangle,
+  Calendar,
+  Clock,
+  DollarSign,
   Info,
   CheckCircle,
   X,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 
 interface CancellationFormProps {
@@ -38,7 +38,7 @@ interface CancellationFormProps {
 
 export const CancellationForm: React.FC<CancellationFormProps> = ({
   booking,
-  paymentDetails,
+  // paymentDetails,
   onCancel,
   onClose,
 }) => {
@@ -49,19 +49,21 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
   const now = new Date();
   const checkInDate = booking.checkIn;
   const cancellationDeadline = booking.cancellationDeadline || checkInDate;
-  
+
   const hoursUntilDeadline = differenceInHours(cancellationDeadline, now);
   const hoursUntilCheckIn = differenceInHours(checkInDate, now);
-  
+
   const isWithinCancellationWindow = now <= cancellationDeadline;
   const canCancel = booking.isCancellable && isWithinCancellationWindow;
 
   // Calculate refund amount based on cancellation policy
   const calculateRefundAmount = () => {
-    if (!canCancel) return 0;
+    if (!canCancel) {
+return 0;
+}
 
-    const policy = booking.cancellationPolicy || {};
-    const totalAmount = booking.totalAmount;
+    // const policy = booking.cancellationPolicy || {};
+    const {totalAmount} = booking;
 
     // Free cancellation period (usually 24-48 hours before check-in)
     if (hoursUntilCheckIn >= 24) {
@@ -108,7 +110,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Cancellation Not Available
           </h2>
-          
+
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div className="text-left space-y-2">
               {!booking.isCancellable ? (
@@ -117,7 +119,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
                 </p>
               ) : (
                 <p className="text-red-700">
-                  The cancellation deadline has passed. 
+                  The cancellation deadline has passed.
                   Deadline was: {format(cancellationDeadline, 'PPP p')}
                 </p>
               )}
@@ -181,7 +183,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
                 {PaymentService.formatCurrency(booking.totalAmount, booking.currency)}
               </span>
             </div>
-            
+
             {cancellationFee > 0 && (
               <div className="flex justify-between">
                 <span className="text-blue-700">Cancellation Fee:</span>
@@ -190,7 +192,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
                 </span>
               </div>
             )}
-            
+
             <div className="border-t border-blue-200 pt-2">
               <div className="flex justify-between">
                 <span className="text-blue-800 font-medium">Refund Amount:</span>
@@ -241,7 +243,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
           >
             Back
           </button>
-          
+
           <button
             onClick={handleConfirmCancellation}
             disabled={isProcessing || !cancellationReason.trim()}
@@ -314,7 +316,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
         {/* Cancellation Policy */}
         <div className="mb-6">
           <h3 className="font-medium text-gray-900 mb-3">Cancellation Policy</h3>
-          
+
           <div className="space-y-4">
             {/* Deadline Info */}
             <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
@@ -324,7 +326,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
                   {hoursUntilDeadline > 0 ? 'Free Cancellation Available' : 'Cancellation Deadline Passed'}
                 </p>
                 <p className="text-blue-700">
-                  {hoursUntilDeadline > 0 
+                  {hoursUntilDeadline > 0
                     ? `You have ${hoursUntilDeadline} hours remaining for free cancellation`
                     : `Deadline was ${format(cancellationDeadline, 'PPP')}`
                   }
@@ -338,7 +340,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
                 <DollarSign className="h-4 w-4 mr-1" />
                 Refund Calculation
               </h4>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Original Amount:</span>
@@ -346,7 +348,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
                     {PaymentService.formatCurrency(booking.totalAmount, booking.currency)}
                   </span>
                 </div>
-                
+
                 {cancellationFee > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Cancellation Fee:</span>
@@ -355,7 +357,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
                     </span>
                   </div>
                 )}
-                
+
                 <div className="border-t pt-2">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-900">Refund Amount:</span>
@@ -409,7 +411,7 @@ export const CancellationForm: React.FC<CancellationFormProps> = ({
           >
             Keep Booking
           </button>
-          
+
           <button
             onClick={handleCancelClick}
             className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

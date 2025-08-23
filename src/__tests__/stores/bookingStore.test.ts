@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useBookingStore } from '@/store/bookingStore';
-import { testUtils } from '../setup';
+// import { testUtils } from '../setup';
 
 // Mock the store
 vi.mock('zustand/middleware', () => ({
   devtools: vi.fn((fn) => fn),
+  persist: vi.fn((fn) => fn),
 }));
 
 describe('BookingStore', () => {
@@ -17,9 +18,9 @@ describe('BookingStore', () => {
     children: 0,
     specialRequests: '',
     preferences: {
-      bedType: 'any',
-      floor: 'any',
-      roomType: 'any',
+      bedType: 'any' as const,
+      floor: 'any' as const,
+      roomType: 'any' as const,
       smokingAllowed: false,
     },
   };
@@ -154,9 +155,9 @@ describe('BookingStore', () => {
       
       setGuestDetails({
         preferences: {
-          bedType: 'king',
-          floor: 'high',
-          roomType: 'suite',
+          bedType: 'king' as const,
+          floor: 'high' as const,
+          roomType: 'view' as const,
           smokingAllowed: true,
         },
       });
@@ -165,7 +166,7 @@ describe('BookingStore', () => {
       expect(state.guestDetails.preferences).toEqual({
         bedType: 'king',
         floor: 'high',
-        roomType: 'suite',
+        roomType: 'view',
         smokingAllowed: true,
       });
     });
@@ -177,11 +178,15 @@ describe('BookingStore', () => {
       
       const mockRoom = {
         id: 'room-123',
+        name: 'Deluxe Room',
         type: 'deluxe',
+        capacity: 2,
         price: 250,
+        currency: 'USD',
         amenities: ['WiFi', 'AC', 'TV'],
-        bedType: 'king',
-        maxOccupancy: 2,
+        images: ['room1.jpg'],
+        availability: true,
+        description: 'A comfortable deluxe room',
       };
       
       setSelectedRoom(mockRoom);
@@ -193,7 +198,18 @@ describe('BookingStore', () => {
     it('should clear selected room', () => {
       const { setSelectedRoom } = useBookingStore.getState();
       
-      const mockRoom = { id: 'room-123', type: 'deluxe', price: 250 };
+      const mockRoom = {
+        id: 'room-123',
+        name: 'Deluxe Room',
+        type: 'deluxe',
+        capacity: 2,
+        price: 250,
+        currency: 'USD',
+        amenities: ['WiFi'],
+        images: ['room1.jpg'],
+        availability: true,
+        description: 'A deluxe room',
+      };
       setSelectedRoom(mockRoom);
       
       // Clear room
@@ -261,7 +277,18 @@ describe('BookingStore', () => {
       
       // Should pass with room selection
       const { setSelectedRoom } = useBookingStore.getState();
-      setSelectedRoom({ id: 'room-123', type: 'deluxe', price: 250 });
+      setSelectedRoom({
+        id: 'room-123',
+        name: 'Deluxe Room',
+        type: 'deluxe',
+        capacity: 2,
+        price: 250,
+        currency: 'USD',
+        amenities: ['WiFi'],
+        images: ['room1.jpg'],
+        availability: true,
+        description: 'A deluxe room',
+      });
       
       isValid = validateCurrentStep();
       expect(isValid).toBe(true);
@@ -370,8 +397,48 @@ describe('BookingStore', () => {
       const confirmationData = {
         bookingId: 'BOOK123',
         confirmationNumber: 'CONF456',
+        hotel: {
+          id: 'hotel-1',
+          name: 'Test Hotel',
+          location: {
+            address: '123 Test St',
+            city: 'Test City',
+            country: 'Test Country',
+            coordinates: { lat: 0, lng: 0 },
+          },
+          rating: 4.5,
+          reviewCount: 100,
+          priceRange: {
+            min: 200,
+            max: 400,
+            currency: 'USD',
+            avgNightly: 300,
+          },
+          amenities: [],
+          images: [],
+          description: 'A test hotel',
+          availability: { available: true, lastChecked: '2024-12-01' },
+        },
+        room: {
+          id: 'room-123',
+          name: 'Deluxe Room',
+          type: 'deluxe',
+          capacity: 2,
+          price: 250,
+          currency: 'USD',
+          amenities: ['WiFi'],
+          images: ['room1.jpg'],
+          availability: true,
+          description: 'A deluxe room',
+        },
+        checkIn: '2024-12-01',
+        checkOut: '2024-12-03',
+        nights: 2,
         totalAmount: 500,
-        paymentStatus: 'completed',
+        currency: 'USD',
+        guestDetails: initialGuestDetails,
+        paymentStatus: 'confirmed' as const,
+        createdAt: '2024-12-01T10:00:00Z',
       };
       
       setConfirmation(confirmationData);
@@ -388,9 +455,65 @@ describe('BookingStore', () => {
       // Set some values
       store.setCurrentStep('payment');
       store.setGuestDetails({ firstName: 'John', lastName: 'Doe' });
-      store.setSelectedRoom({ id: 'room-123', type: 'deluxe', price: 250 });
+      store.setSelectedRoom({
+        id: 'room-123',
+        name: 'Deluxe Room',
+        type: 'deluxe',
+        capacity: 2,
+        price: 250,
+        currency: 'USD',
+        amenities: ['WiFi'],
+        images: ['room1.jpg'],
+        availability: true,
+        description: 'A deluxe room',
+      });
       store.setPaymentInfo({ cardholderName: 'John Doe' });
-      store.setConfirmation({ bookingId: 'BOOK123' });
+      store.setConfirmation({
+        bookingId: 'BOOK123',
+        confirmationNumber: 'CONF123',
+        hotel: {
+          id: 'hotel-1',
+          name: 'Test Hotel',
+          location: {
+            address: '123 Test St',
+            city: 'Test City',
+            country: 'Test Country',
+            coordinates: { lat: 0, lng: 0 },
+          },
+          rating: 4.5,
+          reviewCount: 100,
+          priceRange: {
+            min: 200,
+            max: 400,
+            currency: 'USD',
+            avgNightly: 300,
+          },
+          amenities: [],
+          images: [],
+          description: 'A test hotel',
+          availability: { available: true, lastChecked: '2024-12-01' },
+        },
+        room: {
+          id: 'room-123',
+          name: 'Deluxe Room',
+          type: 'deluxe',
+          capacity: 2,
+          price: 250,
+          currency: 'USD',
+          amenities: ['WiFi'],
+          images: ['room1.jpg'],
+          availability: true,
+          description: 'A deluxe room',
+        },
+        checkIn: '2024-12-01',
+        checkOut: '2024-12-03',
+        nights: 2,
+        totalAmount: 500,
+        currency: 'USD',
+        guestDetails: initialGuestDetails,
+        paymentStatus: 'confirmed',
+        createdAt: '2024-12-01T10:00:00Z',
+      });
       store.setErrors({ firstName: 'Error' });
       store.setLoading(true);
       
@@ -416,11 +539,15 @@ describe('BookingStore', () => {
       expect(store.validateCurrentStep()).toBe(false);
       store.setSelectedRoom({
         id: 'room-deluxe-001',
+        name: 'Deluxe Suite',
         type: 'deluxe',
+        capacity: 2,
         price: 350,
+        currency: 'USD',
         amenities: ['WiFi', 'AC', 'Minibar'],
-        bedType: 'king',
-        maxOccupancy: 2,
+        images: ['suite1.jpg'],
+        availability: true,
+        description: 'A luxurious deluxe suite',
       });
       expect(store.validateCurrentStep()).toBe(true);
       store.nextStep();
@@ -435,9 +562,9 @@ describe('BookingStore', () => {
         phone: '+1234567890',
         specialRequests: 'Late check-in',
         preferences: {
-          bedType: 'king',
-          floor: 'high',
-          roomType: 'suite',
+          bedType: 'king' as const,
+          floor: 'high' as const,
+          roomType: 'view' as const,
           smokingAllowed: false,
         },
       });
@@ -468,8 +595,62 @@ describe('BookingStore', () => {
       store.setConfirmation({
         bookingId: 'BOOK789',
         confirmationNumber: 'CONF123',
+        hotel: {
+          id: 'hotel-1',
+          name: 'Test Hotel',
+          location: {
+            address: '123 Test St',
+            city: 'Test City',
+            country: 'Test Country',
+            coordinates: { lat: 0, lng: 0 },
+          },
+          rating: 4.5,
+          reviewCount: 100,
+          priceRange: {
+            min: 200,
+            max: 400,
+            currency: 'USD',
+            avgNightly: 300,
+          },
+          amenities: [],
+          images: [],
+          description: 'A test hotel',
+          availability: { available: true, lastChecked: '2024-12-01' },
+        },
+        room: {
+          id: 'room-deluxe-001',
+          name: 'Deluxe Suite',
+          type: 'deluxe',
+          capacity: 2,
+          price: 350,
+          currency: 'USD',
+          amenities: ['WiFi', 'AC', 'Minibar'],
+          images: ['suite1.jpg'],
+          availability: true,
+          description: 'A luxurious deluxe suite',
+        },
+        checkIn: '2024-12-01',
+        checkOut: '2024-12-03',
+        nights: 2,
         totalAmount: 700,
-        paymentStatus: 'completed',
+        currency: 'USD',
+        guestDetails: {
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.com',
+          phone: '+1234567890',
+          adults: 2,
+          children: 0,
+          specialRequests: 'Late check-in',
+          preferences: {
+            bedType: 'king',
+            floor: 'high',
+            roomType: 'view',
+            smokingAllowed: false,
+          },
+        },
+        paymentStatus: 'confirmed' as const,
+        createdAt: '2024-12-01T10:00:00Z',
       });
       store.setLoading(false);
       store.nextStep();

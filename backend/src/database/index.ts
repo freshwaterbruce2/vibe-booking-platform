@@ -2,14 +2,13 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { config } from '../config';
-import { sqliteConfig } from '../config/sqlite';
 import { logger } from '../utils/logger';
 import * as schema from './schema';
 import { initializeSqliteDatabase, getSqliteDb, closeSqliteDatabase } from './sqlite';
 import * as sqliteSchema from './schema/sqlite';
 
 let pool: Pool;
-let db: ReturnType<typeof drizzle>;
+let db: any; // Use any to handle both SQLite and PostgreSQL types
 
 // Check if we should use SQLite
 const useLocalSqlite = process.env.LOCAL_SQLITE === 'true';

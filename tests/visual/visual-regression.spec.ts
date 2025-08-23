@@ -9,7 +9,7 @@ const VIEWPORTS = [
 ];
 
 // Helper to wait for animations and loading
-async function waitForStability(page) {
+async function waitForStability(page: any) {
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(500); // Wait for CSS transitions
   await page.evaluate(() => {
@@ -22,9 +22,9 @@ async function waitForStability(page) {
 }
 
 // Helper to mock consistent API responses for visual testing
-async function setupMockData(page) {
+async function setupMockData(page: any) {
   // Mock hotel search API
-  await page.route('**/api/hotels/search**', async (route) => {
+  await page.route('**/api/hotels/search**', async (route: any) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -120,8 +120,8 @@ async function setupMockData(page) {
   });
 
   // Mock other APIs as needed
-  await page.route('**/api/ai/**', (route) => route.fulfill({ status: 200, body: '{}' }));
-  await page.route('**/api/payments/**', (route) => route.fulfill({ status: 200, body: '{}' }));
+  await page.route('**/api/ai/**', (route: any) => route.fulfill({ status: 200, body: '{}' }));
+  await page.route('**/api/payments/**', (route: any) => route.fulfill({ status: 200, body: '{}' }));
 }
 
 test.describe('Hotel Booking Visual Regression Tests', () => {
@@ -168,7 +168,7 @@ test.describe('Hotel Booking Visual Regression Tests', () => {
 
     test('Search loading state', async ({ page }) => {
       // Mock delayed response
-      await page.route('**/api/hotels/search**', async (route) => {
+      await page.route('**/api/hotels/search**', async (route: any) => {
         await new Promise(resolve => setTimeout(resolve, 1500));
         await route.continue();
       });
@@ -231,7 +231,7 @@ test.describe('Hotel Booking Visual Regression Tests', () => {
 
     test('Empty search results', async ({ page }) => {
       // Mock empty results
-      await page.route('**/api/hotels/search**', async (route) => {
+      await page.route('**/api/hotels/search**', async (route: any) => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -340,7 +340,7 @@ test.describe('Hotel Booking Visual Regression Tests', () => {
   test.describe('Error and Loading States', () => {
     test('Search error state', async ({ page }) => {
       // Mock API error
-      await page.route('**/api/hotels/search**', async (route) => {
+      await page.route('**/api/hotels/search**', async (route: any) => {
         await route.fulfill({
           status: 500,
           contentType: 'application/json',
@@ -369,7 +369,7 @@ test.describe('Hotel Booking Visual Regression Tests', () => {
         resolveRequest = resolve;
       });
 
-      await page.route('**/api/hotels/search**', async (route) => {
+      await page.route('**/api/hotels/search**', async (route: any) => {
         await slowResponsePromise;
         await route.fulfill({
           status: 200,

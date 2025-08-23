@@ -1,6 +1,6 @@
-import { eq, sql, and, or, gte, lte, ilike, desc, asc } from 'drizzle-orm';
+import { eq, sql, and, gte, lte, ilike, desc, asc } from 'drizzle-orm';
 import { getDb } from './index';
-import { hotels, rooms, bookings, hotelSearch, searchAnalytics } from './schema';
+import { hotels, rooms, hotelSearch, searchAnalytics } from './schema';
 import { logger } from '../utils/logger';
 
 /**
@@ -116,7 +116,7 @@ export class HotelSearchOptimizer {
       .where(eq(hotels.isActive, true));
 
     // Apply filters with optimized conditions
-    const conditions = this.buildWhereConditions(filters, searchQuery);
+    const conditions = this.buildWhereConditions(filters);
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
     }
@@ -136,14 +136,21 @@ export class HotelSearchOptimizer {
       const results = await query;
       const executionTime = Date.now() - startTime;
 
+      // Convert price strings to numbers for HotelSearchResult interface
+      const formattedResults = results.map((hotel: any) => ({
+        ...hotel,
+        priceMin: Number(hotel.priceMin),
+        priceMax: Number(hotel.priceMax)
+      }));
+
       // Cache results
-      this.setCachedResult(cacheKey, results);
+      this.setCachedResult(cacheKey, formattedResults);
 
       // Log search analytics
-      await this.logSearchAnalytics(filters, searchQuery, results.length, executionTime);
+      await this.logSearchAnalytics(filters, searchQuery, formattedResults.length, executionTime);
 
       return {
-        hotels: results as HotelSearchResult[],
+        hotels: formattedResults as HotelSearchResult[],
         metrics: {
           executionTimeMs: executionTime,
           cacheHit: false,
@@ -211,10 +218,17 @@ export class HotelSearchOptimizer {
       const results = await query;
       const executionTime = Date.now() - startTime;
 
-      await this.logSearchAnalytics(filters, searchQuery, results.length, executionTime);
+      // Convert price strings to numbers for HotelSearchResult interface
+      const formattedResults = results.map((hotel: any) => ({
+        ...hotel,
+        priceMin: Number(hotel.priceMin),
+        priceMax: Number(hotel.priceMax)
+      }));
+
+      await this.logSearchAnalytics(filters, searchQuery, formattedResults.length, executionTime);
 
       return {
-        hotels: results as HotelSearchResult[],
+        hotels: formattedResults as HotelSearchResult[],
         metrics: {
           executionTimeMs: executionTime,
           cacheHit: false,
@@ -239,6 +253,8 @@ export class HotelSearchOptimizer {
     children: number = 0
   ) {
     const startTime = Date.now();
+    // TODO: Implement date range filtering with bookings check
+    // checkIn and checkOut will be used when booking conflicts are checked
 
     const availableRooms = await this.db
       .select({
@@ -267,7 +283,7 @@ export class HotelSearchOptimizer {
   /**
    * Build optimized WHERE conditions
    */
-  private buildWhereConditions(filters: SearchFilters, searchQuery?: string) {
+  private buildWhereConditions(filters: SearchFilters) {
     const conditions = [];
 
     if (filters.city) {
@@ -279,11 +295,11 @@ export class HotelSearchOptimizer {
     }
 
     if (filters.minPrice !== undefined) {
-      conditions.push(gte(hotels.priceMin, filters.minPrice));
+      conditions.push(gte(hotels.priceMin, String(filters.minPrice)));
     }
 
     if (filters.maxPrice !== undefined) {
-      conditions.push(lte(hotels.priceMax, filters.maxPrice));
+      conditions.push(lte(hotels.priceMax, String(filters.maxPrice)));
     }
 
     if (filters.starRating) {
@@ -404,7 +420,9 @@ export class HotelSearchOptimizer {
  * Tracks query performance and provides optimization recommendations
  */
 export class DatabasePerformanceMonitor {
-  private db = getDb();
+  private async getDatabase() {
+    return await getDb();
+  }
 
   /**
    * Monitor slow queries and provide recommendations
@@ -431,7 +449,8 @@ export class DatabasePerformanceMonitor {
    * Get slow queries from performance log
    */
   private async getSlowQueries() {
-    return this.db.execute(sql`
+    const db = await this.getDatabase();
+    return db.execute(sql`
       SELECT 
         operation,
         AVG(response_time_ms) as avg_time,
@@ -453,7 +472,8 @@ export class DatabasePerformanceMonitor {
     const recommendations = [];
 
     // Check for missing indexes on frequently searched columns
-    const frequentSearches = await this.db.execute(sql`
+    const db = await this.getDatabase();
+    const frequentSearches = await db.execute(sql`
       SELECT 
         filters,
         COUNT(*) as frequency
@@ -486,7 +506,8 @@ export class DatabasePerformanceMonitor {
    * Get cache statistics
    */
   private async getCacheStatistics() {
-    const stats = await this.db.execute(sql`
+    const db = await this.getDatabase();
+    const stats = await db.execute(sql`
       SELECT 
         AVG(CASE WHEN cache_hit THEN 1.0 ELSE 0.0 END) * 100 as hit_rate,
         AVG(execution_time_ms) as avg_response_time
@@ -507,20 +528,21 @@ export class DatabasePerformanceMonitor {
     logger.info('Starting database maintenance...');
 
     try {
+      const db = await this.getDatabase();
       // Refresh materialized views
-      await this.db.execute(sql`SELECT refresh_stale_materialized_views('1 hour')`);
+      await db.execute(sql`SELECT refresh_stale_materialized_views('1 hour')`);
       logger.info('Materialized views refreshed');
 
       // Update table statistics
-      await this.db.execute(sql`ANALYZE hotels, bookings, search_analytics`);
+      await db.execute(sql`ANALYZE hotels, bookings, search_analytics`);
       logger.info('Table statistics updated');
 
       // Clean old audit logs (keep 1 year)
-      await this.db.execute(sql`SELECT cleanup_audit_logs(365)`);
+      await db.execute(sql`SELECT cleanup_audit_logs(365)`);
       logger.info('Old audit logs cleaned');
 
       // Refresh hotel search indexes
-      await this.db.execute(sql`SELECT refresh_hotel_search_indexes()`);
+      await db.execute(sql`SELECT refresh_hotel_search_indexes()`);
       logger.info('Hotel search indexes refreshed');
 
     } catch (error) {

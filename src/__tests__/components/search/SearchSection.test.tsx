@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SearchSection from '@/components/search/SearchSection';
 
@@ -72,7 +72,7 @@ describe('SearchSection', () => {
     it('should have guest dropdown with correct options', () => {
       render(<SearchSection {...defaultProps} />);
       
-      const guestSelect = screen.getByLabelText('Guests');
+      // const guestSelect = screen.getByLabelText('Guests');
       
       expect(screen.getByText('1 Guest')).toBeInTheDocument();
       expect(screen.getByText('2 Guests')).toBeInTheDocument();
