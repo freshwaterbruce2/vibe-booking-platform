@@ -83,6 +83,13 @@ class SEOManager {
   }
 
   /**
+   * Get current SEO data
+   */
+  getCurrentData(): SEOData | null {
+    return this.currentData;
+  }
+
+  /**
    * Set comprehensive SEO data
    */
   setSEO(data: SEOData): void {

@@ -5,6 +5,7 @@ import { BookingService } from '@/domain/booking';
 import { PaymentService } from '@/domain/payments';
 import { toast } from 'sonner';
 import { Loader2, AlertTriangle, Home, Mail, Phone } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface BookingDetails {
   id: string;
@@ -140,7 +141,13 @@ export const BookingConfirmationPage: React.FC = () => {
             });
           }
         } catch (paymentError) {
-          console.warn('Could not load payment details:', paymentError);
+          logger.info('Payment details unavailable, continuing without payment info', {
+            component: 'BookingConfirmationPage',
+            method: 'loadBookingDetails',
+            bookingId: id,
+            error: paymentError instanceof Error ? paymentError.message : 'Unknown error',
+            userImpact: 'missing_payment_details',
+          });
           // Continue without payment details
         }
       }

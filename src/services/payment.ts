@@ -1,4 +1,5 @@
 ﻿import axios from 'axios';
+import { logger } from '@/utils/logger';
 // NOTE: Legacy Stripe intent logic removed; focusing on Square & PayPal unified flows.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 // Stripe removed for current scope; reintroduce when provider abstraction in place.
@@ -167,7 +168,14 @@ export class PaymentService {
       });
       return response.data;
     } catch (error) {
-      console.error('Failed to create Square payment:', error);
+      logger.error('Square payment creation failed', {
+        component: 'PaymentService',
+        method: 'createSquarePayment',
+        bookingId: payload.bookingId,
+        amount: payload.amount,
+        currency: payload.currency || 'USD',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Square payment failed');
       }
@@ -196,7 +204,12 @@ export class PaymentService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to confirm payment intent:', error);
+      logger.error('Payment intent confirmation failed', {
+        component: 'PaymentService',
+        method: 'confirmPaymentIntent',
+        paymentIntentId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Payment confirmation failed');
       }
@@ -217,7 +230,12 @@ export class PaymentService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to get payment status:', error);
+      logger.error('Failed to retrieve payment status', {
+        component: 'PaymentService',
+        method: 'getPaymentStatus',
+        paymentIntentId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Failed to retrieve payment status');
       }
@@ -238,7 +256,12 @@ export class PaymentService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to get booking payments:', error);
+      logger.error('Failed to retrieve booking payments', {
+        component: 'PaymentService',
+        method: 'getBookingPayments',
+        bookingId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Failed to retrieve booking payments');
       }
@@ -270,7 +293,13 @@ export class PaymentService {
       const response = await apiClient.post('/payments/refund', refundData);
       return response.data;
     } catch (error) {
-      console.error('Failed to create refund:', error);
+      logger.error('Refund creation failed', {
+        component: 'PaymentService',
+        method: 'createRefund',
+        amount: request.amount,
+        reason: request.reason,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Refund request failed');
       }
@@ -312,7 +341,14 @@ export class PaymentService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to get payment history:', error);
+      logger.error('Failed to retrieve payment history', {
+        component: 'PaymentService',
+        method: 'getPaymentHistory',
+        page,
+        limit,
+        status,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Failed to retrieve payment history');
       }
@@ -335,7 +371,11 @@ export class PaymentService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to create setup intent:', error);
+      logger.error('Setup intent creation failed', {
+        component: 'PaymentService',
+        method: 'createSetupIntent',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Setup intent creation failed');
       }

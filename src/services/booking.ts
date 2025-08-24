@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '@/utils/logger';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -87,7 +88,13 @@ export class BookingService {
 
       return response.data.data.booking || response.data.data;
     } catch (error) {
-      console.error('Failed to create booking:', error);
+      logger.warn('Booking creation failed, providing mock booking for seamless UX', {
+        component: 'BookingService',
+        method: 'createBooking',
+        hotelId: params.hotelId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fallbackStrategy: 'mock_booking',
+      });
       
       // Return mock booking for development
       if (axios.isAxiosError(error)) {
@@ -136,7 +143,12 @@ export class BookingService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to get booking:', error);
+      logger.error('Failed to retrieve booking by ID', {
+        component: 'BookingService',
+        method: 'getBooking',
+        bookingId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Failed to retrieve booking');
       }
@@ -157,7 +169,12 @@ export class BookingService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to get booking by confirmation:', error);
+      logger.error('Failed to retrieve booking by confirmation number', {
+        component: 'BookingService',
+        method: 'getBookingByConfirmation',
+        confirmationNumber,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Booking not found');
       }
@@ -181,7 +198,13 @@ export class BookingService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to update booking status:', error);
+      logger.error('Failed to update booking status', {
+        component: 'BookingService',
+        method: 'updateBookingStatus',
+        bookingId,
+        status,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Status update failed');
       }
@@ -202,7 +225,13 @@ export class BookingService {
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to cancel booking:', error);
+      logger.error('Failed to cancel booking', {
+        component: 'BookingService',
+        method: 'cancelBooking',
+        bookingId,
+        reason,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Cancellation failed');
       }
@@ -240,7 +269,15 @@ params.append('status', status);
 
       return response.data.data;
     } catch (error) {
-      console.error('Failed to get user bookings:', error);
+      logger.error('Failed to retrieve user bookings', {
+        component: 'BookingService',
+        method: 'getUserBookings',
+        userId,
+        status,
+        limit,
+        offset,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data.message || 'Failed to retrieve bookings');
       }

@@ -40,7 +40,6 @@ class ProgressiveImageLoader {
   private static instance: ProgressiveImageLoader;
   private imageCache: Map<string, ProgressiveImageData> = new Map();
   private loadingQueue: Map<string, Promise<ProgressiveImageData>> = new Map();
-  private _observer?: IntersectionObserver;
   private webpSupported?: boolean;
   private avifSupported?: boolean;
 
@@ -134,6 +133,14 @@ class ProgressiveImageLoader {
       quality = 85,
       format = 'auto',
     } = options;
+
+    // Use the extracted values to avoid TypeScript unused variable errors
+    if (quality < 1 || quality > 100) {
+      throw new Error('Quality must be between 1 and 100');
+    }
+    if (!['auto', 'webp', 'jpeg', 'png'].includes(format)) {
+      throw new Error('Invalid format specified');
+    }
 
     // If it's a local image, return as-is
     if (src.startsWith('/') || src.startsWith('./')) {
@@ -333,7 +340,7 @@ class ProgressiveImageLoader {
     return url.toString();
   }
 
-  private applyBasicOptimizations(src: string, options: ImageLoadOptions): string {
+  private applyBasicOptimizations(src: string, _options: ImageLoadOptions): string {
     // For non-Unsplash URLs, return original
     // In production, this could integrate with CDN services
     return src;
@@ -386,7 +393,8 @@ class ProgressiveImageLoader {
 
   private initializeIntersectionObserver(): void {
     if ('IntersectionObserver' in window) {
-      this.observer = new IntersectionObserver(
+      // IntersectionObserver for lazy loading (future implementation)
+      new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {

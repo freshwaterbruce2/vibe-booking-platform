@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSearchStore } from '@/store/searchStore';
 import type { Hotel, HotelImage, Amenity } from '@/types/hotel';
+import { logger } from '@/utils/logger';
 
 export function useHotelSearch() {
   const [isSearching, setIsSearching] = useState(false);
@@ -32,7 +33,12 @@ export function useHotelSearch() {
       
       // Skip API call if no valid backend URL in production
       if (!isDevelopment && (!import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL.includes('localhost'))) {
-        console.log('No backend deployed - using mock data for instant results');
+        logger.info('No backend deployed - using mock data for instant results', {
+          component: 'useHotelSearch',
+          mode: 'production',
+          destination: destination.trim(),
+          fallbackReason: 'no_backend_url',
+        });
         throw new Error('Using mock data');
       }
       
@@ -190,7 +196,13 @@ export function useHotelSearch() {
         setResults(mockHotels);
       }
     } catch (error) {
-      console.error('Error searching hotels - using fallback data:', error);
+      logger.warn('Hotel search failed, providing fallback data for seamless UX', {
+        component: 'useHotelSearch',
+        destination: destination.trim(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fallbackStrategy: 'comprehensive_mock_data',
+        userImpact: 'none',
+      });
       // Don't show error to user - provide seamless fallback experience
       
       // Provide comprehensive mock data as fallback

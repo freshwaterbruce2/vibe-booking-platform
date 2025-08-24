@@ -2,6 +2,7 @@
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Button } from './Button';
 import { Card } from '@/components/ui/Card';
+import { logger } from '@/utils/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -51,7 +52,16 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
       // Integration with error reporting service would go here
       // Example: Sentry.captureException(error, { extra: errorReport });
     } else {
-      console.error('Error reported:', errorReport);
+      logger.error('React error boundary triggered', {
+        component: 'ErrorBoundary',
+        method: 'reportError',
+        errorName: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        userAgent: errorReport.userAgent,
+        url: errorReport.url,
+        timestamp: errorReport.timestamp,
+      });
     }
   };
 
@@ -165,7 +175,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+      logger.error('ErrorBoundary intercepted React component error', {
+        component: 'ErrorBoundary',
+        method: 'componentDidCatch',
+        errorName: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        componentStack: errorInfo.componentStack,
+        errorBoundary: 'react_error_boundary',
+      });
     }
 
     // In production, you might want to send this to an error reporting service
@@ -208,7 +226,14 @@ export const useErrorHandler = () => {
   const captureError = React.useCallback((error: Error | string) => {
     const errorObj = typeof error === 'string' ? new Error(error) : error;
     setError(errorObj);
-    console.error('Async error captured:', errorObj);
+    logger.error('Async error captured by error handler hook', {
+      component: 'useErrorHandler',
+      method: 'captureError',
+      errorName: errorObj.name,
+      errorMessage: errorObj.message,
+      errorStack: errorObj.stack,
+      isStringError: typeof error === 'string',
+    });
   }, []);
 
   // Throw error to be caught by ErrorBoundary

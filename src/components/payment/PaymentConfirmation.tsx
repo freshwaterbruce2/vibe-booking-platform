@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { PaymentService } from '../../services/payment';
+import { logger } from '../../utils/logger';
 import {
   CheckCircle,
   Download,
@@ -63,7 +64,13 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
         setEmailSent(true);
       }, 2000);
     } catch (error) {
-      console.error('Failed to send confirmation email:', error);
+      logger.warn('Confirmation email sending failed, continuing without email', {
+        component: 'PaymentConfirmation',
+        method: 'sendConfirmationEmail',
+        bookingId: paymentIntent.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userImpact: 'none',
+      });
     }
   };
 
@@ -95,7 +102,14 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
       }
 
     } catch (error) {
-      console.error('Failed to generate receipt:', error);
+      logger.error('PDF receipt generation failed', {
+        component: 'PaymentConfirmation',
+        method: 'generatePDFReceipt',
+        paymentIntentId: paymentIntent.id,
+        bookingConfirmation: bookingDetails.confirmationNumber,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userImpact: 'receipt_download_failed',
+      });
     } finally {
       setIsGeneratingReceipt(false);
     }
@@ -214,7 +228,13 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
       // Create a secure print window without using document.write
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
-        console.error('Failed to open print window - popup blocked');
+        logger.warn('Print window blocked by browser popup blocker', {
+          component: 'PaymentConfirmation',
+          method: 'printReceipt',
+          bookingConfirmation: bookingDetails.confirmationNumber,
+          userImpact: 'print_blocked',
+          recommendedAction: 'user_allow_popups',
+        });
         return;
       }
 
@@ -239,7 +259,13 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
             printWindow.close();
           }, 1000);
         } catch (error) {
-          console.error('Print operation failed:', error);
+          logger.warn('Browser print operation failed', {
+            component: 'PaymentConfirmation',
+            method: 'printReceipt',
+            bookingConfirmation: bookingDetails.confirmationNumber,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            userImpact: 'print_failed',
+          });
           URL.revokeObjectURL(blobUrl);
         }
       };
@@ -250,7 +276,13 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
       }, 10000);
 
     } catch (error) {
-      console.error('Failed to generate print receipt:', error);
+      logger.error('Print receipt generation failed', {
+        component: 'PaymentConfirmation',
+        method: 'printReceipt',
+        bookingConfirmation: bookingDetails.confirmationNumber,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userImpact: 'print_unavailable',
+      });
     }
   };
 
@@ -263,7 +295,13 @@ export const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
           url: window.location.href,
         });
       } catch (error) {
-        console.error('Failed to share:', error);
+        logger.info('Native share functionality failed, user likely cancelled', {
+          component: 'PaymentConfirmation',
+          method: 'shareReceipt',
+          bookingConfirmation: bookingDetails.confirmationNumber,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          userImpact: 'share_cancelled',
+        });
       }
     } else {
       // Fallback: copy to clipboard

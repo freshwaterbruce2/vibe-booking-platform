@@ -123,7 +123,7 @@ class WebSocketManager {
   /**
    * Send message through WebSocket
    */
-  send(type: string, data: any, priority: 'low' | 'medium' | 'high' = 'medium'): void {
+  send(type: string, data: any, _priority: 'low' | 'medium' | 'high' = 'medium'): void {
     const message: WebSocketMessage = {
       type,
       data,
@@ -233,7 +233,7 @@ class WebSocketManager {
     };
   }
 
-  private handleOpen(event: Event): void {
+  private handleOpen(_event: Event): void {
     this.connectionState = 'connected';
     this.reconnectAttempts = 0;
     

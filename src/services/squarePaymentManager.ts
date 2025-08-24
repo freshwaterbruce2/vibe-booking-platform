@@ -4,6 +4,7 @@
  */
 
 import { paymentConfig } from '../utils/paymentConfig';
+import { logger } from '../utils/logger';
 
 export interface PaymentResult {
   success: boolean;
@@ -57,7 +58,15 @@ export class SquarePaymentManager {
       // Process real Square payment
       return this.processRealPayment(request);
     } catch (error) {
-      console.error('Payment processing error:', error);
+      logger.warn('Payment processing failed, falling back to demo mode', {
+        component: 'SquarePaymentManager',
+        method: 'processPayment',
+        bookingId: request.bookingId,
+        amount: request.amount,
+        currency: request.currency,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fallbackStrategy: 'demo_payment',
+      });
       
       // Fallback to demo mode if real payment fails
       return this.processDemoPayment(request);
@@ -118,7 +127,14 @@ export class SquarePaymentManager {
   }
 
   private async processDemoPayment(request: PaymentRequest): Promise<PaymentResult> {
-    console.log('Processing demo payment:', request);
+    logger.info('Processing demo payment for development/testing', {
+      component: 'SquarePaymentManager',
+      method: 'processDemoPayment',
+      bookingId: request.bookingId,
+      amount: request.amount,
+      currency: request.currency,
+      isDemoMode: true,
+    });
     
     // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -130,10 +146,13 @@ export class SquarePaymentManager {
       const demoPaymentId = `demo_payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const receiptUrl = `https://demo.vibe-hotels.com/receipt/${demoPaymentId}`;
       
-      console.log('Demo payment successful:', {
+      logger.info('Demo payment completed successfully', {
+        component: 'SquarePaymentManager',
         paymentId: demoPaymentId,
+        bookingId: request.bookingId,
         amount: request.amount,
         currency: request.currency,
+        isDemoPayment: true,
       });
       
       return {
@@ -143,7 +162,14 @@ export class SquarePaymentManager {
         isDemoPayment: true,
       };
     } else {
-      console.log('Demo payment declined:', demoOutcome.reason);
+      logger.info('Demo payment declined for testing scenario', {
+        component: 'SquarePaymentManager',
+        bookingId: request.bookingId,
+        amount: request.amount,
+        currency: request.currency,
+        declineReason: demoOutcome.reason,
+        isDemoPayment: true,
+      });
       
       return {
         success: false,

@@ -1,4 +1,3 @@
-﻿
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NaturalLanguageInput } from '@/components/search/NaturalLanguageInput';
@@ -6,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Play, Star, Users, MapPin, Shield, Award, Clock } from 'lucide-react';
 import { useSearchStore } from '@/store/searchStore';
 import { useHotelSearch } from '@/hooks/useHotelSearch';
+import { logger } from '@/utils/logger';
 
 export function Hero() {
   const navigate = useNavigate();
@@ -16,7 +16,13 @@ export function Hero() {
   const [checkOut, setCheckOut] = useState('');
 
   const handleSearch = () => {
-    console.log('Search clicked:', { destination, checkIn, checkOut });
+    logger.info('Search initiated from hero section', {
+      component: 'Hero',
+      destination: destination.trim(),
+      hasCheckIn: !!checkIn,
+      hasCheckOut: !!checkOut,
+    });
+
     if (destination.trim()) {
       setQuery(destination.trim());
       if (checkIn && checkOut) {
@@ -26,9 +32,14 @@ export function Hero() {
       navigate('/search');
       // Then trigger search in the background
       searchHotels(destination.trim()).catch((error) => {
-        console.error('Search failed:', error);
+        logger.error('Hero search failed, user will see fallback results', {
+          component: 'Hero',
+          destination: destination.trim(),
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
       });
     } else {
+      logger.warn('Search attempted without destination', { component: 'Hero' });
       alert('Please enter a destination to search for hotels.');
     }
   };

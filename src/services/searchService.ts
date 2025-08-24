@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Hotel } from '@/types/hotel';
+import { logger } from '@/utils/logger';
 
 interface SearchParams {
   destination: string;
@@ -196,7 +197,13 @@ class SearchService {
         limit: response.data.limit || 10,
       };
     } catch (error) {
-      console.warn('API search failed, using mock data:', error);
+      logger.info('Hotel search API unavailable, providing mock results for seamless UX', {
+        component: 'SearchService',
+        method: 'searchHotels',
+        destination: params.destination,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fallbackStrategy: 'filtered_mock_data',
+      });
       
       // Fallback to mock data with smart filtering
       const filteredHotels = this.filterMockHotels(params.destination);
@@ -278,7 +285,13 @@ class SearchService {
       });
       return response.data.hotel;
     } catch (error) {
-      console.warn('API hotel details failed, using mock data:', error);
+      logger.info('Hotel details API unavailable, using mock data fallback', {
+        component: 'SearchService',
+        method: 'getHotelDetails',
+        hotelId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fallbackStrategy: 'mock_hotel_data',
+      });
       return mockHotels.find(h => h.id === hotelId) || null;
     }
   }

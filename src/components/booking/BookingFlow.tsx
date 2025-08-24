@@ -11,6 +11,7 @@ import type { Room } from '@/types/hotel';
 import { cn } from '@/utils/cn';
 import { BookingService } from '@/services/booking';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/utils/logger';
 
 interface BookingFlowProps {
   selectedRoom?: Room;
@@ -130,7 +131,13 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
     }
 
     if (!selectedRoom || !selectedHotel) {
-      console.error('Missing required data for booking');
+      logger.error('Booking attempt with missing required data', {
+        component: 'BookingFlow',
+        method: 'handleCompleteBooking',
+        hasSelectedRoom: !!selectedRoom,
+        hasSelectedHotel: !!selectedHotel,
+        userImpact: 'booking_blocked',
+      });
       return;
     }
 
@@ -194,7 +201,15 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
         });
       }
     } catch (error) {
-      console.error('Booking failed:', error);
+      logger.error('Booking creation failed', {
+        component: 'BookingFlow',
+        method: 'handleCompleteBooking',
+        hotelId: selectedHotel?.id,
+        roomId: selectedRoom?.id,
+        guestEmail: guestDetails.email,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userImpact: 'booking_failed',
+      });
       // Show error to user
       alert('Booking failed. Please try again.');
     } finally {
@@ -552,13 +567,27 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
 
 
   const handlePaymentSuccess = async (paymentResult: { paymentId: string; receiptUrl?: string }) => {
-    console.log('Payment successful:', paymentResult);
+    logger.info('Payment completed successfully', {
+      component: 'BookingFlow',
+      method: 'handlePaymentSuccess',
+      paymentId: paymentResult.paymentId,
+      hasReceiptUrl: !!paymentResult.receiptUrl,
+      hotelId: selectedHotel?.id,
+      roomId: selectedRoom?.id,
+    });
     // Payment successful - immediately create booking and navigate to confirmation
     await handleCompleteBooking();
   };
 
   const handlePaymentError = (error: Error) => {
-    console.error('Payment failed:', error);
+    logger.error('Payment processing failed', {
+      component: 'BookingFlow',
+      method: 'handlePaymentError',
+      hotelId: selectedHotel?.id,
+      roomId: selectedRoom?.id,
+      error: error.message,
+      userImpact: 'payment_blocked',
+    });
     alert(`Payment failed: ${error.message}. Please try again.`);
   };
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '@/utils/logger';
 
 // Use proxy in development, direct URL in production
 const isDevelopment = import.meta.env.DEV;
@@ -68,7 +69,11 @@ class BookingService {
       }
       return [];
     } catch (error) {
-      console.error('Failed to fetch bookings:', error);
+      logger.error('Failed to fetch user bookings', {
+        component: 'BookingService',
+        method: 'getBookings',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       return [];
     }
   }
@@ -81,7 +86,12 @@ class BookingService {
       }
       return null;
     } catch (error) {
-      console.error('Failed to fetch booking:', error);
+      logger.error('Failed to fetch individual booking', {
+        component: 'BookingService',
+        method: 'getBooking',
+        bookingId: id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       return null;
     }
   }
@@ -91,7 +101,12 @@ class BookingService {
       const response = await axios.put(`${API_URL}/api/bookings/${id}/cancel`);
       return response.data.success;
     } catch (error) {
-      console.error('Failed to cancel booking:', error);
+      logger.error('Booking cancellation failed', {
+        component: 'BookingService',
+        method: 'cancelBooking',
+        bookingId: id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       return false;
     }
   }
@@ -104,7 +119,12 @@ class BookingService {
       }
       return null;
     } catch (error) {
-      console.error('Failed to confirm booking:', error);
+      logger.error('Booking confirmation failed', {
+        component: 'BookingService',
+        method: 'confirmBooking',
+        bookingId: id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       return null;
     }
   }
