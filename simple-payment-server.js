@@ -14,6 +14,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'vibe-booking-payment-api',
+    version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
 });
