@@ -1,0 +1,11 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "npm start"
+
+[build.env]
+NODE_VERSION = "18"
+
+[deploy.env]
+NODE_ENV = "production"
