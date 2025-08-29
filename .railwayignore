@@ -1,3 +1,16 @@
 Dockerfile
 docker-compose.yml
 .dockerignore
+backend/
+src/
+tests/
+legacy/
+ionos-deployment/
+package.json.complex
+*.md
+playwright.config.ts
+vite.config.ts
+tsconfig.json
+.eslintrc.cjs
+tailwind.config.js
+postcss.config.js
