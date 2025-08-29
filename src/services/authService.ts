@@ -43,13 +43,18 @@ class AuthService {
         password,
         firstName,
         lastName,
+        acceptTerms: true,
       });
 
       if (response.data.success) {
-        this.setAuth(response.data.token, response.data.user);
+        this.setAuth(response.data.data.accessToken, response.data.data.user);
       }
 
-      return response.data;
+      return {
+        success: response.data.success,
+        token: response.data.data.accessToken,
+        user: response.data.data.user
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Registration failed');
     }
@@ -63,10 +68,14 @@ class AuthService {
       });
 
       if (response.data.success) {
-        this.setAuth(response.data.token, response.data.user);
+        this.setAuth(response.data.data.accessToken, response.data.data.user);
       }
 
-      return response.data;
+      return {
+        success: response.data.success,
+        token: response.data.data.accessToken,
+        user: response.data.data.user
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
     }
@@ -80,7 +89,7 @@ return null;
     try {
       const response = await axios.get(`${API_URL}/api/auth/me`);
       if (response.data.success) {
-        this.user = response.data.user;
+        this.user = response.data.data.user;
         localStorage.setItem('user', JSON.stringify(this.user));
         return this.user;
       }

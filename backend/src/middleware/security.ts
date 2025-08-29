@@ -8,22 +8,9 @@ import { logger } from '../utils/logger';
  * Enhanced security middleware for PCI-DSS compliance
  */
 export const securityMiddleware = [
-  // Basic helmet configuration
+  // Basic helmet configuration WITHOUT CSP (we'll handle CSP separately)
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        scriptSrc: ["'self'", "https://js.stripe.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "https://api.stripe.com", "wss:", "https:"],
-        frameSrc: ["https://js.stripe.com", "https://hooks.stripe.com"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        upgradeInsecureRequests: [],
-      },
-    },
+    contentSecurityPolicy: false, // Disable CSP to prevent meta tag injection
     crossOriginEmbedderPolicy: false, // Allow Stripe iframes
     hsts: {
       maxAge: 31536000, // 1 year
@@ -36,16 +23,27 @@ export const securityMiddleware = [
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   }),
 
-  // Additional security headers
+  // Custom CSP middleware (HTTP headers only - no meta tags)
   (req: Request, res: Response, next: NextFunction) => {
-    // PCI-DSS specific headers
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://js.squareup.com https://connect.squareup.com https://web.squarecdn.com https://sandbox.web.squarecdn.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https: https://images.unsplash.com",
+      "connect-src 'self' https://api.liteapi.travel https://connect.squareup.com wss://localhost:*",
+      "frame-src 'self' https://js.squareup.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+      "block-all-mixed-content"
+    ];
     
-    // Enhanced security headers for all endpoints
-    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+    
+    // Additional security headers (avoid duplicates with Helmet)
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     res.setHeader('X-DNS-Prefetch-Control', 'off');
     res.setHeader('X-Download-Options', 'noopen');
     res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
@@ -196,38 +194,78 @@ export const auditLogger = (req: Request, res: Response, next: NextFunction) => 
 };
 
 /**
- * IP whitelist middleware for admin endpoints
+ * IP whitelist middleware for admin endpoints with CIDR support
  */
 export const ipWhitelist = (allowedIPs: string[] = []) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const clientIP = req.ip || req.connection.remoteAddress || '';
     
-    // In development, allow all IPs
+    // In development, allow all IPs (but log for awareness)
     if (config.environment === 'development') {
+      logger.debug('Admin access in development mode', {
+        ip: clientIP,
+        path: req.path,
+        environment: 'development'
+      });
       return next();
     }
     
-    // Check if IP is in whitelist
-    const isAllowed = allowedIPs.some(allowedIP => {
+    // Production default admin IPs if none provided
+    const defaultProductionIPs = [
+      process.env.ADMIN_IP_1 || '127.0.0.1',
+      process.env.ADMIN_IP_2 || '::1',
+      // Add your production server IPs here
+      process.env.PRODUCTION_SERVER_IP || '',
+    ].filter(ip => ip.length > 0);
+    
+    const finalAllowedIPs = allowedIPs.length > 0 ? allowedIPs : defaultProductionIPs;
+    
+    // Check if IP is in whitelist with CIDR support
+    const isAllowed = finalAllowedIPs.some(allowedIP => {
       if (allowedIP.includes('/')) {
-        // CIDR notation support would go here
+        // Basic CIDR notation support for common cases
+        const [network, prefixLength] = allowedIP.split('/');
+        const prefix = parseInt(prefixLength, 10);
+        
+        // Simple IPv4 CIDR check (for production, consider using 'ip' library)
+        if (network.includes('.') && clientIP.includes('.')) {
+          const networkParts = network.split('.').map(Number);
+          const clientParts = clientIP.split('.').map(Number);
+          
+          // Simplified CIDR check for /24 and /16 networks
+          if (prefix === 24) {
+            return networkParts.slice(0, 3).every((part, i) => part === clientParts[i]);
+          } else if (prefix === 16) {
+            return networkParts.slice(0, 2).every((part, i) => part === clientParts[i]);
+          }
+        }
         return false;
       }
-      return clientIP === allowedIP;
+      return clientIP === allowedIP || clientIP.includes(allowedIP);
     });
     
     if (!isAllowed) {
-      logger.warn('Unauthorized IP access attempt', {
+      logger.warn('Unauthorized IP access attempt to admin endpoint', {
         ip: clientIP,
         path: req.path,
         userAgent: req.get('User-Agent'),
+        allowedIPs: finalAllowedIPs,
+        environment: config.environment,
       });
       
       return res.status(403).json({
         error: 'Access denied',
         message: 'Your IP address is not authorized to access this endpoint',
+        code: 'IP_NOT_WHITELISTED',
       });
     }
+    
+    // Log successful admin access for audit
+    logger.info('Authorized admin access', {
+      ip: clientIP,
+      path: req.path,
+      environment: config.environment,
+    });
     
     next();
   };

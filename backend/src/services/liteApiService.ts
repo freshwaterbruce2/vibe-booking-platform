@@ -249,9 +249,13 @@ export class LiteAPIService {
         fullDescription: 'Experience luxury at its finest at the Grand Plaza Hotel. Located in the heart of downtown, our hotel offers world-class amenities, exceptional service, and stunning city views. Perfect for business travelers and tourists alike.',
         images: [
           { url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800', alt: 'Hotel Exterior', caption: 'Hotel Exterior', isPrimary: true },
-          { url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800', alt: 'Lobby', caption: 'Lobby' },
-          { url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800', alt: 'Deluxe Room', caption: 'Deluxe Room' },
-          { url: 'https://images.unsplash.com/photo-1596436889106-be35e843f974?w=800', alt: 'Restaurant', caption: 'Restaurant' }
+          { url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800', alt: 'Lobby', caption: 'Elegant Lobby' },
+          { url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800', alt: 'Deluxe Room', caption: 'Deluxe King Room' },
+          { url: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800', alt: 'Standard Room', caption: 'Standard Twin Room' },
+          { url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800', alt: 'Suite', caption: 'Executive Suite' },
+          { url: 'https://images.unsplash.com/photo-1596436889106-be35e843f974?w=800', alt: 'Restaurant', caption: 'Fine Dining Restaurant' },
+          { url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800', alt: 'Pool Area', caption: 'Rooftop Pool' },
+          { url: 'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800', alt: 'Room View', caption: 'City View from Room' }
         ],
         amenities: [
           { id: 'wifi', name: 'Free WiFi', category: 'technology', icon: '📶' },
@@ -270,7 +274,11 @@ export class LiteAPIService {
             price: 250,
             currency: 'USD',
             capacity: 2,
-            images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'],
+            images: [
+              'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800', // Deluxe king bed main view
+              'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800', // Deluxe room elegant seating
+              'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800'  // City view from window
+            ],
             amenities: ['King Bed', 'City View', 'Mini Bar', 'Work Desk'],
             availability: true
           },
@@ -282,7 +290,11 @@ export class LiteAPIService {
             price: 180,
             currency: 'USD',
             capacity: 2,
-            images: ['https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800'],
+            images: [
+              'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800', // Standard twin room
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800', // Twin room bathroom
+              'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800'  // Standard room workspace
+            ],
             amenities: ['Twin Beds', 'Free WiFi', 'Air Conditioning'],
             availability: true
           },
@@ -294,7 +306,11 @@ export class LiteAPIService {
             price: 450,
             currency: 'USD',
             capacity: 4,
-            images: ['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'],
+            images: [
+              'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800', // Executive suite luxury main
+              'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800', // Suite living room
+              'https://images.unsplash.com/photo-1560448075-bb485b067938?w=800'  // Suite balcony view
+            ],
             amenities: ['Living Room', 'Kitchen', 'Balcony', 'Jacuzzi'],
             availability: true
           }
@@ -375,7 +391,11 @@ export class LiteAPIService {
             available: 5,
             maxOccupancy: 2,
             capacity: 2,
-            images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'],
+            images: [
+              'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800', // Deluxe king bed main view
+              'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800', // Deluxe room elegant seating
+              'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800'  // City view from window
+            ],
             amenities: ['King Bed', 'City View', 'Mini Bar', 'Work Desk', 'Free WiFi', 'Air Conditioning'],
             availability: true
           },
@@ -389,7 +409,11 @@ export class LiteAPIService {
             available: 3,
             maxOccupancy: 2,
             capacity: 2,
-            images: ['https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800'],
+            images: [
+              'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800', // Standard twin room
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800', // Twin room bathroom
+              'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800'  // Standard room workspace
+            ],
             amenities: ['Twin Beds', 'Free WiFi', 'Air Conditioning', 'Safe', 'Coffee Maker'],
             availability: true
           },
@@ -403,7 +427,11 @@ export class LiteAPIService {
             available: 2,
             maxOccupancy: 4,
             capacity: 4,
-            images: ['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'],
+            images: [
+              'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800', // Executive suite luxury main
+              'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800', // Suite living room
+              'https://images.unsplash.com/photo-1560448075-bb485b067938?w=800'  // Suite balcony view
+            ],
             amenities: ['King Bed', 'Living Room', 'Kitchen', 'Balcony', 'Jacuzzi', 'Ocean View'],
             availability: true
           },
@@ -417,7 +445,11 @@ export class LiteAPIService {
             available: 4,
             maxOccupancy: 4,
             capacity: 4,
-            images: ['https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800'],
+            images: [
+              'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800', // Family room main
+              'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800', // Kids bunk bed area
+              'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800'  // Family room seating
+            ],
             amenities: ['Queen Bed', 'Bunk Beds', 'Kids Area', 'Game Console', 'Mini Fridge'],
             availability: true
           }

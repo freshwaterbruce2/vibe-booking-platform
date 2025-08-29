@@ -108,7 +108,10 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
                     src={destination.image}
                     alt={destination.name}
                     className="w-full h-48 object-cover group-hover:brightness-110 transition-all duration-300"
-                    loading="eager"
+                    width="400"
+                    height="192"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-full px-3 py-1">
                     <span className="text-sm font-semibold text-gray-800">

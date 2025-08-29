@@ -1,16 +1,16 @@
-import { Client, Environment } from 'square';
+import { SquareClient, SquareEnvironment } from 'square';
 import { v4 as uuidv4 } from 'uuid';
 
 const { SQUARE_ACCESS_TOKEN } = process.env;
 
-const client = new Client({
-  environment: Environment.Sandbox,
-  accessToken: SQUARE_ACCESS_TOKEN,
+const client = new SquareClient({
+  token: SQUARE_ACCESS_TOKEN,
+  environment: SquareEnvironment.Sandbox,
 });
 
 export const processPayment = async (sourceId: string, amount: number) => {
   try {
-    const response = await client.paymentsApi.createPayment({
+    const response = await client.payments.create({
       sourceId,
       idempotencyKey: uuidv4(),
       amountMoney: {

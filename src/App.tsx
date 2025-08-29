@@ -5,6 +5,7 @@ import { Layout } from '@/components/layout/Layout';
 import { HotelDetailsPage } from '@/pages/HotelDetailsPage';
 import { BookingPage } from '@/pages/BookingPage';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { setupGlobalErrorHandling } from '@/hooks/useErrorHandling';
 import { Toaster } from 'sonner';
 import { preloadCriticalComponents } from '@/utils/lazyLoader';
@@ -15,6 +16,8 @@ import {
   LazySearchResultsPage,
   LazyPaymentPage,
   LazyBookingConfirmationPage,
+  LazyBookingHistoryPage,
+  LazyUserProfilePage,
   LazyDealsPage,
   LazyDestinationsPage,
   LazyExperiencesPage,
@@ -36,33 +39,37 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<LazyHomePage />} />
-          <Route path="/search" element={<LazySearchResultsPage />} />
-          <Route path="/destinations" element={<LazyDestinationsPage />} />
-          <Route path="/deals" element={<LazyDealsPage />} />
-          <Route path="/experiences" element={<LazyExperiencesPage />} />
-          <Route path="/rewards" element={<LazyRewardsPage />} />
-          <Route path="/hotel/:id" element={<HotelDetailsPage />} />
-          <Route path="/booking" element={<BookingPage />} />
-          <Route path="/payment" element={<LazyPaymentPage />} />
-          <Route path="/confirmation/:bookingId" element={<LazyBookingConfirmationPage />} />
-        </Routes>
-      </Layout>
-      <Toaster
-        position="top-right"
-        expand={true}
-        richColors={true}
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: 'hsl(var(--background))',
-            color: 'hsl(var(--foreground))',
-            border: '1px solid hsl(var(--border))',
-          },
-        }}
-      />
+      <AuthProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<LazyHomePage />} />
+            <Route path="/search" element={<LazySearchResultsPage />} />
+            <Route path="/destinations" element={<LazyDestinationsPage />} />
+            <Route path="/deals" element={<LazyDealsPage />} />
+            <Route path="/experiences" element={<LazyExperiencesPage />} />
+            <Route path="/rewards" element={<LazyRewardsPage />} />
+            <Route path="/hotel/:id" element={<HotelDetailsPage />} />
+            <Route path="/booking" element={<BookingPage />} />
+            <Route path="/payment" element={<LazyPaymentPage />} />
+            <Route path="/confirmation/:bookingId" element={<LazyBookingConfirmationPage />} />
+            <Route path="/my-bookings" element={<LazyBookingHistoryPage />} />
+            <Route path="/profile" element={<LazyUserProfilePage />} />
+          </Routes>
+        </Layout>
+        <Toaster
+          position="top-right"
+          expand={true}
+          richColors={true}
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'hsl(var(--background))',
+              color: 'hsl(var(--foreground))',
+              border: '1px solid hsl(var(--border))',
+            },
+          }}
+        />
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

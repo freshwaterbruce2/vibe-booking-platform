@@ -8,6 +8,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
 import { requestLogger } from './middleware/requestLogger';
+import { securityMiddleware } from './middleware/security';
 import { apiRouter } from './routes';
 import { initializeDatabase } from './database/migrations';
 import { initializeCache } from './cache';
@@ -46,24 +47,8 @@ export class HotelBookingServer {
   }
 
   private async initializeMiddleware(): Promise<void> {
-    // Security middleware with relaxed CSP for development
-    this.app.use(helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-          imgSrc: ["'self'", "data:", "https:", "blob:"],
-          connectSrc: ["'self'", "wss:", "ws:", "https:", "http://localhost:*"],
-          fontSrc: ["'self'", "https:", "data:"],
-          objectSrc: ["'none'"],
-          mediaSrc: ["'self'"],
-          frameSrc: ["'self'"],
-        },
-      },
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-    }));
+    // Apply security middleware (includes helmet with proper CSP)
+    this.app.use(securityMiddleware);
 
     // CORS configuration with proper headers to prevent CORB
     this.app.use(cors({

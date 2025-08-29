@@ -42,21 +42,20 @@ export function useHotelSearch() {
         throw new Error('Using mock data');
       }
       
-      const response = await axios.get(`${apiUrl}/api/hotels/search`, {
-        params: {
-          destination,
-          checkIn: selectedDateRange.checkIn,
-          checkOut: selectedDateRange.checkOut,
-          adults: guestCount.adults,
-          children: guestCount.children,
-          rooms: guestCount.rooms,
-        },
-        timeout: 1000, // Fail fast after 1 second to use mock data
+      const response = await axios.post(`${apiUrl}/api/hotels/search`, {
+        destination,
+        checkIn: selectedDateRange.checkIn || '2025-01-01',
+        checkOut: selectedDateRange.checkOut || '2025-01-03',
+        adults: guestCount.adults,
+        children: guestCount.children,
+        rooms: guestCount.rooms,
+      }, {
+        timeout: 3000, // Extended timeout to 3 seconds
       });
 
-      if (response.data.success && response.data.data && response.data.data.length > 0) {
+      if (response.data.success && response.data.hotels && response.data.hotels.length > 0) {
         // Transform the data to match our Hotel type
-        const hotels: Hotel[] = response.data.data.map((hotel: any, index: number) => ({
+        const hotels: Hotel[] = response.data.hotels.map((hotel: any, index: number) => ({
           id: hotel.id || String(index + 1),
           name: hotel.name || 'Unnamed Hotel',
           description: hotel.description || 'A comfortable place to stay',
@@ -69,10 +68,10 @@ export function useHotelSearch() {
           rating: hotel.rating || 4.0,
           reviewCount: hotel.reviewCount || 0,
           priceRange: {
-            min: hotel.price || 100,
-            max: (hotel.price || 100) * 1.5,
+            min: hotel.pricePerNight || 100,
+            max: (hotel.pricePerNight || 100) * 1.5,
             currency: hotel.currency || 'USD',
-            avgNightly: hotel.price || 100,
+            avgNightly: hotel.pricePerNight || 100,
           },
           images: hotel.images ? hotel.images.map((img: string, idx: number): HotelImage => ({
             id: `img-${idx}`,
@@ -111,6 +110,7 @@ export function useHotelSearch() {
 
         setResults(hotels);
       } else {
+        logger.info('API returned no hotels, using comprehensive fallback data');
         // Fallback to mock data if API doesn't return data
         const mockHotels: Hotel[] = [
           {

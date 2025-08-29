@@ -69,13 +69,27 @@
       "Bash(dir:*)",
       "Bash(LOCAL_SQLITE=true npx tsx src/database/setupLocal.ts)",
       "Bash(LOCAL_SQLITE=true node --loader ts-node/esm src/server.ts)",
-      "Bash(LOCAL_SQLITE=true npx tsc --noEmit)"
+      "Bash(LOCAL_SQLITE=true npx tsc --noEmit)",
+      "Bash(set PLAYWRIGHT_BASE_URL=https://vibe-booking-platform.netlify.app)",
+      "Bash(LOCAL_SQLITE=true npm run dev:local)",
+      "WebFetch(domain:docs.liteapi.travel)",
+      "Bash(npm audit:*)",
+      "Bash(killall:*)",
+      "Bash(LOCAL_SQLITE=true PORT=3010 npx tsx src/server.ts)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:developer.squareup.com)",
+      "WebFetch(domain:www.ionos-status.com)",
+      "WebFetch(domain:vibehotelbookings.com)",
+      "Bash(git init:*)",
+      "WebFetch(domain:vibe-booking-platform-production.up.railway.app)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "additionalDirectories": [
       "C:\\c\\dev\\active-projects\\web-apps",
       "C:\\c\\dev\\projects\\web-apps",
-      "C:\\c"
+      "C:\\c",
+      "C:\\mnt\\c\\dev\\projects\\web-apps\\hotelbooking"
     ]
   }
 }

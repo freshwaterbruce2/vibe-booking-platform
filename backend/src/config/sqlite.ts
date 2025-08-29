@@ -82,8 +82,8 @@ const sqliteConfigSchema = z.object({
   }),
 });
 
-// Use the DATABASE_URL from environment or fallback to local path
-const dbPath = process.env.DATABASE_URL || path.join(process.cwd(), 'data', 'vibe-booking.db');
+// Use the DATABASE_URL from environment or fallback to D drive path
+const dbPath = process.env.DATABASE_URL || path.join('D:', 'databases', 'vibe-booking', 'vibe-booking.db');
 
 // Ensure the database directory exists
 const dbDir = path.dirname(dbPath);

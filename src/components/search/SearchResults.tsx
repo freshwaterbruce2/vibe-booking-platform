@@ -61,7 +61,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="animate-pulse">
               <div className="flex flex-col lg:flex-row gap-6 p-6">
-                <div className="w-full lg:w-80 h-48 lg:h-32 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+                <div className="w-full lg:w-96 h-48 sm:h-56 lg:h-48 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
                 <div className="flex-1 space-y-3">
                   <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
                   <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
@@ -162,6 +162,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     src={primaryImage?.url || 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop'}
                     alt={primaryImage?.alt || hotel.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    width="384"
+                    height="192"
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop';
                     }}

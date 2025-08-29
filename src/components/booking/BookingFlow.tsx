@@ -7,9 +7,10 @@ import { Input } from '../ui/Input';
 import { useBookingStore } from '@/store/bookingStore';
 import { useSearchStore } from '@/store/searchStore';
 import { useHotelStore } from '@/store/hotelStore';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Room } from '@/types/hotel';
 import { cn } from '@/utils/cn';
-import { BookingService } from '@/services/booking';
+import { bookingService } from '@/services/bookingService';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/utils/logger';
 
@@ -49,6 +50,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
 
   const { selectedDateRange, guestCount } = useSearchStore();
   const { selectedHotel } = useHotelStore();
+  const { user, isAuthenticated } = useAuth();
 
   // const [cardNumberFormatted, setCardNumberFormatted] = useState('');
   // const [expiryFormatted, setExpiryFormatted] = useState('');
@@ -150,49 +152,64 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
       const fees = 25; // Service fee
       const totalAmount = (roomRate * nights) + taxes + fees;
 
-      // Create booking using the service
-      const booking = await BookingService.createBooking({
+      // Prepare booking data with user information
+      const bookingData = {
         hotelId: selectedHotel.id,
+        hotelName: selectedHotel.name,
+        hotelImage: selectedHotel.images?.[0]?.url || '',
+        roomType: selectedRoom.type || selectedRoom.name || 'Standard Room',
         roomId: selectedRoom.id,
-        rateId: 'standard-rate',
         checkIn: selectedDateRange.checkIn || new Date().toISOString().split('T')[0],
         checkOut: selectedDateRange.checkOut || new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        adults: guestCount.adults,
-        children: guestCount.children,
-        guest: {
-          firstName: guestDetails.firstName || 'Guest',
-          lastName: guestDetails.lastName || 'User',
-          email: guestDetails.email || 'guest@example.com',
+        nights: nights,
+        guests: {
+          adults: guestCount.adults,
+          children: guestCount.children,
+        },
+        guestInfo: {
+          firstName: guestDetails.firstName || (isAuthenticated && user?.firstName) || 'Guest',
+          lastName: guestDetails.lastName || (isAuthenticated && user?.lastName) || 'User',
+          email: guestDetails.email || (isAuthenticated && user?.email) || 'guest@example.com',
           phone: guestDetails.phone || '555-0100'
         },
-        pricing: {
-          roomRate,
-          taxes,
-          fees,
-          totalAmount,
-          currency: selectedRoom.currency || 'USD'
-        },
         specialRequests: guestDetails.specialRequests,
-        source: 'website'
-      });
+        totalAmount,
+        currency: selectedRoom.currency || 'USD',
+        userId: isAuthenticated ? user?.id : undefined,
+      };
+
+      // Create booking using the enhanced service
+      const booking = await bookingService.createBooking(bookingData);
 
       // Clear booking data
       // Store booking in localStorage for confirmation page
       localStorage.setItem('lastBooking', JSON.stringify(booking));
       localStorage.setItem('lastBookingId', booking.id);
       
+      logger.info('Booking created successfully', {
+        component: 'BookingFlow',
+        method: 'handleCompleteBooking',
+        bookingId: booking.id,
+        confirmationNumber: booking.confirmationNumber,
+        hotelId: selectedHotel.id,
+        totalAmount,
+        isAuthenticated,
+        userId: user?.id,
+        userImpact: 'booking_completed',
+      });
+
       clearBooking();
       
       // Navigate to confirmation page with booking data
       if (onBookingComplete) {
-        onBookingComplete(booking.id);
+        onBookingComplete(booking.confirmationNumber || booking.id);
       } else {
-        // Navigate to confirmation page with state
-        navigate(`/booking/confirmation/${booking.id}`, {
+        // Navigate to confirmation page with confirmation number
+        navigate(`/confirmation/${booking.confirmationNumber || booking.id}`, {
           state: {
             booking,
             paymentIntent: {
-              id: booking.id,
+              id: booking.confirmationNumber || booking.id,
               status: 'succeeded',
               amount: totalAmount * 100,
               currency: selectedRoom.currency || 'USD'
@@ -207,11 +224,12 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
         hotelId: selectedHotel?.id,
         roomId: selectedRoom?.id,
         guestEmail: guestDetails.email,
+        isAuthenticated,
+        userId: user?.id,
         error: error instanceof Error ? error.message : 'Unknown error',
         userImpact: 'booking_failed',
       });
-      // Show error to user
-      alert('Booking failed. Please try again.');
+      // Error is already displayed by the booking service toast
     } finally {
       setLoading(false);
     }

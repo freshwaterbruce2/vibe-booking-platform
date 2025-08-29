@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { ThemeToggle } from './ThemeToggle';
 import { Navigation } from './Navigation';
 import { UserMenu } from './UserMenu';
+import NotificationDropdown from '../notifications/NotificationDropdown';
 import { Hotel, Search, Heart, User } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -46,6 +47,9 @@ export function Header() {
           <Button variant="ghost" size="icon">
             <Heart className="h-4 w-4" />
           </Button>
+
+          {/* Notifications */}
+          <NotificationDropdown />
 
           {/* Theme toggle */}
           <ThemeToggle />

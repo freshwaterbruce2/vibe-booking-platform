@@ -12,10 +12,11 @@ export default defineConfig({
     ['junit', { outputFile: 'test-results/junit.xml' }],
   ],
   use: {
-    baseURL: 'http://localhost:3009',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3009',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    timeout: 30000, // Increased timeout for live site testing
   },
 
   projects: [
@@ -70,7 +71,7 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
     command: 'npm run dev',
     port: 3009,
     reuseExistingServer: !process.env.CI,

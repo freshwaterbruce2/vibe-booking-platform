@@ -46,6 +46,16 @@ export const LazyRewardsPage = createLazyRoute(
   'Rewards'
 );
 
+export const LazyBookingHistoryPage = createLazyRoute(
+  () => import('../pages/BookingHistoryPage'),
+  'My Bookings'
+);
+
+export const LazyUserProfilePage = createLazyRoute(
+  () => import('../pages/UserProfilePage'),
+  'My Profile'
+);
+
 // Lazy load heavy components
 export const LazyRoomComparison = createLazyRoute(
   () => import('../components/hotels/RoomComparison'),

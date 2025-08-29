@@ -199,6 +199,10 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                 src={hotel.images[selectedImageIndex]?.url || '/placeholder-hotel.jpg'}
                 alt={hotel.images[selectedImageIndex]?.alt || hotel.name}
                 className="w-full h-96 object-cover rounded-lg"
+                width="800"
+                height="384"
+                loading="lazy"
+                decoding="async"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
                 }}
@@ -263,6 +267,10 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                     src={image.url}
                     alt={image.alt}
                     className="w-full h-28 lg:h-32 object-cover rounded-lg group-hover:opacity-80 transition-opacity"
+                    width="200"
+                    height="128"
+                    loading="lazy"
+                    decoding="async"
                     onClick={() => setSelectedImageIndex(index + 1)}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/placeholder-hotel.jpg';
@@ -289,6 +297,10 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
                   src={image.url}
                   alt={image.alt}
                   className="w-full h-48 object-cover rounded-lg group-hover:opacity-80 transition-opacity"
+                  width="300"
+                  height="192"
+                  loading="lazy"
+                  decoding="async"
                   onClick={() => {
                     setSelectedImageIndex(index);
                     setShowAllImages(false);

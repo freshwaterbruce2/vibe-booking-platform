@@ -85,18 +85,36 @@ const SquarePaymentForm = memo<SquarePaymentFormProps>(({
         throw new Error('Square Web SDK not loaded');
       }
 
-      // Square Web SDK initialization (temporarily disabled for TypeScript)
-      // const payments = window.Square.payments(config.applicationId, config.locationId);
-      // const cardElement = await payments.card({...});
-      // await cardElement.attach('#card-container');
-      // setCard(cardElement);
+      // Initialize Square Web SDK
+      const payments = (window as any).Square.payments(config.applicationId, config.locationId);
       
-      // Mock card element for TypeScript compliance
-      const mockCard = {
-        attach: async () => Promise.resolve(),
-        tokenize: async () => Promise.resolve({ status: 'OK', token: 'mock-token' })
-      };
-      setCard(mockCard as any);
+      // Create and configure card element
+      const cardElement = await payments.card({
+        style: {
+          input: {
+            fontSize: '16px',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            color: '#374151',
+            lineHeight: '24px'
+          },
+          '.input-container': {
+            borderRadius: '8px',
+            borderWidth: '1px',
+            borderColor: '#D1D5DB',
+            backgroundColor: '#FFFFFF'
+          },
+          '.input-container.is-focus': {
+            borderColor: '#3B82F6',
+            boxShadow: '0 0 0 1px #3B82F6'
+          },
+          '.input-container.is-error': {
+            borderColor: '#EF4444'
+          }
+        }
+      });
+      
+      await cardElement.attach('#card-container');
+      setCard(cardElement);
       setIsDemoMode(false);
       logger.info('Square Web SDK initialized successfully', { component: 'SquarePaymentForm' });
     } catch (error) {
@@ -210,10 +228,71 @@ const SquarePaymentForm = memo<SquarePaymentFormProps>(({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading secure payment form...</p>
+      <div className="max-w-2xl mx-auto">
+        <div className="space-y-6 animate-pulse">
+          {/* Payment Status Skeleton */}
+          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="h-5 w-5 bg-gray-300 rounded mr-2 mt-0.5"></div>
+              <div className="flex-1">
+                <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                <div className="h-3 bg-gray-300 rounded w-48"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Information Skeleton */}
+          <div className="space-y-4">
+            <div className="h-6 bg-gray-300 rounded w-40"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-12 bg-gray-300 rounded"></div>
+              <div className="h-12 bg-gray-300 rounded"></div>
+            </div>
+            <div className="h-12 bg-gray-300 rounded"></div>
+            <div className="h-12 bg-gray-300 rounded"></div>
+            <div className="h-12 bg-gray-300 rounded"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="h-12 bg-gray-300 rounded"></div>
+              <div className="h-12 bg-gray-300 rounded"></div>
+              <div className="h-12 bg-gray-300 rounded"></div>
+            </div>
+          </div>
+
+          {/* Payment Method Skeleton */}
+          <div className="space-y-4">
+            <div className="h-6 bg-gray-300 rounded w-36"></div>
+            <div className="h-16 bg-gray-300 rounded"></div>
+          </div>
+
+          {/* Payment Summary Skeleton */}
+          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+            <div className="h-5 bg-gray-300 rounded w-32 mb-4"></div>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <div className="h-4 bg-gray-300 rounded w-16"></div>
+                <div className="h-4 bg-gray-300 rounded w-24"></div>
+              </div>
+              <div className="flex justify-between">
+                <div className="h-4 bg-gray-300 rounded w-20"></div>
+                <div className="h-4 bg-gray-300 rounded w-20"></div>
+              </div>
+              <div className="border-t pt-2">
+                <div className="flex justify-between">
+                  <div className="h-5 bg-gray-300 rounded w-12"></div>
+                  <div className="h-5 bg-gray-300 rounded w-16"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button Skeleton */}
+          <div className="h-14 bg-gray-300 rounded"></div>
+
+          {/* Loading indicator */}
+          <div className="flex items-center justify-center pt-4">
+            <Loader2 className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+            <span className="text-gray-600">Loading secure payment form...</span>
+          </div>
         </div>
       </div>
     );

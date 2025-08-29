@@ -120,11 +120,11 @@ const rawConfig = {
     ttl: parseInt(process.env.REDIS_TTL || '3600', 10),
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+    secret: process.env.JWT_SECRET || '05ba3147e30cec7c5c469038478cc2c0d176ddb7a43645daf97d212d3ee0a136',
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-this-in-production',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || '8bb7206feb4e47b1caa68ec99ee5d7f22f41497b101b2d664ba1d21afedfafa3',
     refreshExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
-    resetSecret: process.env.JWT_RESET_SECRET || 'your-super-secret-reset-key-change-this-in-production',
+    resetSecret: process.env.JWT_RESET_SECRET || '4fc96a80eaeee74cdddbc0529ab3319174ff657eaa90c105b7e4d4bbb3fd4fce',
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',

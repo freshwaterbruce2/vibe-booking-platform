@@ -20,8 +20,19 @@
     <meta name="apple-mobile-web-app-title" content="Vibe Hotels">
 
     <title>Vibe Hotels - Find Your Perfect Vibe</title>
-    <!-- Square Web Payments SDK (sandbox by default; switch to production domain when deploying) -->
-    <script src="https://sandbox.web.squarecdn.com/v1/square.js" defer></script>
+    <!-- Square Web Payments SDK -->
+    <script>
+      // Load Square SDK based on environment
+      const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+      const squareUrl = isProduction 
+        ? 'https://web.squarecdn.com/v1/square.js'
+        : 'https://sandbox.web.squarecdn.com/v1/square.js';
+      
+      const script = document.createElement('script');
+      script.src = squareUrl;
+      script.defer = true;
+      document.head.appendChild(script);
+    </script>
   </head>
   <body>
     <div id="root"></div>

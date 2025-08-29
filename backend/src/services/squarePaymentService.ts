@@ -1,5 +1,5 @@
 // Square payment integration with 2025 standards
-import { Client, Environment } from 'square';
+import { SquareClient, SquareEnvironment } from 'square';
 import crypto from 'crypto';
 import { randomUUID } from 'crypto';
 import { config } from '../config';
@@ -9,12 +9,12 @@ import { payments, paymentMethods, refunds } from '../database/schema';
 import { eq } from 'drizzle-orm';
 
 export class SquarePaymentService {
-  private client: Client;
+  private client: SquareClient;
 
   constructor() {
-    this.client = new Client({
-      accessToken: config.square.accessToken,
-      environment: config.square.environment === 'production' ? Environment.Production : Environment.Sandbox,
+    this.client = new SquareClient({
+      token: config.square.accessToken,
+      environment: config.square.environment === 'production' ? SquareEnvironment.Production : SquareEnvironment.Sandbox,
     });
   }
 
@@ -70,7 +70,7 @@ export class SquarePaymentService {
         } : undefined,
       };
 
-      const { result } = await this.client.paymentsApi.createPayment(createPaymentRequest);
+      const { result } = await this.client.payments.create(createPaymentRequest);
       
       if (result.payment) {
         // Store payment record in database
@@ -141,7 +141,7 @@ export class SquarePaymentService {
     errorMessage?: string;
   }> {
     try {
-      const { result } = await this.client.paymentsApi.getPayment(paymentId);
+      const { result } = await this.client.payments.get(paymentId);
       
       return {
         success: true,
@@ -201,7 +201,7 @@ export class SquarePaymentService {
         reason: params.reason || 'Vibe Booking cancellation',
       };
 
-      const { result } = await this.client.refundsApi.refundPayment(createRefundRequest);
+      const { result } = await this.client.refunds.refund(createRefundRequest);
 
       if (result.refund) {
         // Store refund record in database
@@ -277,7 +277,7 @@ export class SquarePaymentService {
         },
       };
 
-      const { result } = await this.client.cardsApi.createCard(createCardRequest);
+      const { result } = await this.client.cards.create(createCardRequest);
 
       if (result.card) {
         // Store payment method in database
@@ -349,7 +349,7 @@ export class SquarePaymentService {
         phoneNumber: params.phoneNumber,
       };
 
-      const { result } = await this.client.customersApi.createCustomer(createCustomerRequest);
+      const { result } = await this.client.customers.create(createCustomerRequest);
 
       if (result.customer) {
         logger.info('Square customer created successfully', {
@@ -388,31 +388,33 @@ export class SquarePaymentService {
   }
 
   /**
-   * Webhook handler for Square events
+   * Webhook handler for Square events with proper signature verification
    */
-  async handleWebhook(payload: any, signature: string): Promise<{
+  async handleWebhook(
+    payload: any, 
+    signature: string, 
+    rawBody?: string, 
+    notificationUrl?: string
+  ): Promise<{
     success: boolean;
     message: string;
   }> {
     try {
       // Verify signature if key present
       if (config.square.webhookSignatureKey) {
-        // Square spec: signature = Base64( HMAC_SHA256( signatureKey, notificationUrl + body ) )
-        // We currently only have parsed JSON body; to be fully compliant we need raw body & full URL.
-        // TODO: capture raw body in middleware (e.g. bodyParser.raw) and pass original URL.
-        try {
-          const bodyString = JSON.stringify(payload);
-          const hmac = crypto.createHmac('sha256', config.square.webhookSignatureKey);
-          hmac.update(bodyString);
-          const expectedFallback = hmac.digest('base64');
-          if (signature !== expectedFallback) {
-            logger.warn('Square webhook signature mismatch (fallback body-only check)');
-            return { success: false, message: 'Invalid signature' };
-          }
-        } catch (sigErr) {
-          logger.error('Webhook signature verification error', { sigErr });
-          return { success: false, message: 'Signature verification failed' };
+        const verificationResult = this.verifyWebhookSignature(signature, payload, rawBody, notificationUrl);
+        if (!verificationResult.valid) {
+          logger.warn('Square webhook signature verification failed', {
+            reason: verificationResult.reason,
+            signature: signature?.substring(0, 20) + '...',
+            hasRawBody: !!rawBody,
+            hasNotificationUrl: !!notificationUrl
+          });
+          return { success: false, message: 'Invalid webhook signature' };
         }
+        logger.info('Square webhook signature verified successfully');
+      } else {
+        logger.warn('Square webhook signature key not configured - unable to verify webhook authenticity');
       }
       
   const eventType = payload.type;
@@ -505,6 +507,177 @@ export class SquarePaymentService {
       });
     } catch (error) {
       logger.error('Error handling Square refund updated webhook', { error, data });
+    }
+  }
+
+  /**
+   * Verify Square webhook signature according to their specification
+   * Square spec: signature = Base64( HMAC_SHA256( signatureKey, notificationUrl + body ) )
+   */
+  private verifyWebhookSignature(
+    providedSignature: string,
+    payload: any,
+    rawBody?: string,
+    notificationUrl?: string
+  ): { valid: boolean; reason?: string } {
+    if (!config.square.webhookSignatureKey) {
+      return { valid: false, reason: 'Webhook signature key not configured' };
+    }
+
+    if (!providedSignature) {
+      return { valid: false, reason: 'No signature provided' };
+    }
+
+    try {
+      // Method 1: Full Square specification (preferred)
+      // Requires notification URL + raw body
+      if (rawBody && notificationUrl) {
+        const fullPayload = notificationUrl + rawBody;
+        const hmac = crypto.createHmac('sha256', config.square.webhookSignatureKey);
+        hmac.update(fullPayload, 'utf8');
+        const expectedSignature = hmac.digest('base64');
+        
+        if (providedSignature === expectedSignature) {
+          logger.info('Webhook signature verified using full Square specification');
+          return { valid: true };
+        }
+        
+        logger.debug('Full Square specification signature mismatch', {
+          expected: expectedSignature.substring(0, 20) + '...',
+          provided: providedSignature.substring(0, 20) + '...',
+          notificationUrl: notificationUrl.substring(0, 50) + '...',
+          bodyLength: rawBody.length
+        });
+      }
+
+      // Method 2: Raw body only (fallback)
+      if (rawBody) {
+        const hmac = crypto.createHmac('sha256', config.square.webhookSignatureKey);
+        hmac.update(rawBody, 'utf8');
+        const expectedSignature = hmac.digest('base64');
+        
+        if (providedSignature === expectedSignature) {
+          logger.info('Webhook signature verified using raw body fallback');
+          return { valid: true };
+        }
+        
+        logger.debug('Raw body signature mismatch', {
+          expected: expectedSignature.substring(0, 20) + '...',
+          provided: providedSignature.substring(0, 20) + '...',
+          bodyLength: rawBody.length
+        });
+      }
+
+      // Method 3: JSON string (legacy fallback)
+      const bodyString = JSON.stringify(payload);
+      const hmac = crypto.createHmac('sha256', config.square.webhookSignatureKey);
+      hmac.update(bodyString, 'utf8');
+      const expectedSignature = hmac.digest('base64');
+      
+      if (providedSignature === expectedSignature) {
+        logger.warn('Webhook signature verified using JSON string fallback - consider implementing proper raw body handling');
+        return { valid: true };
+      }
+
+      logger.debug('JSON string signature mismatch', {
+        expected: expectedSignature.substring(0, 20) + '...',
+        provided: providedSignature.substring(0, 20) + '...',
+        jsonLength: bodyString.length
+      });
+
+      return { valid: false, reason: 'All signature verification methods failed' };
+
+    } catch (error) {
+      logger.error('Webhook signature verification error', { 
+        error: error instanceof Error ? error.message : error,
+        hasRawBody: !!rawBody,
+        hasNotificationUrl: !!notificationUrl
+      });
+      return { valid: false, reason: 'Signature verification threw an error' };
+    }
+  }
+
+  /**
+   * Validate webhook payload structure
+   */
+  private validateWebhookPayload(payload: any): { valid: boolean; reason?: string } {
+    if (!payload || typeof payload !== 'object') {
+      return { valid: false, reason: 'Invalid payload: not an object' };
+    }
+
+    if (!payload.type || typeof payload.type !== 'string') {
+      return { valid: false, reason: 'Invalid payload: missing or invalid type field' };
+    }
+
+    if (!payload.data) {
+      return { valid: false, reason: 'Invalid payload: missing data field' };
+    }
+
+    // Check for required timestamp
+    if (!payload.created_at) {
+      return { valid: false, reason: 'Invalid payload: missing created_at timestamp' };
+    }
+
+    // Validate timestamp is recent (within last hour to prevent replay attacks)
+    const createdAt = new Date(payload.created_at);
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+    
+    if (createdAt < oneHourAgo) {
+      return { valid: false, reason: 'Webhook payload is too old (potential replay attack)' };
+    }
+
+    if (createdAt > new Date(now.getTime() + (5 * 60 * 1000))) {
+      return { valid: false, reason: 'Webhook payload timestamp is in the future' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Enhanced webhook processing with security checks
+   */
+  async processWebhookSecurely(
+    payload: any,
+    signature: string,
+    rawBody?: string,
+    notificationUrl?: string
+  ): Promise<{ success: boolean; message: string; processedEvent?: string }> {
+    try {
+      // Step 1: Validate payload structure
+      const payloadValidation = this.validateWebhookPayload(payload);
+      if (!payloadValidation.valid) {
+        logger.warn('Invalid webhook payload', { reason: payloadValidation.reason });
+        return { success: false, message: 'Invalid payload structure' };
+      }
+
+      // Step 2: Verify signature
+      const signatureValidation = this.verifyWebhookSignature(signature, payload, rawBody, notificationUrl);
+      if (!signatureValidation.valid) {
+        logger.warn('Webhook signature verification failed', { 
+          reason: signatureValidation.reason,
+          eventType: payload.type
+        });
+        return { success: false, message: 'Signature verification failed' };
+      }
+
+      // Step 3: Process the webhook
+      const result = await this.handleWebhook(payload, signature, rawBody, notificationUrl);
+      
+      return {
+        ...result,
+        processedEvent: payload.type
+      };
+
+    } catch (error) {
+      logger.error('Secure webhook processing error', { 
+        error: error instanceof Error ? error.message : error,
+        eventType: payload?.type
+      });
+      return {
+        success: false,
+        message: 'Internal processing error'
+      };
     }
   }
 }

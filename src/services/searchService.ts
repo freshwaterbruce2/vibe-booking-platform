@@ -42,7 +42,7 @@ const mockHotels: Hotel[] = [
       },
       {
         id: '1-2', 
-        url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
+        url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
         alt: 'Luxury room interior',
         category: 'room',
         isPrimary: false
