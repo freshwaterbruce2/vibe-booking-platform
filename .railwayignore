@@ -14,3 +14,7 @@ tsconfig.json
 .eslintrc.cjs
 tailwind.config.js
 postcss.config.js
+node_modules/
+dist/
+coverage/
+.git/
