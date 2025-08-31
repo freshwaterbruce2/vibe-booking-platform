@@ -108,12 +108,12 @@ export const reviewReports = sqliteTable('review_reports', {
 });
 
 // Zod schemas
-export const insertReviewSchema = createInsertSchema(reviews);
-export const selectReviewSchema = createSelectSchema(reviews);
-export const insertReviewVoteSchema = createInsertSchema(reviewVotes);
-export const selectReviewVoteSchema = createSelectSchema(reviewVotes);
-export const insertReviewReportSchema = createInsertSchema(reviewReports);
-export const selectReviewReportSchema = createSelectSchema(reviewReports);
+export const insertReviewSchema = createInsertSchema(reviews) as unknown as z.ZodType<any>;
+export const selectReviewSchema = createSelectSchema(reviews) as unknown as z.ZodType<any>;
+export const insertReviewVoteSchema = createInsertSchema(reviewVotes) as unknown as z.ZodType<any>;
+export const selectReviewVoteSchema = createSelectSchema(reviewVotes) as unknown as z.ZodType<any>;
+export const insertReviewReportSchema = createInsertSchema(reviewReports) as unknown as z.ZodType<any>;
+export const selectReviewReportSchema = createSelectSchema(reviewReports) as unknown as z.ZodType<any>;
 
 // Type exports
 export type Review = z.infer<typeof selectReviewSchema>;

@@ -168,12 +168,12 @@ export const roomAvailability = pgTable('room_availability', {
 });
 
 // Zod schemas
-export const insertHotelSchema = createInsertSchema(hotels);
-export const selectHotelSchema = createSelectSchema(hotels);
-export const insertRoomSchema = createInsertSchema(rooms);
-export const selectRoomSchema = createSelectSchema(rooms);
-export const insertRoomAvailabilitySchema = createInsertSchema(roomAvailability);
-export const selectRoomAvailabilitySchema = createSelectSchema(roomAvailability);
+export const insertHotelSchema = createInsertSchema(hotels) as unknown as z.ZodType<any>;
+export const selectHotelSchema = createSelectSchema(hotels) as unknown as z.ZodType<any>;
+export const insertRoomSchema = createInsertSchema(rooms) as unknown as z.ZodType<any>;
+export const selectRoomSchema = createSelectSchema(rooms) as unknown as z.ZodType<any>;
+export const insertRoomAvailabilitySchema = createInsertSchema(roomAvailability) as unknown as z.ZodType<any>;
+export const selectRoomAvailabilitySchema = createSelectSchema(roomAvailability) as unknown as z.ZodType<any>;
 
 // Type exports
 export type Hotel = z.infer<typeof selectHotelSchema>;

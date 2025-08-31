@@ -247,8 +247,8 @@ export class HotelSearchOptimizer {
    */
   async getHotelAvailability(
     hotelId: string,
-    checkIn: Date,
-    checkOut: Date,
+    _checkIn: Date,
+    _checkOut: Date,
     adults: number,
     children: number = 0
   ) {

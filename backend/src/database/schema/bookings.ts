@@ -86,7 +86,7 @@ export const bookings = pgTable('bookings', {
     
     // Analytics and reporting
     createdAtIdx: index('bookings_created_at_idx').on(table.createdAt),
-    hotelDateIdx: index('bookings_hotel_date_idx').on(table.hotelId, table.checkin),
+    hotelDateIdx: index('bookings_hotel_date_idx').on(table.hotelId, table.checkIn),
     
     // Complex queries
     userActiveIdx: index('bookings_user_active_idx').on(table.userId, table.status) 
@@ -153,14 +153,14 @@ export const bookingAddons = pgTable('booking_addons', {
 });
 
 // Zod schemas
-export const insertBookingSchema = createInsertSchema(bookings);
-export const selectBookingSchema = createSelectSchema(bookings);
-export const insertBookingStatusHistorySchema = createInsertSchema(bookingStatusHistory);
-export const selectBookingStatusHistorySchema = createSelectSchema(bookingStatusHistory);
-export const insertBookingGuestSchema = createInsertSchema(bookingGuests);
-export const selectBookingGuestSchema = createSelectSchema(bookingGuests);
-export const insertBookingAddonSchema = createInsertSchema(bookingAddons);
-export const selectBookingAddonSchema = createSelectSchema(bookingAddons);
+export const insertBookingSchema = createInsertSchema(bookings) as unknown as z.ZodType<any>;
+export const selectBookingSchema = createSelectSchema(bookings) as unknown as z.ZodType<any>;
+export const insertBookingStatusHistorySchema = createInsertSchema(bookingStatusHistory) as unknown as z.ZodType<any>;
+export const selectBookingStatusHistorySchema = createSelectSchema(bookingStatusHistory) as unknown as z.ZodType<any>;
+export const insertBookingGuestSchema = createInsertSchema(bookingGuests) as unknown as z.ZodType<any>;
+export const selectBookingGuestSchema = createSelectSchema(bookingGuests) as unknown as z.ZodType<any>;
+export const insertBookingAddonSchema = createInsertSchema(bookingAddons) as unknown as z.ZodType<any>;
+export const selectBookingAddonSchema = createSelectSchema(bookingAddons) as unknown as z.ZodType<any>;
 
 // Type exports
 export type Booking = z.infer<typeof selectBookingSchema>;

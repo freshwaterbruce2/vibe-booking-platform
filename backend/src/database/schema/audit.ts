@@ -286,14 +286,14 @@ export const performanceLog = pgTable('performance_log', {
 });
 
 // Zod schemas
-export const insertAuditLogSchema = createInsertSchema(auditLog);
-export const selectAuditLogSchema = createSelectSchema(auditLog);
-export const insertUserActivityLogSchema = createInsertSchema(userActivityLog);
-export const selectUserActivityLogSchema = createSelectSchema(userActivityLog);
-export const insertSecurityEventsLogSchema = createInsertSchema(securityEventsLog);
-export const selectSecurityEventsLogSchema = createSelectSchema(securityEventsLog);
-export const insertPerformanceLogSchema = createInsertSchema(performanceLog);
-export const selectPerformanceLogSchema = createSelectSchema(performanceLog);
+export const insertAuditLogSchema = createInsertSchema(auditLog) as unknown as z.ZodType<any>;
+export const selectAuditLogSchema = createSelectSchema(auditLog) as unknown as z.ZodType<any>;
+export const insertUserActivityLogSchema = createInsertSchema(userActivityLog) as unknown as z.ZodType<any>;
+export const selectUserActivityLogSchema = createSelectSchema(userActivityLog) as unknown as z.ZodType<any>;
+export const insertSecurityEventsLogSchema = createInsertSchema(securityEventsLog) as unknown as z.ZodType<any>;
+export const selectSecurityEventsLogSchema = createSelectSchema(securityEventsLog) as unknown as z.ZodType<any>;
+export const insertPerformanceLogSchema = createInsertSchema(performanceLog) as unknown as z.ZodType<any>;
+export const selectPerformanceLogSchema = createSelectSchema(performanceLog) as unknown as z.ZodType<any>;
 
 // Type exports
 export type AuditLog = z.infer<typeof selectAuditLogSchema>;

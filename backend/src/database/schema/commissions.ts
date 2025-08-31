@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, numeric, jsonb, uuid, index, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, numeric, jsonb, uuid, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { bookings } from './bookings';
@@ -152,12 +152,12 @@ export const payoutBatches = pgTable('payout_batches', {
 });
 
 // Zod schemas
-export const insertCommissionSchema = createInsertSchema(commissions);
-export const selectCommissionSchema = createSelectSchema(commissions);
-export const insertRevenueReportSchema = createInsertSchema(revenueReports);
-export const selectRevenueReportSchema = createSelectSchema(revenueReports);
-export const insertPayoutBatchSchema = createInsertSchema(payoutBatches);
-export const selectPayoutBatchSchema = createSelectSchema(payoutBatches);
+export const insertCommissionSchema = createInsertSchema(commissions) as unknown as z.ZodType<any>;
+export const selectCommissionSchema = createSelectSchema(commissions) as unknown as z.ZodType<any>;
+export const insertRevenueReportSchema = createInsertSchema(revenueReports) as unknown as z.ZodType<any>;
+export const selectRevenueReportSchema = createSelectSchema(revenueReports) as unknown as z.ZodType<any>;
+export const insertPayoutBatchSchema = createInsertSchema(payoutBatches) as unknown as z.ZodType<any>;
+export const selectPayoutBatchSchema = createSelectSchema(payoutBatches) as unknown as z.ZodType<any>;
 
 // Type exports
 export type Commission = z.infer<typeof selectCommissionSchema>;

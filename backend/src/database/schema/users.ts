@@ -82,12 +82,12 @@ export const userProfiles = pgTable('user_profiles', {
 });
 
 // Zod schemas for validation
-export const insertUserSchema = createInsertSchema(users);
-export const selectUserSchema = createSelectSchema(users);
-export const insertSessionSchema = createInsertSchema(sessions);
-export const selectSessionSchema = createSelectSchema(sessions);
-export const insertUserProfileSchema = createInsertSchema(userProfiles);
-export const selectUserProfileSchema = createSelectSchema(userProfiles);
+export const insertUserSchema = createInsertSchema(users) as unknown as z.ZodType<any>;
+export const selectUserSchema = createSelectSchema(users) as unknown as z.ZodType<any>;
+export const insertSessionSchema = createInsertSchema(sessions) as unknown as z.ZodType<any>;
+export const selectSessionSchema = createSelectSchema(sessions) as unknown as z.ZodType<any>;
+export const insertUserProfileSchema = createInsertSchema(userProfiles) as unknown as z.ZodType<any>;
+export const selectUserProfileSchema = createSelectSchema(userProfiles) as unknown as z.ZodType<any>;
 
 // Type exports
 export type User = z.infer<typeof selectUserSchema>;

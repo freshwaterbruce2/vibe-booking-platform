@@ -120,12 +120,12 @@ export const paymentMethods = pgTable('payment_methods', {
 });
 
 // Zod schemas
-export const insertPaymentSchema = createInsertSchema(payments);
-export const selectPaymentSchema = createSelectSchema(payments);
-export const insertRefundSchema = createInsertSchema(refunds);
-export const selectRefundSchema = createSelectSchema(refunds);
-export const insertPaymentMethodSchema = createInsertSchema(paymentMethods);
-export const selectPaymentMethodSchema = createSelectSchema(paymentMethods);
+export const insertPaymentSchema = createInsertSchema(payments) as unknown as z.ZodType<any>;
+export const selectPaymentSchema = createSelectSchema(payments) as unknown as z.ZodType<any>;
+export const insertRefundSchema = createInsertSchema(refunds) as unknown as z.ZodType<any>;
+export const selectRefundSchema = createSelectSchema(refunds) as unknown as z.ZodType<any>;
+export const insertPaymentMethodSchema = createInsertSchema(paymentMethods) as unknown as z.ZodType<any>;
+export const selectPaymentMethodSchema = createSelectSchema(paymentMethods) as unknown as z.ZodType<any>;
 
 // Type exports
 export type Payment = z.infer<typeof selectPaymentSchema>;

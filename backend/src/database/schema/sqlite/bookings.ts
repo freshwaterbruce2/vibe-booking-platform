@@ -141,14 +141,14 @@ export const bookingAddons = sqliteTable('booking_addons', {
 });
 
 // Zod schemas
-export const insertBookingSchema = createInsertSchema(bookings);
-export const selectBookingSchema = createSelectSchema(bookings);
-export const insertBookingStatusHistorySchema = createInsertSchema(bookingStatusHistory);
-export const selectBookingStatusHistorySchema = createSelectSchema(bookingStatusHistory);
-export const insertBookingGuestSchema = createInsertSchema(bookingGuests);
-export const selectBookingGuestSchema = createSelectSchema(bookingGuests);
-export const insertBookingAddonSchema = createInsertSchema(bookingAddons);
-export const selectBookingAddonSchema = createSelectSchema(bookingAddons);
+export const insertBookingSchema = createInsertSchema(bookings) as unknown as z.ZodType<any>;
+export const selectBookingSchema = createSelectSchema(bookings) as unknown as z.ZodType<any>;
+export const insertBookingStatusHistorySchema = createInsertSchema(bookingStatusHistory) as unknown as z.ZodType<any>;
+export const selectBookingStatusHistorySchema = createSelectSchema(bookingStatusHistory) as unknown as z.ZodType<any>;
+export const insertBookingGuestSchema = createInsertSchema(bookingGuests) as unknown as z.ZodType<any>;
+export const selectBookingGuestSchema = createSelectSchema(bookingGuests) as unknown as z.ZodType<any>;
+export const insertBookingAddonSchema = createInsertSchema(bookingAddons) as unknown as z.ZodType<any>;
+export const selectBookingAddonSchema = createSelectSchema(bookingAddons) as unknown as z.ZodType<any>;
 
 // Type exports
 export type Booking = z.infer<typeof selectBookingSchema>;

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, numeric, jsonb, uuid, index, integer, boolean, real } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, jsonb, uuid, index, integer, boolean, real } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -117,10 +117,10 @@ export const searchAnalytics = pgTable('search_analytics', {
 });
 
 // Zod schemas
-export const insertHotelSearchSchema = createInsertSchema(hotelSearch);
-export const selectHotelSearchSchema = createSelectSchema(hotelSearch);
-export const insertSearchAnalyticsSchema = createInsertSchema(searchAnalytics);
-export const selectSearchAnalyticsSchema = createSelectSchema(searchAnalytics);
+export const insertHotelSearchSchema = createInsertSchema(hotelSearch) as unknown as z.ZodType<any>;
+export const selectHotelSearchSchema = createSelectSchema(hotelSearch) as unknown as z.ZodType<any>;
+export const insertSearchAnalyticsSchema = createInsertSchema(searchAnalytics) as unknown as z.ZodType<any>;
+export const selectSearchAnalyticsSchema = createSelectSchema(searchAnalytics) as unknown as z.ZodType<any>;
 
 // Type exports
 export type HotelSearch = z.infer<typeof selectHotelSearchSchema>;

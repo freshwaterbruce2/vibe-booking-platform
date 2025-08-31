@@ -51,7 +51,7 @@ export function getSqliteDb() {
   return db;
 }
 
-export function getSqliteConnection() {
+export function getSqliteConnection(): any {
   if (!sqlite) {
     throw new Error('SQLite connection not initialized. Call initializeSqliteDatabase() first.');
   }
