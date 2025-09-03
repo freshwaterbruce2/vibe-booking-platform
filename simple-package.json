@@ -1,0 +1,19 @@
+{
+  "name": "vibe-booking-payment-api",
+  "version": "1.0.0",
+  "description": "Minimal payment API for Vibe Hotel Booking",
+  "main": "simple-payment-server.js",
+  "scripts": {
+    "start": "node simple-payment-server.js",
+    "dev": "nodemon simple-payment-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "squareup": "^43.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

@@ -36,6 +36,13 @@ export interface SearchStore {
   setGuestCount: (adults: number, children: number, rooms: number) => void
   clearSearch: () => void
   addToResults: (hotels: Hotel[]) => void
+  
+  // Performance optimized actions
+  performSearch: (params?: { query?: string; useCache?: boolean; timeout?: number }) => Promise<void>
+  updateFiltersOptimized: (filters: Partial<SearchFilters>, debounceMs?: number) => void
+  getSearchMetrics: () => { totalSearches: number; cacheHits: number; cacheMisses: number; averageResponseTime: number }
+  getCacheHitRate: () => number
+  clearSearchCache: () => void
 }
 
 export interface BookingStore extends BookingState {

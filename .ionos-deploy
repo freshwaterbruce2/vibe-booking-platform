@@ -1,0 +1,7 @@
+{
+  "deployment_trigger": "2025-08-28T21:00:00Z",
+  "environment": "production",
+  "square_payments": "live",
+  "restart_required": true,
+  "config_reload": true
+}

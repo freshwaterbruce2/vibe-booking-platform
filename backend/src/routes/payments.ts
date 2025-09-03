@@ -5,6 +5,7 @@ import { payments, refunds, bookings } from '../database/schema';
 import { eq, and, desc, gte, lte } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { validateRequest } from '../middleware/validateRequest';
+import { emailService } from '../services/emailService';
 
 export const paymentsRouter = Router();
 
@@ -133,6 +134,51 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
               updatedAt: new Date(),
             })
             .where(eq(bookings.id, bookingId));
+          
+          // Send professional payment receipt email for successful payment
+          try {
+            await emailService.sendProfessionalPaymentReceipt({
+              customerName: `${bookingData.guestFirstName} ${bookingData.guestLastName}`,
+              customerEmail: bookingData.guestEmail,
+              paymentId: result.paymentId,
+              amount: amount,
+              currency: currency,
+              paymentMethod: 'Square Credit Card',
+              transactionDate: new Date(),
+              billingAddress: billingAddress || {
+                firstName: bookingData.guestFirstName,
+                lastName: bookingData.guestLastName,
+                addressLine1: 'N/A',
+                locality: 'N/A',
+                administrativeDistrictLevel1: 'N/A',
+                postalCode: 'N/A'
+              },
+              bookingDetails: {
+                confirmationNumber: bookingData.confirmationNumber,
+                hotelName: bookingData.hotelName || 'Hotel',
+                checkIn: bookingData.checkIn?.toISOString().split('T')[0] || '',
+                checkOut: bookingData.checkOut?.toISOString().split('T')[0] || '',
+                roomType: bookingData.roomType || 'Room',
+                nights: bookingData.nights || 1
+              },
+              receiptFormat: 'professional_html',
+              includeInvoicePDF: true,
+              includeTermsAndConditions: true
+            });
+            
+            logger.info('Payment receipt email sent', { 
+              paymentId: result.paymentId,
+              email: bookingData.guestEmail,
+              bookingId: bookingId
+            });
+          } catch (emailError) {
+            // Don't fail payment if email fails - just log the error
+            logger.error('Failed to send payment receipt email', { 
+              error: emailError,
+              paymentId: result.paymentId,
+              bookingId: bookingId
+            });
+          }
         }
       }
       return res.json({
@@ -185,12 +231,73 @@ paymentsRouter.post('/paypal/order', validateRequest(createPayPalOrderSchema), a
  */
 paymentsRouter.post('/paypal/capture', validateRequest(capturePayPalOrderSchema), async (req: Request, res: Response) => {
   try {
-    const { orderId } = req.body;
+    const { orderId, bookingId, customerEmail, customerName, amount } = req.body;
     const result = await paypalService.captureOrder(orderId);
-  if (!result.success) { return res.status(400).json(result); }
-  return res.json(result);
+    
+    if (!result.success) { 
+      return res.status(400).json(result); 
+    }
+    
+    // If capture was successful, send professional payment receipt email
+    if (result.success && bookingId && customerEmail) {
+      try {
+        // Get booking details for the receipt
+        const db = getDb();
+        const [booking] = await db
+          .select()
+          .from(bookings)
+          .where(eq(bookings.id, bookingId))
+          .limit(1);
+        
+        if (booking) {
+          await emailService.sendProfessionalPaymentReceipt({
+            customerName: customerName || 'Customer',
+            customerEmail: customerEmail,
+            paymentId: orderId,
+            amount: amount || 0,
+            currency: 'USD',
+            paymentMethod: 'PayPal',
+            transactionDate: new Date(),
+            billingAddress: {
+              firstName: booking.guestFirstName,
+              lastName: booking.guestLastName,
+              addressLine1: 'N/A',
+              locality: 'N/A',
+              administrativeDistrictLevel1: 'N/A',
+              postalCode: 'N/A'
+            },
+            bookingDetails: {
+              confirmationNumber: booking.confirmationNumber,
+              hotelName: booking.hotelName || 'Hotel',
+              checkIn: booking.checkIn?.toISOString().split('T')[0] || '',
+              checkOut: booking.checkOut?.toISOString().split('T')[0] || '',
+              roomType: booking.roomType || 'Room',
+              nights: booking.nights || 1
+            },
+            receiptFormat: 'professional_html',
+            includeInvoicePDF: true,
+            includeTermsAndConditions: true
+          });
+        }
+        
+        logger.info('PayPal payment receipt email sent', { 
+          orderId: orderId,
+          email: customerEmail,
+          bookingId: bookingId
+        });
+      } catch (emailError) {
+        // Don't fail payment if email fails - just log the error
+        logger.error('Failed to send PayPal payment receipt email', { 
+          error: emailError,
+          orderId: orderId,
+          bookingId: bookingId
+        });
+      }
+    }
+    
+    return res.json(result);
   } catch (e) {
-  return res.status(500).json({ success: false, error: 'Failed to capture PayPal order' });
+    return res.status(500).json({ success: false, error: 'Failed to capture PayPal order' });
   }
 });
 

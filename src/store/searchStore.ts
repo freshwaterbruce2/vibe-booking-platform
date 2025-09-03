@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { searchMiddleware } from './middleware/searchMiddleware';
 import type { SearchStore } from './types';
 import type { SearchFilters } from '@/types/hotel';
 
@@ -20,7 +21,7 @@ const initialFilters: SearchFilters = {
 export const useSearchStore = create<SearchStore>()(
   devtools(
     persist(
-      (set) => ({
+      searchMiddleware((set) => ({
         // Initial state
         query: '',
         naturalLanguageQuery: '',
@@ -81,7 +82,7 @@ export const useSearchStore = create<SearchStore>()(
           set((state) => ({
             results: [...state.results, ...hotels],
           })),
-      }),
+      })),
       {
         name: 'search-store',
         partialize: (state) => ({

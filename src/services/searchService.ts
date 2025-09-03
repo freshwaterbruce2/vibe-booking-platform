@@ -170,7 +170,7 @@ const mockHotels: Hotel[] = [
 ];
 
 class SearchService {
-  private baseURL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
+  private baseURL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api';
   private timeout = 5000; // 5 second timeout
 
   async searchHotels(params: SearchParams): Promise<SearchResponse> {
@@ -190,11 +190,13 @@ class SearchService {
         },
       });
 
+      // Fix: Backend returns data in nested structure {success: true, data: {hotels: [...], pagination: {...}}}
+      const responseData = response.data.data || response.data;
       return {
-        hotels: response.data.hotels || [],
-        total: response.data.total || 0,
-        page: response.data.page || 1,
-        limit: response.data.limit || 10,
+        hotels: responseData.hotels || response.data.hotels || [],
+        total: responseData.pagination?.total || response.data.total || responseData.hotels?.length || 0,
+        page: responseData.pagination?.page || response.data.page || 1,
+        limit: responseData.pagination?.limit || response.data.limit || 10,
       };
     } catch (error) {
       logger.info('Hotel search API unavailable, providing mock results for seamless UX', {

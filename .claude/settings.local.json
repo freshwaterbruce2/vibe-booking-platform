@@ -82,7 +82,21 @@
       "WebFetch(domain:vibehotelbookings.com)",
       "Bash(git init:*)",
       "WebFetch(domain:vibe-booking-platform-production.up.railway.app)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(npm search:*)",
+      "WebFetch(domain:railway.com)",
+      "WebFetch(domain:web-production-9z75.up.railway.app)",
+      "WebFetch(domain:vibe-tech-backend.up.railway.app)",
+      "WebFetch(domain:vibe-tech-production.up.railway.app)",
+      "WebFetch(domain:web-production-182ae317.up.railway.app)",
+      "Bash(railway link:*)",
+      "Bash(PORT=3002 node server.js)",
+      "Bash(PORT=3002 LOCAL_SQLITE=true npx tsx src/server.ts)",
+      "Bash(powershell:*)",
+      "Bash(git checkout:*)",
+      "Bash(ping:*)",
+      "Read(C:\\dev\\projects/**)",
+      "Bash(npx vitest run:*)"
     ],
     "deny": [],
     "additionalDirectories": [

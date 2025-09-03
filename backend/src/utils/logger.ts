@@ -59,19 +59,32 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Add Sentry transport in production
-if (config.monitoring.sentryDsn && config.environment === 'production') {
-  const Sentry = require('winston-transport-sentry-node').default;
-  
-  logger.add(
-    new Sentry({
-      sentry: {
-        dsn: config.monitoring.sentryDsn,
-        environment: config.environment,
-      },
-      level: 'error',
-    })
-  );
+// Add Sentry transport in production (skip in test environment)
+const addSentryTransport = async () => {
+  try {
+    // Only add Sentry in production and when config is available
+    if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+      const Sentry = require('winston-transport-sentry-node').default;
+      
+      logger.add(
+        new Sentry({
+          sentry: {
+            dsn: process.env.SENTRY_DSN,
+            environment: process.env.NODE_ENV,
+          },
+          level: 'error',
+        })
+      );
+    }
+  } catch (error) {
+    // Silently fail if Sentry transport cannot be added
+    console.warn('Failed to add Sentry transport to logger:', error);
+  }
+};
+
+// Initialize Sentry transport (only in production)
+if (process.env.NODE_ENV === 'production') {
+  addSentryTransport();
 }
 
 // Create a stream object for Morgan

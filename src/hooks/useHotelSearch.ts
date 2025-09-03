@@ -29,7 +29,7 @@ export function useHotelSearch() {
     try {
       // Use proxy in development, direct URL in production
       const isDevelopment = import.meta.env.DEV;
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       
       // Skip API call if no valid backend URL in production
       if (!isDevelopment && (!import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL.includes('localhost'))) {
@@ -53,9 +53,13 @@ export function useHotelSearch() {
         timeout: 3000, // Extended timeout to 3 seconds
       });
 
-      if (response.data.success && response.data.hotels && response.data.hotels.length > 0) {
+      // Fix: Handle nested response structure {success: true, data: {hotels: [...]}}
+      const responseData = response.data.data || response.data;
+      const hotelsData = responseData.hotels || response.data.hotels || [];
+      
+      if (response.data.success && hotelsData && hotelsData.length > 0) {
         // Transform the data to match our Hotel type
-        const hotels: Hotel[] = response.data.hotels.map((hotel: any, index: number) => ({
+        const hotels: Hotel[] = hotelsData.map((hotel: any, index: number) => ({
           id: hotel.id || String(index + 1),
           name: hotel.name || 'Unnamed Hotel',
           description: hotel.description || 'A comfortable place to stay',

@@ -1,0 +1,3 @@
+Server restart trigger - uploaded at $(date)
+This file forces the server to reload configuration.
+Square production credentials should now be active.

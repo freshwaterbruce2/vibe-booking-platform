@@ -21,6 +21,9 @@ export function validateRequest<T>(
           code: err.code,
         }));
 
+        // Check for password validation failure
+        const passwordError = errors.find(err => err.field === 'password' && err.code === 'invalid_string');
+        
         logger.warn('Request validation failed', {
           source,
           errors,
@@ -28,6 +31,14 @@ export function validateRequest<T>(
           path: req.path,
           method: req.method,
         });
+
+        // Return specific error for password validation
+        if (passwordError) {
+          return res.status(400).json({
+            error: 'Password Too Weak',
+            message: passwordError.message,
+          });
+        }
 
         return res.status(400).json({
           error: 'Validation Error',

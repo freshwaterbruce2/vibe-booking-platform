@@ -129,7 +129,7 @@ Standardized button hierarchy with luxury styling:
 ## Common Development Commands
 
 ### Quick Start (Local Development)
-```bash
+```powershell
 # Setup local SQLite environment
 cd backend
 npm run db:setup:local    # Initialize SQLite database
@@ -141,9 +141,10 @@ npm run dev               # Start Vite dev server (port 3009)
 ```
 
 ### Frontend Commands
-```bash
+```powershell
 npm run dev               # Start Vite dev server (port 3009)
 npm run build             # TypeScript check + Vite production build
+npm run build:skip-errors # Build without TypeScript checks
 npm run preview           # Preview production build
 npm run lint              # Run ESLint
 npm run lint:fix          # Auto-fix ESLint issues
@@ -153,18 +154,21 @@ npm run analyze           # Bundle analysis
 ```
 
 ### Testing Commands
-```bash
+```powershell
 # Unit Tests
 npm test                  # Run Vitest unit tests
-npm test SearchResults.test.tsx  # Run specific test file
 npm run test:ui           # Interactive test UI
 npm run test:coverage     # Generate coverage report
 
 # E2E Tests (Playwright)
 npm run test:e2e          # Run all E2E tests
-npm run test:e2e -- booking-flow.spec.ts  # Run specific E2E test
 npm run test:e2e:headed   # Run with browser visible
 npm run test:e2e:debug    # Debug mode
+npm run test:e2e:mobile   # Mobile device testing
+npm run test:e2e:desktop  # Desktop device testing
+npm run test:e2e:tablet   # Tablet device testing
+npm run test:e2e:conversion # Critical conversion flow tests
+npm run test:e2e:live     # Test against live deployment
 npm run test:visual       # Visual regression tests
 npm run test:visual:update # Update visual snapshots
 
@@ -176,12 +180,12 @@ npm run test:coverage     # Backend test coverage
 ```
 
 ### Backend Commands
-```bash
+```powershell
 cd backend
 npm run dev               # Start with tsx watch (PostgreSQL)
 npm run dev:local         # Start with SQLite for local development
-npm run build             # Compile TypeScript to dist/
-npm run start             # Run production build
+npm run build             # Runtime compilation (tsx-based)
+npm run start             # Run production build with tsx
 npm run start:local       # Run production with SQLite
 
 # Database Management
@@ -241,7 +245,7 @@ npm run db:seed:local     # Seed local database with test data
 ### Key Configuration
 
 #### Frontend Environment Variables (`.env`)
-```bash
+```powershell
 VITE_API_URL=http://localhost:3001
 VITE_OPENAI_API_KEY=<key>
 VITE_LITEAPI_KEY=<key>
@@ -250,7 +254,7 @@ SQUARE_LOCATION_ID=<id>
 ```
 
 #### Backend Environment Variables (`backend/.env`)
-```bash
+```powershell
 LOCAL_SQLITE=true          # Enable for local development
 DATABASE_URL=<postgresql_url>
 OPENAI_API_KEY=<key>
@@ -274,16 +278,29 @@ JWT_SECRET=<secret>
 - **Dual Database Support**: Backend automatically switches between SQLite (local) and PostgreSQL (production)
 - **AI Search**: Combines OpenAI natural language processing with LiteAPI hotel data
 - **Passion Matching**: 7-category algorithmic scoring for personalized recommendations
-- **Bundle Optimization**: Manual chunk splitting for vendor, ui, and forms
+- **Bundle Optimization**: Manual chunk splitting for vendor, ui, and forms (vendor: React ecosystem, ui: animations/icons, forms: validation stack)
 - **Security**: Helmet.js, rate limiting, CORS configuration, JWT authentication
 - **Monitoring**: Winston logging, audit trails, security event tracking
+- **Service Layer Architecture**: Comprehensive backend services including:
+  - Payment processing (Square, PayPal, legacy Stripe stubs)
+  - AI search integration with caching
+  - Email services and PDF generation
+  - Commission tracking and refund management
+  - Security monitoring and backup services
 
 ### Testing Strategy
 
 - **Unit Tests**: Vitest for both frontend and backend
-- **E2E Tests**: Playwright with multiple device configurations
+- **E2E Tests**: Playwright with comprehensive device matrix
+  - Desktop: Chrome, Firefox, Safari, Large Desktop (1920x1080)
+  - Mobile: Pixel 5, iPhone 12, iPhone SE
+  - Tablet: iPad Pro, iPad Mini, Galaxy Tab S4
+  - Live Testing: Automated tests against deployed application
 - **Visual Tests**: Regression testing with snapshots
 - **Coverage Target**: Maintain >80% code coverage
+
+#### Playwright Test Matrix
+The project includes sophisticated cross-device testing with 11 different viewport configurations to ensure luxury design consistency across all platforms. Critical conversion flows are tested separately with `npm run test:e2e:conversion`.
 
 ### Production Deployment
 
@@ -293,12 +310,12 @@ JWT_SECRET=<secret>
 - **Build Time**: ~7-8 seconds for complete production build
 - **Deployment Status**: Ready for Netlify deployment via drag-and-drop `dist/` folder
 
-```bash
+```powershell
 # Build frontend
 npm run build             # Creates optimized dist/ directory
 
 # Build backend  
-cd backend && npm run build  # Creates backend/dist/
+cd backend; npm run build  # Runtime compilation with tsx
 
 # Deploy to Netlify
 # Drag dist/ folder to Netlify dashboard for instant deployment

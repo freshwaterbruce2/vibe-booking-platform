@@ -22,7 +22,10 @@ import {
   LazyDestinationsPage,
   LazyExperiencesPage,
   LazyRewardsPage,
+  LazyLoginPage,
+  LazyEmailVerificationPage,
 } from '@/routes/LazyRoutes';
+import { PrivateRoute } from '@/components/auth/PrivateRoute';
 
 function App() {
   useEffect(() => {
@@ -42,6 +45,7 @@ function App() {
       <AuthProvider>
         <Layout>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<LazyHomePage />} />
             <Route path="/search" element={<LazySearchResultsPage />} />
             <Route path="/destinations" element={<LazyDestinationsPage />} />
@@ -49,11 +53,50 @@ function App() {
             <Route path="/experiences" element={<LazyExperiencesPage />} />
             <Route path="/rewards" element={<LazyRewardsPage />} />
             <Route path="/hotel/:id" element={<HotelDetailsPage />} />
-            <Route path="/booking" element={<BookingPage />} />
-            <Route path="/payment" element={<LazyPaymentPage />} />
-            <Route path="/confirmation/:bookingId" element={<LazyBookingConfirmationPage />} />
-            <Route path="/my-bookings" element={<LazyBookingHistoryPage />} />
-            <Route path="/profile" element={<LazyUserProfilePage />} />
+            <Route path="/login" element={<LazyLoginPage />} />
+            <Route path="/verify-email" element={<LazyEmailVerificationPage />} />
+            
+            {/* Protected Routes */}
+            <Route 
+              path="/booking" 
+              element={
+                <PrivateRoute>
+                  <BookingPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/payment" 
+              element={
+                <PrivateRoute>
+                  <LazyPaymentPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/confirmation/:bookingId" 
+              element={
+                <PrivateRoute>
+                  <LazyBookingConfirmationPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/my-bookings" 
+              element={
+                <PrivateRoute>
+                  <LazyBookingHistoryPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <PrivateRoute>
+                  <LazyUserProfilePage />
+                </PrivateRoute>
+              } 
+            />
           </Routes>
         </Layout>
         <Toaster

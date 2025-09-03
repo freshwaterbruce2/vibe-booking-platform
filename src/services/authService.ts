@@ -10,6 +10,19 @@ export interface User {
   firstName: string;
   lastName: string;
   role?: string;
+  emailVerified?: boolean;
+  phone?: string;
+  preferences?: {
+    newsletter: boolean;
+    notifications: boolean;
+    marketing: boolean;
+  };
+  bookingStats?: {
+    totalBookings: number;
+    upcomingBookings: number;
+    completedBookings: number;
+    favoriteDestination: string;
+  };
 }
 
 export interface AuthResponse {
@@ -44,6 +57,7 @@ class AuthService {
         firstName,
         lastName,
         acceptTerms: true,
+        sendVerificationEmail: true,
       });
 
       if (response.data.success) {
@@ -130,6 +144,113 @@ return null;
 
   isAdmin(): boolean {
     return this.user?.role === 'admin';
+  }
+
+  async verifyEmail(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/send-verification`, {
+        email,
+      });
+      return {
+        success: response.data.success,
+        message: response.data.message || 'Verification email sent',
+      };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to send verification email');
+    }
+  }
+
+  async confirmEmailVerification(token: string): Promise<{ success: boolean; user: User }> {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/verify-email`, {
+        token,
+      });
+      
+      if (response.data.success) {
+        this.setAuth(response.data.data.accessToken, response.data.data.user);
+      }
+      
+      return {
+        success: response.data.success,
+        user: response.data.data.user,
+      };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Email verification failed');
+    }
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/send-verification`, {
+        email,
+        resend: true,
+      });
+      return {
+        success: response.data.success,
+        message: response.data.message || 'Verification email resent',
+      };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to resend verification email');
+    }
+  }
+
+  async updateProfile(profileData: { firstName: string; lastName: string; phone?: string }): Promise<{ success: boolean }> {
+    try {
+      const response = await axios.put(`${API_URL}/api/auth/profile`, profileData);
+      
+      if (response.data.success && this.user) {
+        // Update local user state
+        this.user = {
+          ...this.user,
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phone: profileData.phone,
+        };
+        localStorage.setItem('user', JSON.stringify(this.user));
+      }
+
+      return {
+        success: response.data.success,
+      };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to update profile');
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean }> {
+    try {
+      const response = await axios.put(`${API_URL}/api/auth/change-password`, {
+        currentPassword,
+        newPassword,
+      });
+
+      return {
+        success: response.data.success,
+      };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to change password');
+    }
+  }
+
+  async updatePreferences(preferences: { newsletter: boolean; notifications: boolean; marketing: boolean }): Promise<{ success: boolean }> {
+    try {
+      const response = await axios.put(`${API_URL}/api/auth/preferences`, { preferences });
+      
+      if (response.data.success && this.user) {
+        // Update local user state
+        this.user = {
+          ...this.user,
+          preferences,
+        };
+        localStorage.setItem('user', JSON.stringify(this.user));
+      }
+
+      return {
+        success: response.data.success,
+      };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to update preferences');
+    }
   }
 }
 

@@ -1,0 +1,6 @@
+IONOS Server Restart Request
+Timestamp: 2025-08-28
+Purpose: Reload environment variables for Square payment activation
+Configuration: Production .env file with live Square credentials uploaded
+
+Please restart Node.js application to activate live payment processing.

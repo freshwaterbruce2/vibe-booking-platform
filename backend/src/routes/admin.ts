@@ -3,13 +3,17 @@ import { z } from 'zod';
 import { getDb } from '../database';
 import { bookings, payments, refunds, users } from '../database/schema';
 import { CommissionService } from '../services/commission';
-// Use mock service for local development
-const stripeService = process.env.LOCAL_SQLITE 
-  ? require('../services/stripeMock').stripeService
-  : require('../services/stripe').stripeService;
+// Use mock service for local development and testing
+import { stripeService as stripeMockService } from '../services/stripeMock';
+import { stripeService } from '../services/stripe';
+
+const stripeServiceToUse = (process.env.LOCAL_SQLITE === 'true' || process.env.NODE_ENV === 'test') 
+  ? stripeMockService
+  : stripeService;
 import { eq, and, gte, lte, desc, count, sum, avg } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { validateRequest } from '../middleware/validateRequest';
+import { emailSchedulerJob } from '../jobs/emailSchedulerJob';
 
 export const adminRouter = Router();
 
@@ -373,7 +377,7 @@ adminRouter.post('/refund/approve', validateRequest(refundApprovalSchema), async
     const paymentData = payment[0];
 
     // Create refund through Stripe
-    const refund = await stripeService.createRefund({
+    const refund = await stripeServiceToUse.createRefund({
       paymentIntentId,
       amount,
       reason,
@@ -637,3 +641,106 @@ function generateRevenueCSV(reportData: any): string {
 
   return csvContent;
 }
+
+/**
+ * GET /api/admin/email-scheduler/status
+ * Get email scheduler job status
+ */
+adminRouter.get('/email-scheduler/status', (req: Request, res: Response) => {
+  try {
+    const status = emailSchedulerJob.getStatus();
+    
+    logger.info('Email scheduler status requested', {
+      userId: req.user?.id,
+      status: status
+    });
+
+    res.json({
+      success: true,
+      data: {
+        ...status,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to get email scheduler status', { error });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve scheduler status'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/email-scheduler/process
+ * Force email scheduler to process emails immediately
+ */
+adminRouter.post('/email-scheduler/process', async (req: Request, res: Response) => {
+  try {
+    logger.info('Manual email processing triggered', {
+      userId: req.user?.id
+    });
+
+    const result = await emailSchedulerJob.processNow();
+
+    logger.info('Manual email processing completed', {
+      userId: req.user?.id,
+      result: result
+    });
+
+    res.json({
+      success: true,
+      data: {
+        processed: result.processed,
+        failed: result.failed,
+        timestamp: new Date().toISOString(),
+        triggeredBy: req.user?.id
+      }
+    });
+  } catch (error) {
+    logger.error('Manual email processing failed', {
+      userId: req.user?.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process scheduled emails',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/health
+ * Get overall system health including email scheduler
+ */
+adminRouter.get('/health', (req: Request, res: Response) => {
+  try {
+    const emailSchedulerStatus = emailSchedulerJob.getStatus();
+    
+    const systemHealth = {
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      emailScheduler: emailSchedulerStatus,
+      environment: process.env.NODE_ENV || 'development'
+    };
+
+    logger.debug('System health check performed', {
+      userId: req.user?.id,
+      health: systemHealth
+    });
+
+    res.json({
+      success: true,
+      data: systemHealth
+    });
+  } catch (error) {
+    logger.error('Health check failed', { error });
+    res.status(500).json({
+      success: false,
+      error: 'Health check failed'
+    });
+  }
+});

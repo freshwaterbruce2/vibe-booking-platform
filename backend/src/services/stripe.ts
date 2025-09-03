@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 // Stripe has been deprecated in this deployment profile.
 // This minimal stub remains only to satisfy any lingering imports.
 export class StripeService {

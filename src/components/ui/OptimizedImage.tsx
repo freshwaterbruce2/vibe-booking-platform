@@ -1,175 +1,207 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
-import { logger } from '../../utils/logger';
+/**
+ * Optimized Image Component
+ * 
+ * Advanced image optimization with lazy loading, progressive enhancement,
+ * and performance monitoring
+ */
+
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { Camera, AlertTriangle, Loader2 } from 'lucide-react';
+import { useInView, usePerformanceMonitor } from '@/utils/frontendOptimization';
+import { cn } from '@/utils/cn';
 
 interface OptimizedImageProps {
   src: string;
   alt: string;
-  className?: string;
   width?: number;
   height?: number;
+  className?: string;
   fallbackSrc?: string;
   priority?: boolean;
+  quality?: number;
   onLoad?: () => void;
-  onError?: (error: Event) => void;
-  loading?: 'lazy' | 'eager';
-  sizes?: string;
-  srcSet?: string;
-  aspectRatio?: string;
-  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  onError?: () => void;
+  aspectRatio?: 'square' | '4:3' | '16:9' | '3:2';
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
-export const OptimizedImage: React.FC<OptimizedImageProps> = ({
+const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
+  width = 400,
+  height = 300,
   className = '',
-  width,
-  height,
-  fallbackSrc = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
+  fallbackSrc,
   priority = false,
+  quality = 75,
   onLoad,
   onError,
-  loading = 'lazy',
-  sizes,
-  srcSet,
   aspectRatio,
-  objectFit = 'cover',
+  objectFit = 'cover'
 }) => {
-  const [imageSrc, setImageSrc] = useState<string>(priority ? src : '');
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [loadStartTime, setLoadStartTime] = useState<number>(0);
-  const imgRef = useRef<HTMLImageElement>(null);
+  usePerformanceMonitor(`OptimizedImage-${alt}`);
 
-  // Use intersection observer for lazy loading
-  const { isIntersecting } = useIntersectionObserver(imgRef, {
+  // State
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState<string>('');
+  
+  // Intersection observer for lazy loading
+  const [inViewRef, inView] = useInView({
     threshold: 0.1,
-    rootMargin: '50px',
+    rootMargin: priority ? '0px' : '100px'
   });
 
-  // Start loading image when it becomes visible or if priority is set
-  useEffect(() => {
-    if ((isIntersecting || priority) && !imageSrc && !imageError) {
-      setLoadStartTime(Date.now());
-      setImageSrc(src);
-      logger.debug('Image loading started', { 
-        component: 'OptimizedImage', 
-        src, 
-        priority,
-        isIntersecting 
-      });
-    }
-  }, [isIntersecting, priority, src, imageSrc, imageError]);
+  // Optimize image URL
+  const optimizedSrc = useMemo(() => {
+    if (!src) return '';
 
-  const handleLoad = (_event: React.SyntheticEvent<HTMLImageElement>) => {
-    setImageLoaded(true);
-    const loadTime = Date.now() - loadStartTime;
-    
-    logger.debug('Image loaded successfully', { 
-      component: 'OptimizedImage', 
-      src: imageSrc,
-      loadTime: `${loadTime}ms`
-    });
-    
+    try {
+      const url = new URL(src);
+      
+      // For Unsplash images, add optimization parameters
+      if (url.hostname.includes('unsplash.com')) {
+        url.searchParams.set('w', width.toString());
+        url.searchParams.set('h', height.toString());
+        url.searchParams.set('q', quality.toString());
+        url.searchParams.set('fit', 'crop');
+        return url.toString();
+      }
+
+      return src;
+    } catch {
+      return src;
+    }
+  }, [src, width, height, quality]);
+
+  // Generate placeholder
+  const placeholder = useMemo(() => {
+    return `data:image/svg+xml;base64,${btoa(
+      `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#f3f4f6"/>
+        <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#9ca3af" font-size="14">
+          Loading...
+        </text>
+      </svg>`
+    )}`;
+  }, [width, height]);
+
+  // Handle image loading
+  const handleLoad = useCallback(() => {
+    setIsLoaded(true);
+    setIsError(false);
     onLoad?.();
-  };
+  }, [onLoad]);
 
-  const handleError = (_event: React.SyntheticEvent<HTMLImageElement>) => {
-    setImageError(true);
-    const loadTime = Date.now() - loadStartTime;
+  // Handle image error
+  const handleError = useCallback(() => {
+    setIsError(true);
     
-    logger.warn('Image failed to load, using fallback', { 
-      component: 'OptimizedImage', 
-      originalSrc: src,
-      fallbackSrc,
-      loadTime: `${loadTime}ms`
-    });
-
-    if (imageSrc !== fallbackSrc && fallbackSrc) {
-      setImageSrc(fallbackSrc);
-      setImageError(false);
+    if (fallbackSrc && currentSrc !== fallbackSrc) {
+      setCurrentSrc(fallbackSrc);
+      setIsError(false);
+      return;
     }
     
-    onError?.(_event.nativeEvent);
-  };
+    onError?.();
+  }, [fallbackSrc, currentSrc, onError]);
 
-  const containerStyle: React.CSSProperties = {
-    aspectRatio: aspectRatio || (width && height ? `${width}/${height}` : undefined),
-    width: width ? `${width}px` : undefined,
-    height: height ? `${height}px` : undefined,
-  };
+  // Set up image loading when in view or priority
+  React.useEffect(() => {
+    if ((inView || priority) && !currentSrc && optimizedSrc) {
+      setCurrentSrc(optimizedSrc);
+    }
+  }, [inView, priority, optimizedSrc, currentSrc]);
 
-  const imageStyle: React.CSSProperties = {
-    objectFit,
-    transition: 'opacity 0.3s ease-in-out',
-    opacity: imageLoaded ? 1 : 0,
-  };
+  // Calculate aspect ratio styles
+  const containerStyle = useMemo(() => {
+    if (!aspectRatio) return { width, height };
+    
+    const ratios = {
+      'square': 1,
+      '4:3': 4/3,
+      '16:9': 16/9,
+      '3:2': 3/2
+    };
+    
+    const ratio = ratios[aspectRatio];
+    const paddingTop = `${(1 / ratio) * 100}%`;
+    
+    return {
+      position: 'relative' as const,
+      width: '100%',
+      paddingTop
+    };
+  }, [aspectRatio, width, height]);
+
+  const imageStyle = aspectRatio ? {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    objectFit
+  } : { width, height, objectFit };
 
   return (
-    <div 
-      className={`relative overflow-hidden bg-gray-100 ${className}`}
+    <div
+      ref={inViewRef}
       style={containerStyle}
+      className={cn('relative overflow-hidden bg-gray-100 rounded-lg', className)}
     >
-      {/* Placeholder/Loading state */}
-      {!imageLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-          <div className="flex flex-col items-center text-gray-400">
-            <svg 
-              className="w-8 h-8 animate-pulse" 
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-            >
-              <path 
-                fillRule="evenodd" 
-                d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" 
-                clipRule="evenodd" 
-              />
-            </svg>
-            <span className="text-xs mt-1">Loading...</span>
-          </div>
-        </div>
+      {/* Placeholder */}
+      {!isLoaded && !isError && (
+        <img
+          src={placeholder}
+          alt=""
+          style={imageStyle}
+          className="absolute inset-0 animate-pulse"
+        />
       )}
 
-      {/* Actual image */}
-      {imageSrc && (
+      {/* Main image */}
+      {currentSrc && !isError && (
         <img
-          ref={imgRef}
-          src={imageSrc}
+          src={currentSrc}
           alt={alt}
           width={width}
           height={height}
-          loading={loading}
-          sizes={sizes}
-          srcSet={srcSet}
           style={imageStyle}
-          className="w-full h-full"
+          className={cn(
+            'transition-opacity duration-300',
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          )}
           onLoad={handleLoad}
           onError={handleError}
+          loading={priority ? 'eager' : 'lazy'}
           decoding="async"
         />
       )}
 
+      {/* Loading state */}
+      {currentSrc && !isLoaded && !isError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+        </div>
+      )}
+
       {/* Error state */}
-      {imageError && imageSrc === fallbackSrc && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-          <div className="flex flex-col items-center text-gray-500">
-            <svg 
-              className="w-8 h-8" 
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-            >
-              <path 
-                fillRule="evenodd" 
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" 
-                clipRule="evenodd" 
-              />
-            </svg>
-            <span className="text-xs mt-1">Failed to load</span>
-          </div>
+      {isError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400">
+          <AlertTriangle className="w-6 h-6 mb-2" />
+          <span className="text-xs">Failed to load</span>
+        </div>
+      )}
+
+      {/* Lazy loading placeholder */}
+      {!currentSrc && !priority && !inView && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
+          <Camera className="w-6 h-6" />
         </div>
       )}
     </div>
   );
 };
 
+export { OptimizedImage };
 export default OptimizedImage;

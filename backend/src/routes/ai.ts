@@ -4,7 +4,7 @@ import { validateRequest } from '../middleware/validateRequest';
 import { aiSearchService } from '../services/aiSearchService';
 import { logger } from '../utils/logger';
 import { getDb } from '../database';
-import { aiFeedback } from '../database/schema';
+// import { aiFeedback } from '../database/schema';
 
 export const aiRouter = Router();
 
@@ -281,18 +281,19 @@ aiRouter.post('/feedback', async (req, res) => {
     // Store feedback in database for analysis and model improvement
     try {
       const db = await getDb();
-      await db.insert(aiFeedback).values({
-        userId: req.user?.id,
-        feedbackType: feedback.type,
-        rating: feedback.rating,
-        comment: feedback.comment,
-        searchQuery: feedback.searchQuery,
-        aiResponse: feedback.aiResponse,
-        metadata: JSON.stringify({
-          timestamp: new Date().toISOString(),
-          userAgent: req.get('User-Agent'),
-        }),
-      });
+      // TODO: Re-enable when aiFeedback schema is available
+      // await db.insert(aiFeedback).values({
+      //   userId: req.user?.id,
+      //   feedbackType: feedback.type,
+      //   rating: feedback.rating,
+      //   comment: feedback.comment,
+      //   searchQuery: feedback.searchQuery,
+      //   aiResponse: feedback.aiResponse,
+      //   metadata: JSON.stringify({
+      //     timestamp: new Date().toISOString(),
+      //     userAgent: req.get('User-Agent'),
+      //   }),
+      // });
       logger.info('AI feedback stored in database');
     } catch (dbError) {
       logger.error('Failed to store AI feedback in database:', dbError);

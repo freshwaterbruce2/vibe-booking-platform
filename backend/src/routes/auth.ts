@@ -9,6 +9,9 @@ import { users, NewUser } from '../database/schema';
 import { eq } from 'drizzle-orm';
 import { config } from '../config';
 import { emailService } from '../services/emailService.js';
+import { generateEmailVerificationToken, verifyEmailToken } from '../utils/emailTokens.js';
+import { createEmailVerificationTemplate } from '../templates/emailVerification.js';
+import { createPasswordResetEmailTemplate } from '../templates/passwordResetEmail.js';
 
 export const authRouter = Router();
 
@@ -39,13 +42,41 @@ const forgotPasswordSchema = z.object({
 });
 
 const resetPasswordSchema = z.object({
-  token: z.string(),
-  password: z.string().min(8).max(100),
+  token: z.string().min(1, 'Reset token is required'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]/,
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    ),
 });
 
 const changePasswordSchema = z.object({
   currentPassword: z.string(),
   newPassword: z.string().min(8).max(100),
+});
+
+const updateProfileSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  phone: z.string().min(5).max(20).optional(),
+});
+
+const updatePreferencesSchema = z.object({
+  preferences: z.object({
+    newsletter: z.boolean(),
+    notifications: z.boolean(),
+    marketing: z.boolean(),
+  }),
+});
+
+const sendVerificationSchema = z.object({
+  email: z.string().email(),
+  resend: z.boolean().optional(),
+});
+
+const verifyEmailSchema = z.object({
+  token: z.string().min(1),
 });
 
 // Helper functions
@@ -131,6 +162,27 @@ authRouter.post('/register', validateRequest(registerSchema), async (req, res) =
 
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(createdUser);
+
+    // Send welcome email
+    try {
+      await emailService.sendWelcomeEmail(
+        createdUser.firstName,
+        createdUser.lastName,
+        createdUser.email
+      );
+      
+      logger.info('Welcome email sent', { 
+        userId: createdUser.id,
+        email: createdUser.email 
+      });
+    } catch (emailError) {
+      // Don't fail registration if email fails - just log the error
+      logger.error('Failed to send welcome email', { 
+        error: emailError,
+        userId: createdUser.id,
+        email: createdUser.email 
+      });
+    }
 
     logger.info('User registered successfully', {
       userId: createdUser.id,
@@ -414,8 +466,18 @@ authRouter.post('/forgot-password', validateRequest(forgotPasswordSchema), async
       })
       .where(eq(users.id, user.id));
 
+    // Create password reset email template
+    const frontendUrl = config.app.frontendUrl || 'https://vibe-booking.netlify.app';
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+    const emailTemplate = createPasswordResetEmailTemplate(user.firstName || 'Valued Customer', resetUrl, 1);
+    
     // Send password reset email
-    await emailService.sendPasswordReset(user.email, resetToken, user.email);
+    await emailService.sendEmail({
+      to: user.email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+    });
 
     logger.info('Password reset requested', {
       userId: user.id,
@@ -447,7 +509,7 @@ authRouter.post('/reset-password', validateRequest(resetPasswordSchema), async (
       decoded = jwt.verify(token, config.jwt.resetSecret);
     } catch (jwtError) {
       return res.status(400).json({
-        error: 'Reset Error',
+        error: 'Token Expired',
         message: 'Invalid or expired reset token',
       });
     }
@@ -463,7 +525,7 @@ authRouter.post('/reset-password', validateRequest(resetPasswordSchema), async (
 
     if (!user || user.passwordResetToken !== token) {
       return res.status(400).json({
-        error: 'Reset Error',
+        error: 'Token Expired',
         message: 'Invalid or expired reset token',
       });
     }
@@ -471,7 +533,7 @@ authRouter.post('/reset-password', validateRequest(resetPasswordSchema), async (
     // Check if token is expired
     if (!user.passwordResetExpires || new Date() > user.passwordResetExpires) {
       return res.status(400).json({
-        error: 'Reset Error',
+        error: 'Token Expired',
         message: 'Reset token has expired',
       });
     }
@@ -498,7 +560,7 @@ authRouter.post('/reset-password', validateRequest(resetPasswordSchema), async (
 
     res.json({
       success: true,
-      message: 'Password reset successfully',
+      message: 'Password reset successful',
     });
 
   } catch (error) {
@@ -601,7 +663,7 @@ authRouter.get('/me', async (req, res) => {
         email: users.email,
         phone: users.phone,
         role: users.role,
-        isEmailVerified: users.isEmailVerified,
+        emailVerified: users.emailVerified,
         preferences: users.preferences,
         createdAt: users.createdAt,
         lastLoginAt: users.lastLoginAt,
@@ -629,6 +691,271 @@ authRouter.get('/me', async (req, res) => {
     res.status(500).json({
       error: 'User Error',
       message: 'Failed to get user information',
+    });
+  }
+});
+
+// POST /api/auth/send-verification - Send email verification
+authRouter.post('/send-verification', validateRequest(sendVerificationSchema), async (req, res) => {
+  try {
+    const { email, resend } = req.body;
+
+    const db = getDb();
+
+    // Find user by email
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User Error',
+        message: 'User not found with this email address',
+      });
+    }
+
+    // Check if already verified (unless resending)
+    if (user.emailVerified && !resend) {
+      return res.status(400).json({
+        error: 'Verification Error',
+        message: 'Email is already verified',
+      });
+    }
+
+    // Generate verification token
+    const verificationToken = generateEmailVerificationToken(user.id, user.email);
+    
+    // Update user with verification token
+    await db
+      .update(users)
+      .set({
+        emailVerificationToken: verificationToken,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    // Create verification URL
+    const verificationUrl = `${config.app.frontendUrl}/verify-email?token=${verificationToken}`;
+
+    // Send verification email
+    const emailTemplate = createEmailVerificationTemplate(
+      user.firstName,
+      verificationUrl
+    );
+
+    await emailService.sendEmail({
+      to: user.email,
+      template: emailTemplate,
+    });
+
+    logger.info('Verification email sent', {
+      userId: user.id,
+      email: user.email,
+      resend: !!resend,
+    });
+
+    res.json({
+      success: true,
+      message: resend ? 'Verification email resent' : 'Verification email sent',
+    });
+
+  } catch (error) {
+    logger.error('Failed to send verification email', { error });
+    res.status(500).json({
+      error: 'Email Error',
+      message: 'Failed to send verification email',
+    });
+  }
+});
+
+// POST /api/auth/verify-email - Verify email with token
+authRouter.post('/verify-email', validateRequest(verifyEmailSchema), async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Verify token
+    let tokenData;
+    try {
+      tokenData = verifyEmailToken(token);
+    } catch (tokenError) {
+      const message = tokenError instanceof Error ? tokenError.message : 'Invalid token';
+      return res.status(400).json({
+        error: message.includes('expired') ? 'Token Expired' : 'Invalid Token',
+        message: message.includes('expired') ? 'Verification token has expired' : 'Invalid verification token',
+      });
+    }
+
+    if (tokenData.type !== 'email_verification') {
+      return res.status(400).json({
+        error: 'Invalid Token',
+        message: 'Invalid token type',
+      });
+    }
+
+    const db = getDb();
+
+    // Find user and check token
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, tokenData.userId))
+      .limit(1);
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User Error',
+        message: 'User not found',
+      });
+    }
+
+    // Check if token matches stored token
+    if (user.emailVerificationToken !== token) {
+      return res.status(400).json({
+        error: 'Token Already Used',
+        message: 'This verification token has already been used',
+      });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({
+        error: 'Already Verified',
+        message: 'Email address is already verified',
+      });
+    }
+
+    // Update user as verified
+    await db
+      .update(users)
+      .set({
+        emailVerified: true,
+        emailVerificationToken: null, // Clear the token
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    // Generate new auth tokens
+    const tokens = generateTokens({
+      ...user,
+      emailVerified: true,
+    });
+
+    logger.info('Email verified successfully', {
+      userId: user.id,
+      email: user.email,
+    });
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
+      data: {
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          emailVerified: true,
+        },
+        accessToken: tokens.accessToken,
+      },
+    });
+
+  } catch (error) {
+    logger.error('Email verification failed', { error });
+    res.status(500).json({
+      error: 'Verification Error',
+      message: 'Failed to verify email',
+    });
+  }
+});
+
+// PUT /api/auth/profile - Update user profile
+authRouter.put('/profile', validateRequest(updateProfileSchema), async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { firstName, lastName, phone } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication Error',
+        message: 'User not authenticated',
+      });
+    }
+
+    const db = getDb();
+
+    // Update user profile
+    await db
+      .update(users)
+      .set({
+        firstName,
+        lastName,
+        phone,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    logger.info('User profile updated', {
+      userId,
+      updatedFields: ['firstName', 'lastName', 'phone'],
+    });
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+    });
+
+  } catch (error) {
+    logger.error('Profile update failed', { error });
+    res.status(500).json({
+      error: 'Profile Update Error',
+      message: 'Failed to update profile',
+    });
+  }
+});
+
+// PUT /api/auth/preferences - Update user preferences
+authRouter.put('/preferences', validateRequest(updatePreferencesSchema), async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { preferences } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication Error',
+        message: 'User not authenticated',
+      });
+    }
+
+    const db = getDb();
+
+    // Update user preferences
+    await db
+      .update(users)
+      .set({
+        preferences,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    logger.info('User preferences updated', {
+      userId,
+      preferences,
+    });
+
+    res.json({
+      success: true,
+      message: 'Preferences updated successfully',
+    });
+
+  } catch (error) {
+    logger.error('Preferences update failed', { error });
+    res.status(500).json({
+      error: 'Preferences Update Error',
+      message: 'Failed to update preferences',
     });
   }
 });

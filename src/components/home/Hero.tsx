@@ -158,6 +158,7 @@ export function Hero() {
                     size="lg"
                     variant="primary"
                     onClick={handleSearch}
+                    data-testid="hero-search-button"
                     className="w-full h-14 md:h-12 text-xl md:text-lg font-bold bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 transition-all duration-300"
                   >
                     Search Hotels

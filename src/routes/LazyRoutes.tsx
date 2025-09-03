@@ -56,6 +56,16 @@ export const LazyUserProfilePage = createLazyRoute(
   'My Profile'
 );
 
+export const LazyLoginPage = createLazyRoute(
+  () => import('../pages/LoginPage').then(m => ({ default: m.LoginPage })),
+  'Login'
+);
+
+export const LazyEmailVerificationPage = createLazyRoute(
+  () => import('../pages/EmailVerificationPage').then(m => ({ default: m.EmailVerificationPage })),
+  'Email Verification'
+);
+
 // Lazy load heavy components
 export const LazyRoomComparison = createLazyRoute(
   () => import('../components/hotels/RoomComparison'),

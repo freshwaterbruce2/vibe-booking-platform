@@ -23,7 +23,7 @@ import { Button } from '../ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useHotelStore } from '@/store/hotelStore';
 import { useSearchStore } from '@/store/searchStore';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+ 
 import type { HotelDetails } from '@/types/hotel';
 import { cn } from '@/utils/cn';
 import './HotelDetails.css';

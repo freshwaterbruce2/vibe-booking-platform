@@ -1,4 +1,4 @@
-﻿import React, { memo } from 'react';
+﻿import React, { memo, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, MapPin, Heart, Share2, Sparkles, Camera, Wifi, Car, Coffee } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -9,46 +9,195 @@ import { useSearchStore } from '@/store/searchStore';
 import { useHotelStore } from '@/store/hotelStore';
 import type { Hotel } from '@/types/hotel';
 import { cn } from '@/utils/cn';
+import { 
+  formatters, 
+  useStarRating, 
+  useVirtualScroll, 
+  createListKey,
+  usePerformanceMonitor,
+  createMemoizedComponent
+} from '@/utils/frontendOptimization';
 
 interface SearchResultsProps {
   onHotelSelect?: (hotel: Hotel) => void;
   className?: string;
 }
 
+// OPTIMIZATION: Memoized hotel card component
+const HotelCard = memo<{ hotel: Hotel; onSelect: (hotel: Hotel) => void; onNavigate: (hotelId: string) => void }>(
+  ({ hotel, onSelect, onNavigate }) => {
+    // Use optimized star rating hook
+    const starRating = useStarRating(hotel.starRating || 0);
+    
+    // Memoized price formatting
+    const formattedPrice = useMemo(() => {
+      if (!hotel.price?.amount) return null;
+      return formatters.getCurrencyFormatter(hotel.price.currency || 'USD').format(hotel.price.amount);
+    }, [hotel.price?.amount, hotel.price?.currency]);
+
+    const handleSelect = useCallback(() => onSelect(hotel), [hotel, onSelect]);
+    const handleNavigate = useCallback(() => onNavigate(hotel.id), [hotel.id, onNavigate]);
+
+    return (
+      <Card className="group hover:shadow-luxury-lg transition-all duration-300 cursor-pointer overflow-hidden">
+        {/* Hotel image with lazy loading */}
+        <div className="relative h-48 sm:h-56 overflow-hidden">
+          <img
+            src={hotel.images?.[0]?.url || '/placeholder-hotel.jpg'}
+            alt={hotel.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            decoding="async"
+          />
+          
+          {/* Overlay badges */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            <TrustBadge />
+            {hotel.featured && (
+              <span className="bg-luxury-gold text-white text-xs font-semibold px-2 py-1 rounded-full">
+                Featured
+              </span>
+            )}
+          </div>
+
+          {/* Favorite button */}
+          <button className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors">
+            <Heart className="w-4 h-4 text-gray-600" />
+          </button>
+
+          {/* Urgency indicator */}
+          <UrgencyIndicator className="absolute bottom-4 right-4" />
+        </div>
+
+        {/* Hotel content */}
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-luxury-navy mb-1 line-clamp-1">
+                {hotel.name}
+              </h3>
+              <div className="flex items-center text-gray-600 mb-2">
+                <MapPin className="w-4 h-4 mr-1" />
+                <span className="text-sm line-clamp-1">
+                  {hotel.address || `${hotel.city}, ${hotel.country}`}
+                </span>
+              </div>
+            </div>
+            {formattedPrice && (
+              <div className="text-right">
+                <div className="text-2xl font-bold text-luxury-gold">
+                  {formattedPrice}
+                </div>
+                <div className="text-sm text-gray-500">per night</div>
+              </div>
+            )}
+          </div>
+
+          {/* Star rating - Optimized */}
+          <div className="flex items-center gap-1 mb-3">
+            {[...Array(starRating.fullStars)].map((_, i) => (
+              <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+            ))}
+            {starRating.hasHalfStar && (
+              <Star className="w-4 h-4 text-yellow-400 fill-current opacity-50" />
+            )}
+            {[...Array(starRating.emptyStars)].map((_, i) => (
+              <Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />
+            ))}
+            <span className="ml-1 text-sm font-medium text-gray-700">
+              {starRating.ratingText}
+            </span>
+          </div>
+
+          {/* Amenities - Limited to prevent layout shift */}
+          {hotel.amenities && hotel.amenities.length > 0 && (
+            <div className="flex items-center gap-4 mb-4 text-gray-600">
+              {hotel.amenities.slice(0, 4).map((amenity, index) => (
+                <div key={index} className="flex items-center gap-1">
+                  <Wifi className="w-4 h-4" />
+                  <span className="text-sm">{amenity}</span>
+                </div>
+              ))}
+              {hotel.amenities.length > 4 && (
+                <span className="text-sm text-gray-500">+{hotel.amenities.length - 4} more</span>
+              )}
+            </div>
+          )}
+
+          {/* Passion score */}
+          {hotel.passionScore && hotel.passionScore > 0 && (
+            <div className="flex items-center gap-2 mb-4 p-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-700">
+                {hotel.passionScore}% passion match
+              </span>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            <Button
+              onClick={handleNavigate}
+              className="flex-1 bg-luxury-navy hover:bg-luxury-navy/90"
+            >
+              View Details
+            </Button>
+            <Button
+              onClick={handleSelect}
+              variant="outline"
+              className="flex-shrink-0 border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white"
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  },
+  // Custom comparison function for better memoization
+  (prevProps, nextProps) => {
+    return (
+      prevProps.hotel.id === nextProps.hotel.id &&
+      prevProps.hotel.price?.amount === nextProps.hotel.price?.amount &&
+      prevProps.hotel.passionScore === nextProps.hotel.passionScore
+    );
+  }
+);
+
+HotelCard.displayName = 'HotelCard';
+
 const SearchResults: React.FC<SearchResultsProps> = ({
   onHotelSelect,
   className = '',
 }) => {
+  usePerformanceMonitor('SearchResults');
+  
   const navigate = useNavigate();
   const { results: hotels, loading: isLoading, pagination } = useSearchStore();
   const { setSelectedHotel } = useHotelStore();
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-1">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={cn(
-              'w-4 h-4',
-              i < Math.floor(rating)
-                ? 'text-yellow-400 fill-current'
-                : 'text-gray-300',
-            )}
-          />
-        ))}
-        <span className="ml-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          {rating.toFixed(1)}
-        </span>
-      </div>
-    );
-  };
 
-  const formatPrice = (price: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(price);
-  };
+  // Memoized callbacks to prevent unnecessary re-renders
+  const handleHotelSelect = useCallback((hotel: Hotel) => {
+    setSelectedHotel(hotel);
+    onHotelSelect?.(hotel);
+  }, [setSelectedHotel, onHotelSelect]);
+
+  const handleHotelNavigate = useCallback((hotelId: string) => {
+    navigate(`/hotel/${hotelId}`);
+  }, [navigate]);
+
+  // Virtual scrolling for large result sets
+  const { startIndex, endIndex, offsetY, totalHeight, onScroll } = useVirtualScroll({
+    items: hotels,
+    itemHeight: 420, // Approximate height of each hotel card
+    containerHeight: 800, // Visible container height
+    overscan: 2
+  });
+
+  const visibleHotels = useMemo(() => {
+    return hotels.slice(startIndex, endIndex);
+  }, [hotels, startIndex, endIndex]);
 
   if (isLoading) {
     return (

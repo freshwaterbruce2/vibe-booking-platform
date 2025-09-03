@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { validateRequest } from '../middleware/validateRequest';
 import { liteApiService } from '../services/liteApiService';
 import { paymentService } from '../services/paymentService';
+import { emailService } from '../services/emailService';
+import { notificationScheduler } from '../services/notificationScheduler';
 import { logger } from '../utils/logger';
 import { getDb } from '../database';
 import { 
@@ -10,6 +12,7 @@ import {
   bookingStatusHistory, 
   bookingGuests, 
   bookingAddons,
+  payments,
   NewBooking,
   NewBookingStatusHistory 
 } from '../database/schema';
@@ -295,6 +298,67 @@ bookingsRouter.post('/', validateRequest(createBookingSchema), async (req, res) 
       .where(eq(bookings.id, createdBooking.id))
       .limit(1);
 
+    // Send booking confirmation email
+    try {
+      await emailService.sendBookingConfirmation({
+        guestName: `${bookingData.guest.firstName} ${bookingData.guest.lastName}`,
+        email: bookingData.guest.email,
+        confirmationNumber: createdBooking.confirmationNumber,
+        hotelName: bookingData.hotelName || 'Hotel',
+        hotelImage: bookingData.hotelImage || '',
+        roomType: bookingData.roomType || 'Room',
+        checkIn: bookingData.checkIn,
+        checkOut: bookingData.checkOut,
+        nights,
+        guests: { adults: bookingData.adults, children: bookingData.children },
+        totalAmount: bookingData.pricing.totalAmount,
+        currency: bookingData.pricing.currency,
+        specialRequests: bookingData.specialRequests
+      });
+      
+      logger.info('Booking confirmation email sent', { 
+        confirmationNumber: createdBooking.confirmationNumber,
+        email: bookingData.guest.email 
+      });
+    } catch (emailError) {
+      // Don't fail booking if email fails - just log the error
+      logger.error('Failed to send booking confirmation email', { 
+        error: emailError,
+        confirmationNumber: createdBooking.confirmationNumber 
+      });
+    }
+
+    // Schedule booking reminder email (24h before check-in)
+    try {
+      const checkInDate = new Date(bookingData.checkIn);
+      const reminderTime = new Date(checkInDate.getTime() - (24 * 60 * 60 * 1000));
+      
+      // Only schedule reminder if check-in is more than 24 hours away
+      if (reminderTime > new Date()) {
+        await notificationScheduler.scheduleBookingReminder({
+          bookingId: createdBooking.id,
+          guestEmail: bookingData.guest.email,
+          guestName: `${bookingData.guest.firstName} ${bookingData.guest.lastName}`,
+          hotelName: bookingData.hotelName || 'Hotel',
+          checkIn: bookingData.checkIn,
+          confirmationNumber: createdBooking.confirmationNumber,
+          sendAt: reminderTime,
+          reminderType: '24h_before_checkin'
+        });
+        
+        logger.info('Booking reminder scheduled', { 
+          confirmationNumber: createdBooking.confirmationNumber,
+          scheduledFor: reminderTime
+        });
+      }
+    } catch (reminderError) {
+      // Don't fail booking if reminder scheduling fails - just log the error
+      logger.error('Failed to schedule booking reminder', { 
+        error: reminderError,
+        confirmationNumber: createdBooking.confirmationNumber 
+      });
+    }
+
     res.status(201).json({
       success: true,
       data: {
@@ -528,6 +592,54 @@ bookingsRouter.put('/:bookingId', validateRequest(updateBookingSchema), async (r
       .where(eq(bookings.id, bookingId))
       .returning();
 
+    // Send booking modification notification (except for internal admin updates)
+    if (!updates.administrativeUpdate && updatedBooking.guestEmail) {
+      try {
+        let modificationType = 'general_update';
+        
+        if (updates.checkIn || updates.checkOut) {
+          modificationType = 'date_change';
+        } else if (updates.roomType || updates.roomId) {
+          modificationType = 'room_upgrade';
+        } else if (updates.specialRequests || updates.addServiceRequests) {
+          modificationType = 'special_requests';
+        }
+
+        await emailService.sendBookingModification({
+          guestName: `${updatedBooking.guestFirstName} ${updatedBooking.guestLastName}`,
+          guestEmail: updatedBooking.guestEmail,
+          confirmationNumber: updatedBooking.confirmationNumber,
+          hotelName: updatedBooking.hotelName || 'Hotel',
+          modificationType,
+          originalDetails: {
+            checkIn: existingBooking.checkIn?.toISOString().split('T')[0] || '',
+            checkOut: existingBooking.checkOut?.toISOString().split('T')[0] || '',
+            nights: existingBooking.nights || 1
+          },
+          newDetails: {
+            checkIn: updatedBooking.checkIn?.toISOString().split('T')[0] || '',
+            checkOut: updatedBooking.checkOut?.toISOString().split('T')[0] || '',
+            nights: updatedBooking.nights || 1
+          },
+          modifiedAt: new Date(),
+          modifiedBy: updates.updatedBy || 'guest',
+          reason: updates.reason || 'Booking modification requested',
+          priceAdjustment: updates.priceAdjustment || 0
+        });
+        
+        logger.info('Booking modification notification sent', { 
+          confirmationNumber: updatedBooking.confirmationNumber,
+          modificationType
+        });
+      } catch (emailError) {
+        // Don't fail booking update if email fails - just log the error
+        logger.error('Failed to send booking modification notification', { 
+          error: emailError,
+          confirmationNumber: updatedBooking.confirmationNumber 
+        });
+      }
+    }
+
     res.json({
       success: true,
       data: {
@@ -678,6 +790,162 @@ bookingsRouter.post('/:bookingId/cancel', validateRequest(cancelBookingSchema), 
     res.status(500).json({
       error: 'Cancellation Error',
       message: 'Failed to cancel booking.',
+    });
+  }
+});
+
+// GET /api/bookings/user/:userId - Get user's bookings
+bookingsRouter.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status } = req.query;
+    const requestingUserId = req.user?.id;
+
+    // Check ownership (users can only see their own bookings unless admin)
+    if (userId !== requestingUserId && !req.user?.isAdmin) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only view your own bookings',
+      });
+    }
+
+    const db = getDb();
+    let query = db.select().from(bookings).where(eq(bookings.userId, userId));
+
+    // Filter by status if provided
+    if (status && typeof status === 'string') {
+      query = query.where(eq(bookings.status, status));
+    }
+
+    // Order by creation date (newest first)
+    const userBookings = await query.orderBy(desc(bookings.createdAt));
+
+    logger.info('Retrieved user bookings', { 
+      userId, 
+      count: userBookings.length,
+      requestedBy: requestingUserId 
+    });
+
+    res.json({
+      success: true,
+      bookings: userBookings,
+    });
+
+  } catch (error) {
+    logger.error('Failed to fetch user bookings', { 
+      error, 
+      userId: req.params.userId,
+      requestedBy: req.user?.id 
+    });
+    res.status(500).json({
+      error: 'Fetch Error',
+      message: 'Failed to fetch user bookings.',
+    });
+  }
+});
+
+// GET /api/bookings/user/:userId/stats - Get user's booking statistics
+bookingsRouter.get('/user/:userId/stats', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const requestingUserId = req.user?.id;
+
+    // Check ownership (users can only see their own stats unless admin)
+    if (userId !== requestingUserId && !req.user?.isAdmin) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only view your own booking statistics',
+      });
+    }
+
+    const db = getDb();
+    
+    // Get all bookings for the user
+    const userBookings = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.userId, userId));
+
+    // Calculate statistics
+    const stats = {
+      totalBookings: userBookings.length,
+      upcomingBookings: userBookings.filter(b => 
+        ['confirmed', 'pending'].includes(b.status) && 
+        new Date(b.checkIn) > new Date()
+      ).length,
+      completedBookings: userBookings.filter(b => 
+        b.status === 'completed' || b.status === 'checked_out'
+      ).length,
+      cancelledBookings: userBookings.filter(b => b.status === 'cancelled').length,
+      totalSpent: userBookings
+        .filter(b => b.paymentStatus === 'completed')
+        .reduce((sum, b) => sum + (b.totalAmount || 0), 0),
+      currency: userBookings[0]?.currency || 'USD',
+    };
+
+    logger.info('Retrieved user booking stats', { 
+      userId, 
+      stats,
+      requestedBy: requestingUserId 
+    });
+
+    res.json({
+      success: true,
+      stats,
+    });
+
+  } catch (error) {
+    logger.error('Failed to fetch user booking stats', { 
+      error, 
+      userId: req.params.userId,
+      requestedBy: req.user?.id 
+    });
+    res.status(500).json({
+      error: 'Fetch Error',
+      message: 'Failed to fetch booking statistics.',
+    });
+  }
+});
+
+// GET /api/bookings/confirmation/:confirmationNumber - Get booking by confirmation number
+bookingsRouter.get('/confirmation/:confirmationNumber', async (req, res) => {
+  try {
+    const { confirmationNumber } = req.params;
+
+    const db = getDb();
+    
+    // Get booking by confirmation number
+    const [booking] = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.confirmationNumber, confirmationNumber))
+      .limit(1);
+
+    if (!booking) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Booking not found with this confirmation number',
+      });
+    }
+
+    logger.info('Retrieved booking by confirmation number', { 
+      confirmationNumber,
+      bookingId: booking.id 
+    });
+
+    res.json({
+      success: true,
+      booking,
+    });
+
+  } catch (error) {
+    logger.error('Failed to get booking by confirmation number', { 
+      error, 
+      confirmationNumber: req.params.confirmationNumber 
+    });
+    res.status(500).json({
+      error: 'Fetch Error',
+      message: 'Failed to retrieve booking.',
     });
   }
 });

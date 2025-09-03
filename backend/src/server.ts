@@ -14,6 +14,7 @@ import { initializeDatabase } from './database/migrations';
 import { initializeCache } from './cache';
 import { initializeWebSocket } from './websocket';
 import { logger } from './utils/logger';
+import { emailSchedulerJob } from './jobs/emailSchedulerJob';
 
 // Conditionally load config based on LOCAL_SQLITE environment variable
 const loadConfig = async () => {
@@ -155,6 +156,14 @@ export class HotelBookingServer {
       initializeWebSocket(this.io);
       logger.info('WebSocket initialized successfully');
 
+      // Start email scheduler job for production
+      if (process.env.NODE_ENV === 'production' || process.env.ENABLE_EMAIL_SCHEDULER === 'true') {
+        emailSchedulerJob.start();
+        logger.info('Email scheduler background job started');
+      } else {
+        logger.info('Email scheduler disabled for development environment');
+      }
+
     } catch (error) {
       logger.error('Failed to initialize services:', error);
       throw error;
@@ -184,6 +193,10 @@ export class HotelBookingServer {
 
   private async shutdown(): Promise<void> {
     logger.info('Shutting down server...');
+
+    // Stop email scheduler job
+    emailSchedulerJob.stop();
+    logger.info('Email scheduler job stopped');
 
     this.httpServer.close(() => {
       logger.info('HTTP server closed');
