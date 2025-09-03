@@ -1,0 +1,11 @@
+[providers]
+node = "backend/package.json"
+
+[build]
+cmds = ["cd backend && npm ci && npm run build"]
+
+[start]
+cmd = "cd backend && npm start"
+
+[variables]
+NODE_ENV = "production"
