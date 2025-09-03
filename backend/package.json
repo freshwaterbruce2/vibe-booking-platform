@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:local": "set LOCAL_SQLITE=true && tsx watch src/server.ts",
-    "build": "echo 'Build completed - using runtime compilation'",
-    "start": "tsx src/server.ts",
+    "build": "tsc --outDir dist",
+    "start": "node dist/server.js",
     "start:local": "LOCAL_SQLITE=true node dist/server.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
