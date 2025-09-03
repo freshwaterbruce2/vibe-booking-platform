@@ -1,5 +1,0 @@
-[start]
-cmd = "cd backend && npm start"
-
-[variables]
-NODE_ENV = "production"
