@@ -5,10 +5,10 @@ import { DatabaseOptimizer } from '../database/optimizations/indexOptimization';
 
 /**
  * Email Scheduler Background Job
- * 
+ *
  * Production-ready background job that processes scheduled emails
  * in batches to ensure reliable delivery without blocking the main application.
- * 
+ *
  * Features:
  * - Batch processing for high-volume email delivery
  * - Error resilience with graceful failure handling
@@ -34,11 +34,11 @@ class EmailSchedulerJob {
       intervalMinutes: config.intervalMinutes || 5, // Process every 5 minutes
       batchSize: config.batchSize || 50, // Process 50 emails per batch
       maxRetries: config.maxRetries || 3,
-      retryDelayMs: config.retryDelayMs || 60000 // 1 minute retry delay
+      retryDelayMs: config.retryDelayMs || 60000, // 1 minute retry delay
     };
 
     logger.info('Email Scheduler Job initialized', {
-      config: this.config
+      config: this.config,
     });
   }
 
@@ -53,17 +53,17 @@ class EmailSchedulerJob {
 
     logger.info('Starting email scheduler background job', {
       interval: `${this.config.intervalMinutes} minutes`,
-      batchSize: this.config.batchSize
+      batchSize: this.config.batchSize,
     });
 
     // Process immediately on startup
-    this.processScheduledEmails().catch(error => {
+    this.processScheduledEmails().catch((error) => {
       logger.error('Initial email processing failed', { error });
     });
 
     // Set up recurring processing
     this.intervalId = setInterval(() => {
-      this.processScheduledEmails().catch(error => {
+      this.processScheduledEmails().catch((error) => {
         logger.error('Scheduled email processing failed', { error });
       });
     }, this.config.intervalMinutes * 60 * 1000);
@@ -108,29 +108,29 @@ class EmailSchedulerJob {
             maxAttempts: 2, // Limited retries for background jobs
             baseDelayMs: 5000,
             maxDelayMs: 30000,
-            backoffFactor: 2
+            backoffFactor: 2,
           },
-          'email-batch-processing'
+          'email-batch-processing',
         );
       });
-      
+
       const processingTime = Date.now() - startTime;
       const emailsPerSecond = result.processed > 0 ? (result.processed / (processingTime / 1000)).toFixed(2) : '0';
-      
+
       logger.info('Scheduled email processing completed', {
         processed: result.processed,
         failed: result.failed,
         processingTimeMs: processingTime,
         emailsPerSecond,
-        efficiency: this.calculateEfficiency(result.processed, result.failed, processingTime)
+        efficiency: this.calculateEfficiency(result.processed, result.failed, processingTime),
       });
 
       // OPTIMIZATION 3: Enhanced monitoring and alerting
       await this.performHealthChecks(result, processingTime);
-      
+
       // OPTIMIZATION 4: Auto-cleanup old emails periodically (every hour)
       if (this.shouldPerformCleanup()) {
-        this.performMaintenanceTasks().catch(error => {
+        this.performMaintenanceTasks().catch((error) => {
           logger.warn('Maintenance tasks failed', { error });
         });
       }
@@ -141,7 +141,7 @@ class EmailSchedulerJob {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         processingTimeMs: processingTime,
-        circuitBreakerState: databaseCircuitBreaker.getStatus()
+        circuitBreakerState: databaseCircuitBreaker.getStatus(),
       });
 
       await this.handleProcessingError(error);
@@ -162,12 +162,17 @@ class EmailSchedulerJob {
     const total = processed + failed;
     const successRate = total > 0 ? (processed / total) * 100 : 100;
     const throughput = total > 0 ? (total / (timeMs / 1000)) : 0;
-    
+
     let performance: 'excellent' | 'good' | 'fair' | 'poor';
-    if (successRate >= 95 && throughput >= 10) performance = 'excellent';
-    else if (successRate >= 85 && throughput >= 5) performance = 'good';
-    else if (successRate >= 70 && throughput >= 2) performance = 'fair';
-    else performance = 'poor';
+    if (successRate >= 95 && throughput >= 10) {
+performance = 'excellent';
+} else if (successRate >= 85 && throughput >= 5) {
+performance = 'good';
+} else if (successRate >= 70 && throughput >= 2) {
+performance = 'fair';
+} else {
+performance = 'poor';
+}
 
     return { successRate: Number(successRate.toFixed(1)), throughput: Number(throughput.toFixed(2)), performance };
   }
@@ -184,7 +189,7 @@ class EmailSchedulerJob {
           failureRate: `${failureRate.toFixed(1)}%`,
           failed: result.failed,
           processed: result.processed,
-          recommendation: 'Check email service health and configuration'
+          recommendation: 'Check email service health and configuration',
         });
       }
     }
@@ -194,7 +199,7 @@ class EmailSchedulerJob {
       logger.warn('Slow email processing detected', {
         processingTimeMs: processingTime,
         processed: result.processed,
-        recommendation: 'Consider increasing concurrent processing or checking database performance'
+        recommendation: 'Consider increasing concurrent processing or checking database performance',
       });
     }
 
@@ -210,10 +215,12 @@ class EmailSchedulerJob {
   private shouldPerformCleanup(): boolean {
     const now = Date.now();
     const oneHour = 60 * 60 * 1000;
-    
+
     // Store last cleanup time in memory (in production, use Redis or database)
-    if (!this.lastCleanupTime) this.lastCleanupTime = 0;
-    
+    if (!this.lastCleanupTime) {
+this.lastCleanupTime = 0;
+}
+
     return (now - this.lastCleanupTime) > oneHour;
   }
 
@@ -225,23 +232,23 @@ class EmailSchedulerJob {
   private async performMaintenanceTasks(): Promise<void> {
     try {
       logger.info('Starting background maintenance tasks');
-      
+
       // Cleanup old emails
       const cleanupResult = await DatabaseOptimizer.cleanupOldEmails();
-      
+
       // Get performance metrics
       const metrics = await DatabaseOptimizer.getPerformanceMetrics();
-      
+
       logger.info('Maintenance tasks completed', {
         emailsDeleted: cleanupResult.deletedCount,
-        performanceMetrics: metrics
+        performanceMetrics: metrics,
       });
-      
+
       this.lastCleanupTime = Date.now();
-      
+
     } catch (error) {
       logger.error('Maintenance tasks failed', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -251,11 +258,11 @@ class EmailSchedulerJob {
    */
   private async handleProcessingError(error: unknown): Promise<void> {
     logger.warn('Implementing error recovery for email processing', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Wait before allowing next processing cycle
-    await new Promise(resolve => setTimeout(resolve, this.config.retryDelayMs));
+    await new Promise((resolve) => setTimeout(resolve, this.config.retryDelayMs));
 
     // In production, you might want to:
     // - Send alerts to monitoring systems
@@ -272,7 +279,7 @@ class EmailSchedulerJob {
     config: JobConfig;
     nextProcessing: string | null;
   } {
-    const nextProcessing = this.intervalId 
+    const nextProcessing = this.intervalId
       ? new Date(Date.now() + (this.config.intervalMinutes * 60 * 1000)).toISOString()
       : null;
 
@@ -280,7 +287,7 @@ class EmailSchedulerJob {
       isRunning: this.intervalId !== null,
       isProcessing: this.isRunning,
       config: this.config,
-      nextProcessing
+      nextProcessing,
     };
   }
 
@@ -289,7 +296,7 @@ class EmailSchedulerJob {
    */
   async processNow(): Promise<{ processed: number; failed: number }> {
     logger.info('Manual email processing triggered');
-    
+
     try {
       return await notificationScheduler.processScheduledEmails();
     } catch (error) {
@@ -301,15 +308,15 @@ class EmailSchedulerJob {
 
 // Export singleton instance for production use
 export const emailSchedulerJob = new EmailSchedulerJob({
-  intervalMinutes: process.env.EMAIL_SCHEDULER_INTERVAL_MINUTES 
-    ? parseInt(process.env.EMAIL_SCHEDULER_INTERVAL_MINUTES) 
+  intervalMinutes: process.env.EMAIL_SCHEDULER_INTERVAL_MINUTES
+    ? parseInt(process.env.EMAIL_SCHEDULER_INTERVAL_MINUTES)
     : 5,
-  batchSize: process.env.EMAIL_SCHEDULER_BATCH_SIZE 
-    ? parseInt(process.env.EMAIL_SCHEDULER_BATCH_SIZE) 
+  batchSize: process.env.EMAIL_SCHEDULER_BATCH_SIZE
+    ? parseInt(process.env.EMAIL_SCHEDULER_BATCH_SIZE)
     : 50,
-  maxRetries: process.env.EMAIL_SCHEDULER_MAX_RETRIES 
-    ? parseInt(process.env.EMAIL_SCHEDULER_MAX_RETRIES) 
-    : 3
+  maxRetries: process.env.EMAIL_SCHEDULER_MAX_RETRIES
+    ? parseInt(process.env.EMAIL_SCHEDULER_MAX_RETRIES)
+    : 3,
 });
 
 // Graceful shutdown handling

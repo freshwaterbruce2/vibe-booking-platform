@@ -11,7 +11,7 @@
   "categories": ["travel", "lifestyle", "business"],
   "lang": "en-US",
   "dir": "ltr",
-  
+
   "icons": [
     {
       "src": "/icon.svg",
@@ -62,7 +62,7 @@
       "purpose": "any maskable"
     }
   ],
-  
+
   "screenshots": [
     {
       "src": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=390&h=844&fit=crop&crop=center",
@@ -73,7 +73,7 @@
     },
     {
       "src": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=390&h=844&fit=crop&crop=center",
-      "sizes": "390x844", 
+      "sizes": "390x844",
       "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Passion-based hotel recommendations with 5% rewards"
@@ -81,12 +81,12 @@
     {
       "src": "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1024&h=768&fit=crop&crop=center",
       "sizes": "1024x768",
-      "type": "image/jpeg", 
+      "type": "image/jpeg",
       "form_factor": "wide",
       "label": "Immersive desktop experience for finding your perfect vibe"
     }
   ],
-  
+
   "shortcuts": [
     {
       "name": "Find Hotels",
@@ -128,21 +128,21 @@
       ]
     }
   ],
-  
+
   "related_applications": [],
   "prefer_related_applications": false,
-  
+
   "edge_side_panel": {
     "preferred_width": 400
   },
-  
+
   "protocol_handlers": [
     {
       "protocol": "web+vibehotels",
       "url": "/?action=%s"
     }
   ],
-  
+
   "file_handlers": [
     {
       "action": "/",
@@ -151,7 +151,7 @@
       }
     }
   ],
-  
+
   "share_target": {
     "action": "/",
     "method": "GET",

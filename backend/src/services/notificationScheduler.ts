@@ -1,5 +1,6 @@
 import { getDb } from '../database';
-import { scheduledEmails, bookings, NewScheduledEmail } from '../database/schema';
+import type { NewScheduledEmail } from '../database/schema';
+import { scheduledEmails, bookings } from '../database/schema';
 import { eq, and, lte } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { emailService } from './emailService';
@@ -32,11 +33,11 @@ export class NotificationScheduler {
   async scheduleBookingReminder(reminderData: BookingReminderData): Promise<{ success: boolean }> {
     try {
       const db = getDb();
-      
+
       // Calculate 24 hours before check-in
       const checkInDate = new Date(reminderData.checkIn);
       const reminderTime = new Date(checkInDate.getTime() - (24 * 60 * 60 * 1000)); // 24 hours before
-      
+
       const scheduledEmail: NewScheduledEmail = {
         id: uuidv4(),
         bookingId: reminderData.bookingId,
@@ -49,24 +50,24 @@ export class NotificationScheduler {
           hotelName: reminderData.hotelName,
           checkIn: reminderData.checkIn,
           confirmationNumber: reminderData.confirmationNumber,
-          reminderType: reminderData.reminderType
+          reminderType: reminderData.reminderType,
         },
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       await db.insert(scheduledEmails).values(scheduledEmail);
-      
+
       logger.info('Booking reminder scheduled', {
         bookingId: reminderData.bookingId,
         scheduledFor: reminderTime,
-        reminderType: reminderData.reminderType
+        reminderType: reminderData.reminderType,
       });
 
       return { success: true };
     } catch (error) {
       logger.error('Failed to schedule booking reminder', {
         error,
-        bookingId: reminderData.bookingId
+        bookingId: reminderData.bookingId,
       });
       return { success: false };
     }
@@ -78,7 +79,7 @@ export class NotificationScheduler {
   async scheduleBookingModificationNotification(modificationData: BookingModificationData): Promise<{ success: boolean }> {
     try {
       const db = getDb();
-      
+
       const scheduledEmail: NewScheduledEmail = {
         id: uuidv4(),
         bookingId: modificationData.bookingId,
@@ -89,23 +90,23 @@ export class NotificationScheduler {
         emailData: {
           guestName: modificationData.guestName,
           confirmationNumber: modificationData.confirmationNumber,
-          modificationType: modificationData.modificationType
+          modificationType: modificationData.modificationType,
         },
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       await db.insert(scheduledEmails).values(scheduledEmail);
-      
+
       logger.info('Booking modification notification scheduled', {
         bookingId: modificationData.bookingId,
-        modificationType: modificationData.modificationType
+        modificationType: modificationData.modificationType,
       });
 
       return { success: true };
     } catch (error) {
       logger.error('Failed to schedule booking modification notification', {
         error,
-        bookingId: modificationData.bookingId
+        bookingId: modificationData.bookingId,
       });
       return { success: false };
     }
@@ -117,25 +118,25 @@ export class NotificationScheduler {
   async cancelScheduledNotifications(bookingId: string): Promise<{ success: boolean }> {
     try {
       const db = getDb();
-      
+
       await db
         .update(scheduledEmails)
-        .set({ 
+        .set({
           status: 'cancelled',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(and(
           eq(scheduledEmails.bookingId, bookingId),
-          eq(scheduledEmails.status, 'pending')
+          eq(scheduledEmails.status, 'pending'),
         ));
 
       logger.info('Cancelled scheduled notifications for booking', { bookingId });
-      
+
       return { success: true };
     } catch (error) {
       logger.error('Failed to cancel scheduled notifications', {
         error,
-        bookingId
+        bookingId,
       });
       return { success: false };
     }
@@ -148,7 +149,7 @@ export class NotificationScheduler {
     try {
       const db = getDb();
       const now = new Date();
-      
+
       // OPTIMIZATION 1: Select only required fields to reduce memory usage
       const emailsToSend = await db
         .select({
@@ -156,12 +157,12 @@ export class NotificationScheduler {
           emailType: scheduledEmails.emailType,
           recipientEmail: scheduledEmails.recipientEmail,
           emailData: scheduledEmails.emailData,
-          scheduledFor: scheduledEmails.scheduledFor
+          scheduledFor: scheduledEmails.scheduledFor,
         })
         .from(scheduledEmails)
         .where(and(
           eq(scheduledEmails.status, 'pending'),
-          lte(scheduledEmails.scheduledFor, now)
+          lte(scheduledEmails.scheduledFor, now),
         ))
         .orderBy(scheduledEmails.scheduledFor) // OPTIMIZATION 2: Process oldest first
         .limit(50); // Process in batches of 50
@@ -173,7 +174,7 @@ export class NotificationScheduler {
 
       let processed = 0;
       let failed = 0;
-      const emailIds = emailsToSend.map(e => e.id);
+      const emailIds = emailsToSend.map((e) => e.id);
       const successfulEmailIds: string[] = [];
       const failedEmailIds: string[] = [];
 
@@ -194,16 +195,16 @@ export class NotificationScheduler {
                 await this.sendBookingReminderEmail(email);
                 emailSent = true;
                 break;
-              
+
               case 'booking_modification':
                 await this.sendBookingModificationEmail(email);
                 emailSent = true;
                 break;
-              
+
               default:
                 logger.warn('Unknown email type for scheduled email', {
                   emailId: email.id,
-                  emailType: email.emailType
+                  emailType: email.emailType,
                 });
             }
 
@@ -215,7 +216,7 @@ export class NotificationScheduler {
             logger.error('Failed to send scheduled email', {
               error: emailError instanceof Error ? emailError.message : String(emailError),
               emailId: email.id,
-              emailType: email.emailType
+              emailType: email.emailType,
             });
             failedEmailIds.push(email.id);
             failed++;
@@ -234,7 +235,7 @@ export class NotificationScheduler {
           .set({
             status: 'sent',
             sentAt: now,
-            updatedAt: now
+            updatedAt: now,
           })
           .where(scheduledEmails.id.in(successfulEmailIds));
       }
@@ -247,23 +248,23 @@ export class NotificationScheduler {
             status: 'failed',
             failedAt: now,
             updatedAt: now,
-            errorMessage: 'Email sending failed'
+            errorMessage: 'Email sending failed',
           })
           .where(scheduledEmails.id.in(failedEmailIds));
       }
 
-      logger.info('Processed scheduled emails', { 
-        processed, 
-        failed, 
+      logger.info('Processed scheduled emails', {
+        processed,
+        failed,
         total: emailsToSend.length,
         batchSize: emailsToSend.length,
-        concurrentLimit: CONCURRENT_LIMIT
+        concurrentLimit: CONCURRENT_LIMIT,
       });
-      
+
       return { processed, failed };
     } catch (error) {
-      logger.error('Failed to process scheduled emails', { 
-        error: error instanceof Error ? error.message : String(error)
+      logger.error('Failed to process scheduled emails', {
+        error: error instanceof Error ? error.message : String(error),
       });
       return { processed: 0, failed: 0 };
     }
@@ -273,8 +274,8 @@ export class NotificationScheduler {
    * Send a booking reminder email
    */
   private async sendBookingReminderEmail(email: any): Promise<void> {
-    const emailData = email.emailData;
-    
+    const {emailData} = email;
+
     // Get booking details for the reminder
     const db = getDb();
     const [booking] = await db
@@ -307,8 +308,8 @@ export class NotificationScheduler {
       specialInstructions: 'Please bring valid ID for check-in',
       contactInfo: {
         phone: '+1-555-HOTEL',
-        email: 'concierge@luxuryhotel.com'
-      }
+        email: 'concierge@luxuryhotel.com',
+      },
     });
   }
 
@@ -316,8 +317,8 @@ export class NotificationScheduler {
    * Send a booking modification notification email
    */
   private async sendBookingModificationEmail(email: any): Promise<void> {
-    const emailData = email.emailData;
-    
+    const {emailData} = email;
+
     // Get booking details for the modification notification
     const db = getDb();
     const [booking] = await db
@@ -339,17 +340,17 @@ export class NotificationScheduler {
       originalDetails: {
         checkIn: booking.checkIn?.toISOString().split('T')[0] || '',
         checkOut: booking.checkOut?.toISOString().split('T')[0] || '',
-        nights: booking.nights || 1
+        nights: booking.nights || 1,
       },
       newDetails: {
         checkIn: booking.checkIn?.toISOString().split('T')[0] || '',
         checkOut: booking.checkOut?.toISOString().split('T')[0] || '',
-        nights: booking.nights || 1
+        nights: booking.nights || 1,
       },
       modifiedAt: new Date(),
       modifiedBy: 'guest',
       reason: 'Booking modification requested',
-      priceAdjustment: 0
+      priceAdjustment: 0,
     });
   }
 }

@@ -15,7 +15,7 @@ export const scheduledEmails = pgTable('scheduled_emails', {
   errorMessage: text('error_message'),
   retryCount: varchar('retry_count', { length: 10 }).default('0'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow()
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 // Zod schemas for validation
@@ -23,7 +23,7 @@ export const insertScheduledEmailSchema = createInsertSchema(scheduledEmails, {
   emailType: z.enum(['booking_reminder', 'booking_modification', 'payment_receipt', 'cancellation_confirmation']),
   status: z.enum(['pending', 'sent', 'failed', 'cancelled']).default('pending'),
   recipientEmail: z.string().email(),
-  emailData: z.record(z.any())
+  emailData: z.record(z.any()),
 });
 
 export const selectScheduledEmailSchema = createSelectSchema(scheduledEmails);

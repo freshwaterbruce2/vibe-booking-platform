@@ -1,5 +1,2040 @@
-import{a as C,u as I,j as e,c as k,I as E,B as N,l as w}from"./index-Bz50S9TB.js";import{r as y,u as F}from"./vendor-VgjaNQN2.js";import{h as R,w as M,S as H,d as T,A as U,a as $,l as W,n as q,U as O,M as G,H as P,x as B,B as A,y as D,z as L,D as j}from"./ui-c8TFxX-w.js";import{O as S}from"./OptimizedImage-DxfBstpr.js";class _{baseURL="https://api.vibehotels.com";async processNaturalLanguage(h){try{return(await C.post(`${this.baseURL}/ai/process-query`,{query:h,context:{timestamp:new Date().toISOString(),userAgent:navigator.userAgent}})).data.processedQuery}catch(l){throw console.error("Error processing natural language query:",l),new Error("Failed to process natural language query")}}async getRecommendations(h){try{return(await C.post(`${this.baseURL}/ai/recommendations`,h)).data}catch(l){throw console.error("Error getting AI recommendations:",l),new Error("Failed to get recommendations")}}async analyzeSentiment(h){try{return(await C.post(`${this.baseURL}/ai/sentiment`,{text:h})).data}catch(l){throw console.error("Error analyzing sentiment:",l),new Error("Failed to analyze sentiment")}}}const Y=new _;function K({className:r,placeholder:h="Describe your perfect trip...",size:l="lg"}){const[t,c]=y.useState(!1),[i,x]=y.useState(!1),{naturalLanguageQuery:p,setNaturalLanguageQuery:a,setAiProcessedQuery:g,setDateRange:n,setGuestCount:s,setFilters:m}=I(),f=async()=>{if(p.trim()){c(!0);try{const d=await Y.processNaturalLanguage(p);g(d),d.extractedDetails.dates&&n(d.extractedDetails.dates.checkIn,d.extractedDetails.dates.checkOut),d.extractedDetails.guests&&s(d.extractedDetails.guests.adults,d.extractedDetails.guests.children,d.extractedDetails.guests.rooms),d.extractedDetails.budget&&m({priceRange:[d.extractedDetails.budget.min,d.extractedDetails.budget.max]})}catch(d){console.error("Error processing natural language query:",d)}finally{c(!1)}}},b=()=>{if(!("webkitSpeechRecognition"in window)&&!("SpeechRecognition"in window)){alert("Speech recognition not supported in your browser");return}const d=window.webkitSpeechRecognition||window.SpeechRecognition,u=new d;u.continuous=!1,u.interimResults=!1,u.lang="en-US",u.onstart=()=>{x(!0)},u.onresult=v=>{const{transcript:z}=v.results[0][0];a(z),x(!1)},u.onerror=()=>{x(!1)},u.onend=()=>{x(!1)},u.start()},o={sm:"h-10 text-sm",md:"h-12 text-base",lg:"h-14 text-lg"};return e.jsxs("div",{className:k("relative w-full max-w-2xl",r),children:[e.jsxs("div",{className:"relative",children:[e.jsx("div",{className:"absolute left-4 top-1/2 -translate-y-1/2 text-gray-400",children:e.jsx(R,{className:k("transition-colors",l==="sm"?"h-4 w-4":l==="md"?"h-5 w-5":"h-6 w-6",t&&"text-primary-500 animate-pulse")})}),e.jsx(E,{value:p,onChange:d=>a(d.target.value),placeholder:h,className:k("pl-12 pr-24 glass-morphism border-white/30 placeholder:text-gray-400",o[l]),onKeyDown:d=>d.key==="Enter"&&f()}),e.jsxs("div",{className:"absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1",children:[e.jsx(N,{type:"button",variant:"ghost",size:"icon",onClick:b,disabled:i||t,className:k("h-8 w-8",i&&"text-red-500 animate-pulse"),children:e.jsx(M,{className:"h-4 w-4"})}),e.jsx(N,{type:"button",onClick:f,disabled:!p.trim()||t,loading:t,size:l==="lg"?"md":"sm",className:"bg-primary-600 hover:bg-primary-700",children:e.jsx(H,{className:"h-4 w-4"})})]})]}),t&&e.jsx("div",{className:"absolute top-full mt-2 left-0 right-0",children:e.jsx("div",{className:"bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3",children:e.jsxs("div",{className:"flex items-center space-x-2 text-sm text-primary-700 dark:text-primary-300",children:[e.jsx(R,{className:"h-4 w-4 animate-spin"}),e.jsx("span",{children:"AI is analyzing your request..."})]})})})]})}function V(){const[r,h]=y.useState(!1),{query:l,selectedDateRange:t,guestCount:c,setResults:i,setLoading:x,setError:p}=I(),a=async g=>{const n=g||l;if(!n){i([]);return}h(!0),x(!0),p(null);try{const m="https://api.vibehotels.com";if("https://api.vibehotels.com".includes("localhost"))throw w.info("No backend deployed - using mock data for instant results",{component:"useHotelSearch",mode:"production",destination:n.trim(),fallbackReason:"no_backend_url"}),new Error("Using mock data");const f=await C.post(`${m}/api/hotels/search`,{destination:n,checkIn:t.checkIn||"2025-01-01",checkOut:t.checkOut||"2025-01-03",adults:c.adults,children:c.children,rooms:c.rooms},{timeout:3e3});if(f.data.success&&f.data.hotels&&f.data.hotels.length>0){const b=f.data.hotels.map((o,d)=>({id:o.id||String(d+1),name:o.name||"Unnamed Hotel",description:o.description||"A comfortable place to stay",location:{address:o.address||"123 Main St",city:o.city||n,country:o.country||"USA",coordinates:o.coordinates||{lat:0,lng:0}},rating:o.rating||4,reviewCount:o.reviewCount||0,priceRange:{min:o.pricePerNight||100,max:(o.pricePerNight||100)*1.5,currency:o.currency||"USD",avgNightly:o.pricePerNight||100},images:o.images?o.images.map((u,v)=>({id:`img-${v}`,url:u,alt:`${o.name} - Image ${v+1}`,category:v===0?"exterior":"room",isPrimary:v===0})):[{id:"default-1",url:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400",alt:o.name||"Hotel Image",category:"exterior",isPrimary:!0}],amenities:(o.amenities||["WiFi","Parking"]).map((u,v)=>({id:`amenity-${v}`,name:u,category:"general",icon:void 0,description:void 0})),availability:{available:!0,lastChecked:new Date().toISOString(),lowAvailability:Math.random()>.7},passionScore:o.passions?o.passions.reduce((u,v)=>(u[v]=Math.random()*100,u),{}):{},sustainabilityScore:o.sustainabilityCertified?85:void 0}));i(b)}else{w.info("API returned no hotels, using comprehensive fallback data");const b=[{id:"1",name:`Grand Hotel ${n}`,description:"Luxury hotel in the heart of the city",location:{address:"123 Main St",city:n,country:"USA",coordinates:{lat:0,lng:0}},rating:4.5,reviewCount:234,priceRange:{min:200,max:350,currency:"USD",avgNightly:250},images:[{id:"img-1",url:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400",alt:"Grand Hotel Exterior",category:"exterior",isPrimary:!0}],amenities:[{id:"a1",name:"WiFi",category:"connectivity"},{id:"a2",name:"Pool",category:"recreation"},{id:"a3",name:"Spa",category:"wellness"},{id:"a4",name:"Gym",category:"fitness"}],availability:{available:!0,lastChecked:new Date().toISOString(),lowAvailability:!0},passionScore:{Romance:90,Wellness:85},sustainabilityScore:92},{id:"2",name:`Boutique Hotel ${n}`,description:"Charming boutique hotel with personalized service",location:{address:"456 Park Ave",city:n,country:"USA",coordinates:{lat:0,lng:0}},rating:4.3,reviewCount:156,priceRange:{min:150,max:220,currency:"USD",avgNightly:180},images:[{id:"img-2",url:"https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400",alt:"Boutique Hotel Interior",category:"interior",isPrimary:!0}],amenities:[{id:"b1",name:"WiFi",category:"connectivity"},{id:"b2",name:"Restaurant",category:"dining"},{id:"b3",name:"Bar",category:"dining"}],availability:{available:!0,lastChecked:new Date().toISOString()},passionScore:{Culture:88,Food:92}}];i(b)}}catch(s){w.warn("Hotel search failed, providing fallback data for seamless UX",{component:"useHotelSearch",destination:n.trim(),error:s instanceof Error?s.message:"Unknown error",fallbackStrategy:"comprehensive_mock_data",userImpact:"none"});const m=[{id:"mock-1",name:`Grand Plaza ${n||"Hotel"}`,description:"Luxury hotel in the heart of downtown with world-class amenities and exceptional service",location:{address:"123 Main Street",city:n||"New York",country:"USA",coordinates:{lat:40.7128,lng:-74.006}},rating:4.8,reviewCount:1250,priceRange:{min:200,max:400,currency:"USD",avgNightly:280},images:[{id:"img-1",url:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",alt:"Grand Plaza Hotel Exterior",category:"exterior",isPrimary:!0},{id:"img-2",url:"https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800",alt:"Grand Plaza Hotel Lobby",category:"interior",isPrimary:!1}],amenities:[{id:"a1",name:"Free WiFi",category:"connectivity"},{id:"a2",name:"Swimming Pool",category:"recreation"},{id:"a3",name:"Spa & Wellness",category:"wellness"},{id:"a4",name:"Fitness Center",category:"fitness"},{id:"a5",name:"Restaurant",category:"dining"},{id:"a6",name:"Business Center",category:"business"}],availability:{available:!0,lastChecked:new Date().toISOString(),lowAvailability:Math.random()>.7},passionScore:{Luxury:95,Business:85,Wellness:80},sustainabilityScore:88},{id:"mock-2",name:`Comfort Inn ${n||"Downtown"}`,description:"Comfortable and affordable hotel perfect for business and leisure travelers",location:{address:"456 Oak Avenue",city:n||"New York",country:"USA",coordinates:{lat:40.7589,lng:-73.9851}},rating:4.2,reviewCount:650,priceRange:{min:100,max:180,currency:"USD",avgNightly:120},images:[{id:"img-3",url:"https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800",alt:"Comfort Inn Room",category:"room",isPrimary:!0}],amenities:[{id:"b1",name:"Free WiFi",category:"connectivity"},{id:"b2",name:"Free Breakfast",category:"dining"},{id:"b3",name:"Parking",category:"transportation"},{id:"b4",name:"Business Center",category:"business"}],availability:{available:!0,lastChecked:new Date().toISOString()},passionScore:{Budget:90,Business:75}},{id:"mock-3",name:`Seaside Resort ${n||"Beach"}`,description:"Beachfront resort with stunning ocean views and full spa services",location:{address:"789 Beach Boulevard",city:n||"Miami",country:"USA",coordinates:{lat:25.7617,lng:-80.1918}},rating:4.6,reviewCount:890,priceRange:{min:300,max:500,currency:"USD",avgNightly:350},images:[{id:"img-4",url:"https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800",alt:"Seaside Resort Beach View",category:"exterior",isPrimary:!0}],amenities:[{id:"c1",name:"Beach Access",category:"recreation"},{id:"c2",name:"Outdoor Pool",category:"recreation"},{id:"c3",name:"Full Spa",category:"wellness"},{id:"c4",name:"Water Sports",category:"recreation"},{id:"c5",name:"Kids Club",category:"family"}],availability:{available:!0,lastChecked:new Date().toISOString(),lowAvailability:!0},passionScore:{Romance:95,Wellness:90,Family:85},sustainabilityScore:75}];i(m)}finally{h(!1),x(!1)}};return y.useEffect(()=>{l&&a()},[l]),{searchHotels:a,isSearching:r}}function Q(){const r=F(),{setQuery:h,setDateRange:l}=I(),{searchHotels:t}=V(),[c,i]=y.useState(""),[x,p]=y.useState(""),[a,g]=y.useState(""),n=()=>{w.info("Search initiated from hero section",{component:"Hero",destination:c.trim(),hasCheckIn:!!x,hasCheckOut:!!a}),c.trim()?(h(c.trim()),x&&a&&l(x,a),r("/search"),t(c.trim()).catch(s=>{w.error("Hero search failed, user will see fallback results",{component:"Hero",destination:c.trim(),error:s instanceof Error?s.message:"Unknown error"})})):(w.warn("Search attempted without destination",{component:"Hero"}),alert("Please enter a destination to search for hotels."))};return e.jsxs("section",{className:"relative min-h-screen flex items-center justify-center overflow-hidden",children:[e.jsxs("div",{className:"absolute inset-0",children:[e.jsxs("video",{autoPlay:!0,muted:!0,loop:!0,playsInline:!0,className:"absolute inset-0 w-full h-full object-cover",poster:"https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",children:[e.jsx("source",{src:"https://player.vimeo.com/external/370467553.sd.mp4?s=c3a9caa58b9a45d2a21ba5c3be35c2a0dccae44a&profile_id=164&oauth2_token_id=57447761",type:"video/mp4"}),e.jsx("div",{className:"absolute inset-0 bg-cover bg-center bg-no-repeat",style:{backgroundImage:"url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"}})]}),e.jsx("div",{className:"absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/50"})]}),e.jsx("div",{className:"relative z-10 container mx-auto px-4 text-center text-white",children:e.jsxs("div",{className:"max-w-5xl mx-auto space-y-8",children:[e.jsxs("div",{className:"flex justify-center items-center gap-6 text-sm text-white/80 mb-6",children:[e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(T,{className:"w-4 h-4"}),e.jsx("span",{children:"Secure Booking"})]}),e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(U,{className:"w-4 h-4"}),e.jsx("span",{children:"Best Price Guarantee"})]}),e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx($,{className:"w-4 h-4"}),e.jsx("span",{children:"Instant Confirmation"})]})]}),e.jsxs("div",{className:"space-y-4 md:space-y-6",children:[e.jsxs("h1",{className:"text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-tight",children:[e.jsx("span",{className:"block",children:"Book Your"}),e.jsx("span",{className:"block",children:"Dream Stay"}),e.jsx("span",{className:"block bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl lg:text-6xl mt-2",children:"Save 5% on Every Booking"})]}),e.jsxs("p",{className:"text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-medium px-4",children:[e.jsx("span",{className:"hidden md:inline",children:"AI-powered hotel matching • Instant confirmation • Best prices guaranteed"}),e.jsx("span",{className:"md:hidden",children:"Find perfect hotels with AI • Best prices • Instant booking"})]})]}),e.jsx("div",{className:"max-w-4xl mx-auto",children:e.jsxs("div",{className:"bg-white/95 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-luxury-xl border border-white/20",children:[e.jsxs("div",{className:"space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4 md:items-end",children:[e.jsxs("div",{className:"space-y-2 md:col-span-1",children:[e.jsx("label",{htmlFor:"destination",className:"text-sm font-semibold text-gray-700",children:"Where to?"}),e.jsx("input",{type:"text",id:"destination",name:"destination",placeholder:"City, hotel, landmark...",value:c,onChange:s=>i(s.target.value),autoComplete:"address-level2",className:"w-full p-4 md:p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-700 focus:border-slate-700 text-slate-900 text-lg md:text-base shadow-luxury-sm"})]}),e.jsxs("div",{className:"grid grid-cols-2 gap-4 md:contents",children:[e.jsxs("div",{className:"space-y-2",children:[e.jsx("label",{htmlFor:"checkin",className:"text-sm font-semibold text-gray-700",children:"Check-in"}),e.jsx("input",{type:"date",id:"checkin",name:"checkin",value:x,onChange:s=>p(s.target.value),autoComplete:"checkin",className:"w-full p-4 md:p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-700 focus:border-slate-700 text-slate-900 text-lg md:text-base shadow-luxury-sm"})]}),e.jsxs("div",{className:"space-y-2",children:[e.jsx("label",{htmlFor:"checkout",className:"text-sm font-semibold text-gray-700",children:"Check-out"}),e.jsx("input",{type:"date",id:"checkout",name:"checkout",value:a,onChange:s=>g(s.target.value),autoComplete:"checkout",className:"w-full p-4 md:p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-700 focus:border-slate-700 text-slate-900 text-lg md:text-base shadow-luxury-sm"})]})]}),e.jsx("div",{className:"md:col-span-1",children:e.jsx(N,{size:"lg",variant:"primary",onClick:n,className:"w-full h-14 md:h-12 text-xl md:text-lg font-bold bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 transition-all duration-300",children:"Search Hotels"})})]}),e.jsxs("div",{className:"mt-6 pt-4 border-t border-gray-200",children:[e.jsx("div",{className:"text-center mb-3",children:e.jsx("span",{className:"text-sm font-semibold text-gray-600 bg-primary-50 text-primary-700 px-3 py-1 rounded-full",children:"Try AI-Powered Search"})}),e.jsx(K,{placeholder:"Try: 'Romantic weekend in Paris with spa'",size:"md",className:"text-center"})]})]})}),e.jsxs("div",{className:"flex flex-col sm:flex-row items-center justify-center gap-4",children:[e.jsxs(N,{size:"lg",variant:"secondary",className:"text-white bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20",children:[e.jsx(W,{className:"mr-2 h-5 w-5"}),"Watch Demo"]}),e.jsx(N,{size:"lg",variant:"outline",className:"border-white/30 text-white hover:bg-white/10",children:"Browse Destinations"})]}),e.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 pt-8 border-t border-white/20",children:[e.jsxs("div",{className:"text-center",children:[e.jsxs("div",{className:"flex items-center justify-center mb-2",children:[e.jsx(q,{className:"h-6 w-6 text-accent mr-2"}),e.jsx("span",{className:"text-4xl font-bold",children:"4.9"})]}),e.jsx("p",{className:"text-white/80 font-medium",children:"Customer Rating"}),e.jsx("p",{className:"text-white/60 text-sm",children:"From 50,000+ reviews"})]}),e.jsxs("div",{className:"text-center",children:[e.jsxs("div",{className:"flex items-center justify-center mb-2",children:[e.jsx(O,{className:"h-6 w-6 text-accent mr-2"}),e.jsx("span",{className:"text-4xl font-bold",children:"2M+"})]}),e.jsx("p",{className:"text-white/80 font-medium",children:"Happy Travelers"}),e.jsx("p",{className:"text-white/60 text-sm",children:"Saved $15M+ total"})]}),e.jsxs("div",{className:"text-center",children:[e.jsxs("div",{className:"flex items-center justify-center mb-2",children:[e.jsx(G,{className:"h-6 w-6 text-accent mr-2"}),e.jsx("span",{className:"text-4xl font-bold",children:"50K+"})]}),e.jsx("p",{className:"text-white/80 font-medium",children:"Hotels Worldwide"}),e.jsx("p",{className:"text-white/60 text-sm",children:"In 195 countries"})]})]})]})}),e.jsx("div",{className:"absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60",children:e.jsx("div",{className:"animate-bounce",children:e.jsx("div",{className:"w-6 h-10 border-2 border-white/30 rounded-full flex justify-center",children:e.jsx("div",{className:"w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse"})})})})]})}const J=({destinations:r=[{id:"1",name:"Paris",country:"France",image:"https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=800&h=500&fit=crop&crop=center",description:"The City of Light, famous for its iconic landmarks, art, and cuisine.",hotelCount:1200,averagePrice:180,popularAttractions:["Eiffel Tower","Louvre Museum","Notre-Dame"]},{id:"2",name:"Tokyo",country:"Japan",image:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=500&fit=crop&crop=center",description:"A vibrant metropolis blending traditional culture with modern innovation.",hotelCount:800,averagePrice:220,popularAttractions:["Tokyo Tower","Shibuya Crossing","Senso-ji Temple"]},{id:"3",name:"New York",country:"USA",image:"https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=500&fit=crop&crop=center",description:"The city that never sleeps, offering endless entertainment and culture.",hotelCount:950,averagePrice:280,popularAttractions:["Times Square","Central Park","Statue of Liberty"]},{id:"4",name:"Bali",country:"Indonesia",image:"https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=800&h=500&fit=crop&crop=center",description:"Tropical paradise with stunning beaches, temples, and rice terraces.",hotelCount:600,averagePrice:120,popularAttractions:["Uluwatu Temple","Rice Terraces","Mount Batur"]},{id:"5",name:"Rome",country:"Italy",image:"https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&h=500&fit=crop&crop=center",description:"The Eternal City, home to ancient history and incredible architecture.",hotelCount:750,averagePrice:160,popularAttractions:["Colosseum","Vatican City","Trevi Fountain"]},{id:"6",name:"Dubai",country:"UAE",image:"https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=500&fit=crop&crop=center",description:"A modern oasis of luxury, shopping, and architectural marvels.",hotelCount:400,averagePrice:250,popularAttractions:["Burj Khalifa","Palm Jumeirah","Dubai Mall"]}],onDestinationSelect:h,className:l=""})=>e.jsx("section",{className:`py-12 ${l}`,children:e.jsxs("div",{className:"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",children:[e.jsxs("div",{className:"text-center mb-12",children:[e.jsx("h2",{className:"text-3xl font-bold text-gray-900 mb-4",children:"Featured Destinations"}),e.jsx("p",{className:"text-lg text-gray-600 max-w-2xl mx-auto",children:"Discover amazing places around the world and find the perfect hotel for your next adventure."})]}),e.jsx("div",{className:"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8",children:r.map(t=>e.jsx("div",{className:"group cursor-pointer transform transition-all duration-300 hover:scale-105",onClick:()=>h&&h(t),children:e.jsxs("div",{className:"bg-white rounded-xl shadow-lg overflow-hidden",children:[e.jsxs("div",{className:"relative",children:[e.jsx("img",{src:t.image,alt:t.name,className:"w-full h-48 object-cover group-hover:brightness-110 transition-all duration-300",loading:"eager"}),e.jsx("div",{className:"absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-full px-3 py-1",children:e.jsxs("span",{className:"text-sm font-semibold text-gray-800",children:["$",t.averagePrice,"/night"]})})]}),e.jsxs("div",{className:"p-6",children:[e.jsxs("div",{className:"flex justify-between items-start mb-3",children:[e.jsxs("div",{children:[e.jsx("h3",{className:"text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors",children:t.name}),e.jsx("p",{className:"text-gray-600",children:t.country})]}),e.jsx("div",{className:"text-right",children:e.jsxs("div",{className:"text-sm text-gray-500",children:[t.hotelCount," hotels"]})})]}),e.jsx("p",{className:"text-gray-700 text-sm mb-4 line-clamp-2",children:t.description}),e.jsxs("div",{className:"space-y-2",children:[e.jsx("h4",{className:"text-sm font-semibold text-gray-800",children:"Popular Attractions:"}),e.jsxs("div",{className:"flex flex-wrap gap-2",children:[t.popularAttractions.slice(0,2).map((c,i)=>e.jsx("span",{className:"px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full",children:c},i)),t.popularAttractions.length>2&&e.jsxs("span",{className:"px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full",children:["+",t.popularAttractions.length-2," more"]})]})]}),e.jsx("div",{className:"mt-4 pt-4 border-t border-gray-200",children:e.jsx("button",{className:"w-full text-center text-blue-600 font-medium hover:text-blue-800 transition-colors",children:"Explore Hotels →"})})]})]})},t.id))}),e.jsx("div",{className:"text-center mt-12",children:e.jsx("button",{className:"px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium",children:"View All Destinations"})})]})}),X=({selectedPassions:r=[],onPassionToggle:h,onApplyPassions:l,isVisible:t=!0,className:c=""})=>{const[i,x]=y.useState(r),p=[{id:"culinary-excellence",name:"Culinary Excellence",description:"Michelin-starred dining, wine tastings, and gourmet experiences",icon:"utensils",keywords:["michelin","fine-dining","sommelier","gourmet","chef","culinary"],color:"from-amber-600 to-amber-800 text-white",image:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop"},{id:"wellness-sanctuary",name:"Wellness Sanctuary",description:"World-class spas, meditation retreats, and holistic wellness",icon:"sparkles",keywords:["spa","wellness","meditation","yoga","holistic","retreat"],color:"from-emerald-600 to-emerald-800 text-white",image:"https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=800&h=600&fit=crop"},{id:"cultural-immersion",name:"Cultural Immersion",description:"Historic landmarks, world-class museums, and artistic heritage",icon:"building2",keywords:["museum","culture","heritage","art","history","landmarks"],color:"from-purple-600 to-purple-800 text-white",image:"https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=800&h=600&fit=crop"},{id:"adventure-escapes",name:"Adventure Escapes",description:"Exclusive outdoor experiences and luxury adventure activities",icon:"mountain",keywords:["adventure","outdoor","exclusive","nature","activities","luxury"],color:"from-teal-600 to-teal-800 text-white",image:"https://images.unsplash.com/photo-1517021897933-0e0319cfbc28?w=800&h=600&fit=crop"},{id:"business-elite",name:"Business Elite",description:"Executive lounges, conference facilities, and premium business services",icon:"briefcase",keywords:["executive","business","conference","premium","corporate","luxury"],color:"from-slate-700 to-slate-900 text-white",image:"https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop"},{id:"family-luxury",name:"Family Luxury",description:"Premium family suites, kids clubs, and sophisticated family experiences",icon:"users2",keywords:["family","premium","kids-club","suites","luxury","experiences"],color:"from-orange-600 to-orange-800 text-white",image:"https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=800&h=600&fit=crop"},{id:"romantic-elegance",name:"Romantic Elegance",description:"Private villas, couples spa treatments, and intimate luxury settings",icon:"heart",keywords:["romantic","couples","private","intimate","luxury","villas"],color:"from-rose-600 to-rose-800 text-white",image:"https://images.unsplash.com/photo-1502301103665-0b95cc738daf?w=800&h=600&fit=crop"}],a=s=>{const m=i.includes(s)?i.filter(f=>f!==s):[...i,s];x(m),h&&h(s)},g=()=>{l&&l(i)},n=()=>{x([])};return t?e.jsxs("section",{className:`relative bg-gradient-to-br from-slate-50 via-white to-amber-50/30 py-20 overflow-hidden ${c}`,children:[e.jsxs("div",{className:"absolute inset-0 opacity-30",children:[e.jsx("div",{className:"absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-amber-200/20 to-transparent rounded-full blur-3xl"}),e.jsx("div",{className:"absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-slate-200/20 to-transparent rounded-full blur-3xl"}),e.jsx("div",{className:"absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-amber-100/10 via-transparent to-slate-100/10 rounded-full blur-3xl"})]}),e.jsxs("div",{className:"relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",children:[e.jsxs("div",{className:"text-center mb-12",children:[e.jsx("h2",{className:"text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-6",children:"Discover Your Travel Passion"}),e.jsx("p",{className:"text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed",children:"Experience personalized luxury. Select your travel passions and we'll curate hotels that match your sophisticated preferences."})]}),e.jsx("div",{className:"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 max-w-7xl mx-auto",children:p.map(s=>{const m=i.includes(s.id),f={utensils:j,sparkles:R,building2:L,mountain:D,briefcase:A,users2:B,heart:P}[s.icon]||j;return e.jsxs("div",{onClick:()=>a(s.id),className:`
+import { a as C, u as I, j as e, c as k, I as E, B as N, l as w } from './index-Bz50S9TB.js';
+import { r as y, u as F } from './vendor-VgjaNQN2.js';
+import {
+  h as R,
+  w as M,
+  S as H,
+  d as T,
+  A as U,
+  a as $,
+  l as W,
+  n as q,
+  U as O,
+  M as G,
+  H as P,
+  x as B,
+  B as A,
+  y as D,
+  z as L,
+  D as j,
+} from './ui-c8TFxX-w.js';
+import { O as S } from './OptimizedImage-DxfBstpr.js';
+class _ {
+  baseURL = 'https://api.vibehotels.com';
+  async processNaturalLanguage(h) {
+    try {
+      return (
+        await C.post(`${this.baseURL}/ai/process-query`, {
+          query: h,
+          context: { timestamp: new Date().toISOString(), userAgent: navigator.userAgent },
+        })
+      ).data.processedQuery;
+    } catch (l) {
+      throw (
+        console.error('Error processing natural language query:', l),
+        new Error('Failed to process natural language query')
+      );
+    }
+  }
+  async getRecommendations(h) {
+    try {
+      return (await C.post(`${this.baseURL}/ai/recommendations`, h)).data;
+    } catch (l) {
+      throw (
+        console.error('Error getting AI recommendations:', l),
+        new Error('Failed to get recommendations')
+      );
+    }
+  }
+  async analyzeSentiment(h) {
+    try {
+      return (await C.post(`${this.baseURL}/ai/sentiment`, { text: h })).data;
+    } catch (l) {
+      throw (
+        console.error('Error analyzing sentiment:', l),
+        new Error('Failed to analyze sentiment')
+      );
+    }
+  }
+}
+const Y = new _();
+function K({ className: r, placeholder: h = 'Describe your perfect trip...', size: l = 'lg' }) {
+  const [t, c] = y.useState(!1),
+    [i, x] = y.useState(!1),
+    {
+      naturalLanguageQuery: p,
+      setNaturalLanguageQuery: a,
+      setAiProcessedQuery: g,
+      setDateRange: n,
+      setGuestCount: s,
+      setFilters: m,
+    } = I(),
+    f = async () => {
+      if (p.trim()) {
+        c(!0);
+        try {
+          const d = await Y.processNaturalLanguage(p);
+          (g(d),
+            d.extractedDetails.dates &&
+              n(d.extractedDetails.dates.checkIn, d.extractedDetails.dates.checkOut),
+            d.extractedDetails.guests &&
+              s(
+                d.extractedDetails.guests.adults,
+                d.extractedDetails.guests.children,
+                d.extractedDetails.guests.rooms,
+              ),
+            d.extractedDetails.budget &&
+              m({ priceRange: [d.extractedDetails.budget.min, d.extractedDetails.budget.max] }));
+        } catch (d) {
+          console.error('Error processing natural language query:', d);
+        } finally {
+          c(!1);
+        }
+      }
+    },
+    b = () => {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Speech recognition not supported in your browser');
+        return;
+      }
+      const d = window.webkitSpeechRecognition || window.SpeechRecognition,
+        u = new d();
+      ((u.continuous = !1),
+        (u.interimResults = !1),
+        (u.lang = 'en-US'),
+        (u.onstart = () => {
+          x(!0);
+        }),
+        (u.onresult = (v) => {
+          const { transcript: z } = v.results[0][0];
+          (a(z), x(!1));
+        }),
+        (u.onerror = () => {
+          x(!1);
+        }),
+        (u.onend = () => {
+          x(!1);
+        }),
+        u.start());
+    },
+    o = { sm: 'h-10 text-sm', md: 'h-12 text-base', lg: 'h-14 text-lg' };
+  return e.jsxs('div', {
+    className: k('relative w-full max-w-2xl', r),
+    children: [
+      e.jsxs('div', {
+        className: 'relative',
+        children: [
+          e.jsx('div', {
+            className: 'absolute left-4 top-1/2 -translate-y-1/2 text-gray-400',
+            children: e.jsx(R, {
+              className: k(
+                'transition-colors',
+                l === 'sm' ? 'h-4 w-4' : l === 'md' ? 'h-5 w-5' : 'h-6 w-6',
+                t && 'text-primary-500 animate-pulse',
+              ),
+            }),
+          }),
+          e.jsx(E, {
+            value: p,
+            onChange: (d) => a(d.target.value),
+            placeholder: h,
+            className: k(
+              'pl-12 pr-24 glass-morphism border-white/30 placeholder:text-gray-400',
+              o[l],
+            ),
+            onKeyDown: (d) => d.key === 'Enter' && f(),
+          }),
+          e.jsxs('div', {
+            className: 'absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1',
+            children: [
+              e.jsx(N, {
+                type: 'button',
+                variant: 'ghost',
+                size: 'icon',
+                onClick: b,
+                disabled: i || t,
+                className: k('h-8 w-8', i && 'text-red-500 animate-pulse'),
+                children: e.jsx(M, { className: 'h-4 w-4' }),
+              }),
+              e.jsx(N, {
+                type: 'button',
+                onClick: f,
+                disabled: !p.trim() || t,
+                loading: t,
+                size: l === 'lg' ? 'md' : 'sm',
+                className: 'bg-primary-600 hover:bg-primary-700',
+                children: e.jsx(H, { className: 'h-4 w-4' }),
+              }),
+            ],
+          }),
+        ],
+      }),
+      t &&
+        e.jsx('div', {
+          className: 'absolute top-full mt-2 left-0 right-0',
+          children: e.jsx('div', {
+            className:
+              'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3',
+            children: e.jsxs('div', {
+              className:
+                'flex items-center space-x-2 text-sm text-primary-700 dark:text-primary-300',
+              children: [
+                e.jsx(R, { className: 'h-4 w-4 animate-spin' }),
+                e.jsx('span', { children: 'AI is analyzing your request...' }),
+              ],
+            }),
+          }),
+        }),
+    ],
+  });
+}
+function V() {
+  const [r, h] = y.useState(!1),
+    {
+      query: l,
+      selectedDateRange: t,
+      guestCount: c,
+      setResults: i,
+      setLoading: x,
+      setError: p,
+    } = I(),
+    a = async (g) => {
+      const n = g || l;
+      if (!n) {
+        i([]);
+        return;
+      }
+      (h(!0), x(!0), p(null));
+      try {
+        const m = 'https://api.vibehotels.com';
+        if ('https://api.vibehotels.com'.includes('localhost'))
+          throw (
+            w.info('No backend deployed - using mock data for instant results', {
+              component: 'useHotelSearch',
+              mode: 'production',
+              destination: n.trim(),
+              fallbackReason: 'no_backend_url',
+            }),
+            new Error('Using mock data')
+          );
+        const f = await C.post(
+          `${m}/api/hotels/search`,
+          {
+            destination: n,
+            checkIn: t.checkIn || '2025-01-01',
+            checkOut: t.checkOut || '2025-01-03',
+            adults: c.adults,
+            children: c.children,
+            rooms: c.rooms,
+          },
+          { timeout: 3e3 },
+        );
+        if (f.data.success && f.data.hotels && f.data.hotels.length > 0) {
+          const b = f.data.hotels.map((o, d) => ({
+            id: o.id || String(d + 1),
+            name: o.name || 'Unnamed Hotel',
+            description: o.description || 'A comfortable place to stay',
+            location: {
+              address: o.address || '123 Main St',
+              city: o.city || n,
+              country: o.country || 'USA',
+              coordinates: o.coordinates || { lat: 0, lng: 0 },
+            },
+            rating: o.rating || 4,
+            reviewCount: o.reviewCount || 0,
+            priceRange: {
+              min: o.pricePerNight || 100,
+              max: (o.pricePerNight || 100) * 1.5,
+              currency: o.currency || 'USD',
+              avgNightly: o.pricePerNight || 100,
+            },
+            images: o.images
+              ? o.images.map((u, v) => ({
+                  id: `img-${v}`,
+                  url: u,
+                  alt: `${o.name} - Image ${v + 1}`,
+                  category: v === 0 ? 'exterior' : 'room',
+                  isPrimary: v === 0,
+                }))
+              : [
+                  {
+                    id: 'default-1',
+                    url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400',
+                    alt: o.name || 'Hotel Image',
+                    category: 'exterior',
+                    isPrimary: !0,
+                  },
+                ],
+            amenities: (o.amenities || ['WiFi', 'Parking']).map((u, v) => ({
+              id: `amenity-${v}`,
+              name: u,
+              category: 'general',
+              icon: void 0,
+              description: void 0,
+            })),
+            availability: {
+              available: !0,
+              lastChecked: new Date().toISOString(),
+              lowAvailability: Math.random() > 0.7,
+            },
+            passionScore: o.passions
+              ? o.passions.reduce((u, v) => ((u[v] = Math.random() * 100), u), {})
+              : {},
+            sustainabilityScore: o.sustainabilityCertified ? 85 : void 0,
+          }));
+          i(b);
+        } else {
+          w.info('API returned no hotels, using comprehensive fallback data');
+          const b = [
+            {
+              id: '1',
+              name: `Grand Hotel ${n}`,
+              description: 'Luxury hotel in the heart of the city',
+              location: {
+                address: '123 Main St',
+                city: n,
+                country: 'USA',
+                coordinates: { lat: 0, lng: 0 },
+              },
+              rating: 4.5,
+              reviewCount: 234,
+              priceRange: { min: 200, max: 350, currency: 'USD', avgNightly: 250 },
+              images: [
+                {
+                  id: 'img-1',
+                  url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400',
+                  alt: 'Grand Hotel Exterior',
+                  category: 'exterior',
+                  isPrimary: !0,
+                },
+              ],
+              amenities: [
+                { id: 'a1', name: 'WiFi', category: 'connectivity' },
+                { id: 'a2', name: 'Pool', category: 'recreation' },
+                { id: 'a3', name: 'Spa', category: 'wellness' },
+                { id: 'a4', name: 'Gym', category: 'fitness' },
+              ],
+              availability: {
+                available: !0,
+                lastChecked: new Date().toISOString(),
+                lowAvailability: !0,
+              },
+              passionScore: { Romance: 90, Wellness: 85 },
+              sustainabilityScore: 92,
+            },
+            {
+              id: '2',
+              name: `Boutique Hotel ${n}`,
+              description: 'Charming boutique hotel with personalized service',
+              location: {
+                address: '456 Park Ave',
+                city: n,
+                country: 'USA',
+                coordinates: { lat: 0, lng: 0 },
+              },
+              rating: 4.3,
+              reviewCount: 156,
+              priceRange: { min: 150, max: 220, currency: 'USD', avgNightly: 180 },
+              images: [
+                {
+                  id: 'img-2',
+                  url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400',
+                  alt: 'Boutique Hotel Interior',
+                  category: 'interior',
+                  isPrimary: !0,
+                },
+              ],
+              amenities: [
+                { id: 'b1', name: 'WiFi', category: 'connectivity' },
+                { id: 'b2', name: 'Restaurant', category: 'dining' },
+                { id: 'b3', name: 'Bar', category: 'dining' },
+              ],
+              availability: { available: !0, lastChecked: new Date().toISOString() },
+              passionScore: { Culture: 88, Food: 92 },
+            },
+          ];
+          i(b);
+        }
+      } catch (s) {
+        w.warn('Hotel search failed, providing fallback data for seamless UX', {
+          component: 'useHotelSearch',
+          destination: n.trim(),
+          error: s instanceof Error ? s.message : 'Unknown error',
+          fallbackStrategy: 'comprehensive_mock_data',
+          userImpact: 'none',
+        });
+        const m = [
+          {
+            id: 'mock-1',
+            name: `Grand Plaza ${n || 'Hotel'}`,
+            description:
+              'Luxury hotel in the heart of downtown with world-class amenities and exceptional service',
+            location: {
+              address: '123 Main Street',
+              city: n || 'New York',
+              country: 'USA',
+              coordinates: { lat: 40.7128, lng: -74.006 },
+            },
+            rating: 4.8,
+            reviewCount: 1250,
+            priceRange: { min: 200, max: 400, currency: 'USD', avgNightly: 280 },
+            images: [
+              {
+                id: 'img-1',
+                url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+                alt: 'Grand Plaza Hotel Exterior',
+                category: 'exterior',
+                isPrimary: !0,
+              },
+              {
+                id: 'img-2',
+                url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
+                alt: 'Grand Plaza Hotel Lobby',
+                category: 'interior',
+                isPrimary: !1,
+              },
+            ],
+            amenities: [
+              { id: 'a1', name: 'Free WiFi', category: 'connectivity' },
+              { id: 'a2', name: 'Swimming Pool', category: 'recreation' },
+              { id: 'a3', name: 'Spa & Wellness', category: 'wellness' },
+              { id: 'a4', name: 'Fitness Center', category: 'fitness' },
+              { id: 'a5', name: 'Restaurant', category: 'dining' },
+              { id: 'a6', name: 'Business Center', category: 'business' },
+            ],
+            availability: {
+              available: !0,
+              lastChecked: new Date().toISOString(),
+              lowAvailability: Math.random() > 0.7,
+            },
+            passionScore: { Luxury: 95, Business: 85, Wellness: 80 },
+            sustainabilityScore: 88,
+          },
+          {
+            id: 'mock-2',
+            name: `Comfort Inn ${n || 'Downtown'}`,
+            description:
+              'Comfortable and affordable hotel perfect for business and leisure travelers',
+            location: {
+              address: '456 Oak Avenue',
+              city: n || 'New York',
+              country: 'USA',
+              coordinates: { lat: 40.7589, lng: -73.9851 },
+            },
+            rating: 4.2,
+            reviewCount: 650,
+            priceRange: { min: 100, max: 180, currency: 'USD', avgNightly: 120 },
+            images: [
+              {
+                id: 'img-3',
+                url: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800',
+                alt: 'Comfort Inn Room',
+                category: 'room',
+                isPrimary: !0,
+              },
+            ],
+            amenities: [
+              { id: 'b1', name: 'Free WiFi', category: 'connectivity' },
+              { id: 'b2', name: 'Free Breakfast', category: 'dining' },
+              { id: 'b3', name: 'Parking', category: 'transportation' },
+              { id: 'b4', name: 'Business Center', category: 'business' },
+            ],
+            availability: { available: !0, lastChecked: new Date().toISOString() },
+            passionScore: { Budget: 90, Business: 75 },
+          },
+          {
+            id: 'mock-3',
+            name: `Seaside Resort ${n || 'Beach'}`,
+            description: 'Beachfront resort with stunning ocean views and full spa services',
+            location: {
+              address: '789 Beach Boulevard',
+              city: n || 'Miami',
+              country: 'USA',
+              coordinates: { lat: 25.7617, lng: -80.1918 },
+            },
+            rating: 4.6,
+            reviewCount: 890,
+            priceRange: { min: 300, max: 500, currency: 'USD', avgNightly: 350 },
+            images: [
+              {
+                id: 'img-4',
+                url: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800',
+                alt: 'Seaside Resort Beach View',
+                category: 'exterior',
+                isPrimary: !0,
+              },
+            ],
+            amenities: [
+              { id: 'c1', name: 'Beach Access', category: 'recreation' },
+              { id: 'c2', name: 'Outdoor Pool', category: 'recreation' },
+              { id: 'c3', name: 'Full Spa', category: 'wellness' },
+              { id: 'c4', name: 'Water Sports', category: 'recreation' },
+              { id: 'c5', name: 'Kids Club', category: 'family' },
+            ],
+            availability: {
+              available: !0,
+              lastChecked: new Date().toISOString(),
+              lowAvailability: !0,
+            },
+            passionScore: { Romance: 95, Wellness: 90, Family: 85 },
+            sustainabilityScore: 75,
+          },
+        ];
+        i(m);
+      } finally {
+        (h(!1), x(!1));
+      }
+    };
+  return (
+    y.useEffect(() => {
+      l && a();
+    }, [l]),
+    { searchHotels: a, isSearching: r }
+  );
+}
+function Q() {
+  const r = F(),
+    { setQuery: h, setDateRange: l } = I(),
+    { searchHotels: t } = V(),
+    [c, i] = y.useState(''),
+    [x, p] = y.useState(''),
+    [a, g] = y.useState(''),
+    n = () => {
+      (w.info('Search initiated from hero section', {
+        component: 'Hero',
+        destination: c.trim(),
+        hasCheckIn: !!x,
+        hasCheckOut: !!a,
+      }),
+        c.trim()
+          ? (h(c.trim()),
+            x && a && l(x, a),
+            r('/search'),
+            t(c.trim()).catch((s) => {
+              w.error('Hero search failed, user will see fallback results', {
+                component: 'Hero',
+                destination: c.trim(),
+                error: s instanceof Error ? s.message : 'Unknown error',
+              });
+            }))
+          : (w.warn('Search attempted without destination', { component: 'Hero' }),
+            alert('Please enter a destination to search for hotels.')));
+    };
+  return e.jsxs('section', {
+    className: 'relative min-h-screen flex items-center justify-center overflow-hidden',
+    children: [
+      e.jsxs('div', {
+        className: 'absolute inset-0',
+        children: [
+          e.jsxs('video', {
+            autoPlay: !0,
+            muted: !0,
+            loop: !0,
+            playsInline: !0,
+            className: 'absolute inset-0 w-full h-full object-cover',
+            poster:
+              'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+            children: [
+              e.jsx('source', {
+                src: 'https://player.vimeo.com/external/370467553.sd.mp4?s=c3a9caa58b9a45d2a21ba5c3be35c2a0dccae44a&profile_id=164&oauth2_token_id=57447761',
+                type: 'video/mp4',
+              }),
+              e.jsx('div', {
+                className: 'absolute inset-0 bg-cover bg-center bg-no-repeat',
+                style: {
+                  backgroundImage:
+                    "url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
+                },
+              }),
+            ],
+          }),
+          e.jsx('div', {
+            className: 'absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/50',
+          }),
+        ],
+      }),
+      e.jsx('div', {
+        className: 'relative z-10 container mx-auto px-4 text-center text-white',
+        children: e.jsxs('div', {
+          className: 'max-w-5xl mx-auto space-y-8',
+          children: [
+            e.jsxs('div', {
+              className: 'flex justify-center items-center gap-6 text-sm text-white/80 mb-6',
+              children: [
+                e.jsxs('div', {
+                  className: 'flex items-center gap-2',
+                  children: [
+                    e.jsx(T, { className: 'w-4 h-4' }),
+                    e.jsx('span', { children: 'Secure Booking' }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  className: 'flex items-center gap-2',
+                  children: [
+                    e.jsx(U, { className: 'w-4 h-4' }),
+                    e.jsx('span', { children: 'Best Price Guarantee' }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  className: 'flex items-center gap-2',
+                  children: [
+                    e.jsx($, { className: 'w-4 h-4' }),
+                    e.jsx('span', { children: 'Instant Confirmation' }),
+                  ],
+                }),
+              ],
+            }),
+            e.jsxs('div', {
+              className: 'space-y-4 md:space-y-6',
+              children: [
+                e.jsxs('h1', {
+                  className:
+                    'text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-tight',
+                  children: [
+                    e.jsx('span', { className: 'block', children: 'Book Your' }),
+                    e.jsx('span', { className: 'block', children: 'Dream Stay' }),
+                    e.jsx('span', {
+                      className:
+                        'block bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl lg:text-6xl mt-2',
+                      children: 'Save 5% on Every Booking',
+                    }),
+                  ],
+                }),
+                e.jsxs('p', {
+                  className:
+                    'text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-medium px-4',
+                  children: [
+                    e.jsx('span', {
+                      className: 'hidden md:inline',
+                      children:
+                        'AI-powered hotel matching • Instant confirmation • Best prices guaranteed',
+                    }),
+                    e.jsx('span', {
+                      className: 'md:hidden',
+                      children: 'Find perfect hotels with AI • Best prices • Instant booking',
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            e.jsx('div', {
+              className: 'max-w-4xl mx-auto',
+              children: e.jsxs('div', {
+                className:
+                  'bg-white/95 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-luxury-xl border border-white/20',
+                children: [
+                  e.jsxs('div', {
+                    className:
+                      'space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4 md:items-end',
+                    children: [
+                      e.jsxs('div', {
+                        className: 'space-y-2 md:col-span-1',
+                        children: [
+                          e.jsx('label', {
+                            htmlFor: 'destination',
+                            className: 'text-sm font-semibold text-gray-700',
+                            children: 'Where to?',
+                          }),
+                          e.jsx('input', {
+                            type: 'text',
+                            id: 'destination',
+                            name: 'destination',
+                            placeholder: 'City, hotel, landmark...',
+                            value: c,
+                            onChange: (s) => i(s.target.value),
+                            autoComplete: 'address-level2',
+                            className:
+                              'w-full p-4 md:p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-700 focus:border-slate-700 text-slate-900 text-lg md:text-base shadow-luxury-sm',
+                          }),
+                        ],
+                      }),
+                      e.jsxs('div', {
+                        className: 'grid grid-cols-2 gap-4 md:contents',
+                        children: [
+                          e.jsxs('div', {
+                            className: 'space-y-2',
+                            children: [
+                              e.jsx('label', {
+                                htmlFor: 'checkin',
+                                className: 'text-sm font-semibold text-gray-700',
+                                children: 'Check-in',
+                              }),
+                              e.jsx('input', {
+                                type: 'date',
+                                id: 'checkin',
+                                name: 'checkin',
+                                value: x,
+                                onChange: (s) => p(s.target.value),
+                                autoComplete: 'checkin',
+                                className:
+                                  'w-full p-4 md:p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-700 focus:border-slate-700 text-slate-900 text-lg md:text-base shadow-luxury-sm',
+                              }),
+                            ],
+                          }),
+                          e.jsxs('div', {
+                            className: 'space-y-2',
+                            children: [
+                              e.jsx('label', {
+                                htmlFor: 'checkout',
+                                className: 'text-sm font-semibold text-gray-700',
+                                children: 'Check-out',
+                              }),
+                              e.jsx('input', {
+                                type: 'date',
+                                id: 'checkout',
+                                name: 'checkout',
+                                value: a,
+                                onChange: (s) => g(s.target.value),
+                                autoComplete: 'checkout',
+                                className:
+                                  'w-full p-4 md:p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-700 focus:border-slate-700 text-slate-900 text-lg md:text-base shadow-luxury-sm',
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                      e.jsx('div', {
+                        className: 'md:col-span-1',
+                        children: e.jsx(N, {
+                          size: 'lg',
+                          variant: 'primary',
+                          onClick: n,
+                          className:
+                            'w-full h-14 md:h-12 text-xl md:text-lg font-bold bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 transition-all duration-300',
+                          children: 'Search Hotels',
+                        }),
+                      }),
+                    ],
+                  }),
+                  e.jsxs('div', {
+                    className: 'mt-6 pt-4 border-t border-gray-200',
+                    children: [
+                      e.jsx('div', {
+                        className: 'text-center mb-3',
+                        children: e.jsx('span', {
+                          className:
+                            'text-sm font-semibold text-gray-600 bg-primary-50 text-primary-700 px-3 py-1 rounded-full',
+                          children: 'Try AI-Powered Search',
+                        }),
+                      }),
+                      e.jsx(K, {
+                        placeholder: "Try: 'Romantic weekend in Paris with spa'",
+                        size: 'md',
+                        className: 'text-center',
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            }),
+            e.jsxs('div', {
+              className: 'flex flex-col sm:flex-row items-center justify-center gap-4',
+              children: [
+                e.jsxs(N, {
+                  size: 'lg',
+                  variant: 'secondary',
+                  className:
+                    'text-white bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20',
+                  children: [e.jsx(W, { className: 'mr-2 h-5 w-5' }), 'Watch Demo'],
+                }),
+                e.jsx(N, {
+                  size: 'lg',
+                  variant: 'outline',
+                  className: 'border-white/30 text-white hover:bg-white/10',
+                  children: 'Browse Destinations',
+                }),
+              ],
+            }),
+            e.jsxs('div', {
+              className:
+                'grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 pt-8 border-t border-white/20',
+              children: [
+                e.jsxs('div', {
+                  className: 'text-center',
+                  children: [
+                    e.jsxs('div', {
+                      className: 'flex items-center justify-center mb-2',
+                      children: [
+                        e.jsx(q, { className: 'h-6 w-6 text-accent mr-2' }),
+                        e.jsx('span', { className: 'text-4xl font-bold', children: '4.9' }),
+                      ],
+                    }),
+                    e.jsx('p', {
+                      className: 'text-white/80 font-medium',
+                      children: 'Customer Rating',
+                    }),
+                    e.jsx('p', {
+                      className: 'text-white/60 text-sm',
+                      children: 'From 50,000+ reviews',
+                    }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  className: 'text-center',
+                  children: [
+                    e.jsxs('div', {
+                      className: 'flex items-center justify-center mb-2',
+                      children: [
+                        e.jsx(O, { className: 'h-6 w-6 text-accent mr-2' }),
+                        e.jsx('span', { className: 'text-4xl font-bold', children: '2M+' }),
+                      ],
+                    }),
+                    e.jsx('p', {
+                      className: 'text-white/80 font-medium',
+                      children: 'Happy Travelers',
+                    }),
+                    e.jsx('p', {
+                      className: 'text-white/60 text-sm',
+                      children: 'Saved $15M+ total',
+                    }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  className: 'text-center',
+                  children: [
+                    e.jsxs('div', {
+                      className: 'flex items-center justify-center mb-2',
+                      children: [
+                        e.jsx(G, { className: 'h-6 w-6 text-accent mr-2' }),
+                        e.jsx('span', { className: 'text-4xl font-bold', children: '50K+' }),
+                      ],
+                    }),
+                    e.jsx('p', {
+                      className: 'text-white/80 font-medium',
+                      children: 'Hotels Worldwide',
+                    }),
+                    e.jsx('p', {
+                      className: 'text-white/60 text-sm',
+                      children: 'In 195 countries',
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+      e.jsx('div', {
+        className: 'absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60',
+        children: e.jsx('div', {
+          className: 'animate-bounce',
+          children: e.jsx('div', {
+            className: 'w-6 h-10 border-2 border-white/30 rounded-full flex justify-center',
+            children: e.jsx('div', {
+              className: 'w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse',
+            }),
+          }),
+        }),
+      }),
+    ],
+  });
+}
+const J = ({
+    destinations: r = [
+      {
+        id: '1',
+        name: 'Paris',
+        country: 'France',
+        image:
+          'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=800&h=500&fit=crop&crop=center',
+        description: 'The City of Light, famous for its iconic landmarks, art, and cuisine.',
+        hotelCount: 1200,
+        averagePrice: 180,
+        popularAttractions: ['Eiffel Tower', 'Louvre Museum', 'Notre-Dame'],
+      },
+      {
+        id: '2',
+        name: 'Tokyo',
+        country: 'Japan',
+        image:
+          'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=500&fit=crop&crop=center',
+        description: 'A vibrant metropolis blending traditional culture with modern innovation.',
+        hotelCount: 800,
+        averagePrice: 220,
+        popularAttractions: ['Tokyo Tower', 'Shibuya Crossing', 'Senso-ji Temple'],
+      },
+      {
+        id: '3',
+        name: 'New York',
+        country: 'USA',
+        image:
+          'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=500&fit=crop&crop=center',
+        description: 'The city that never sleeps, offering endless entertainment and culture.',
+        hotelCount: 950,
+        averagePrice: 280,
+        popularAttractions: ['Times Square', 'Central Park', 'Statue of Liberty'],
+      },
+      {
+        id: '4',
+        name: 'Bali',
+        country: 'Indonesia',
+        image:
+          'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=800&h=500&fit=crop&crop=center',
+        description: 'Tropical paradise with stunning beaches, temples, and rice terraces.',
+        hotelCount: 600,
+        averagePrice: 120,
+        popularAttractions: ['Uluwatu Temple', 'Rice Terraces', 'Mount Batur'],
+      },
+      {
+        id: '5',
+        name: 'Rome',
+        country: 'Italy',
+        image:
+          'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&h=500&fit=crop&crop=center',
+        description: 'The Eternal City, home to ancient history and incredible architecture.',
+        hotelCount: 750,
+        averagePrice: 160,
+        popularAttractions: ['Colosseum', 'Vatican City', 'Trevi Fountain'],
+      },
+      {
+        id: '6',
+        name: 'Dubai',
+        country: 'UAE',
+        image:
+          'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=500&fit=crop&crop=center',
+        description: 'A modern oasis of luxury, shopping, and architectural marvels.',
+        hotelCount: 400,
+        averagePrice: 250,
+        popularAttractions: ['Burj Khalifa', 'Palm Jumeirah', 'Dubai Mall'],
+      },
+    ],
+    onDestinationSelect: h,
+    className: l = '',
+  }) =>
+    e.jsx('section', {
+      className: `py-12 ${l}`,
+      children: e.jsxs('div', {
+        className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
+        children: [
+          e.jsxs('div', {
+            className: 'text-center mb-12',
+            children: [
+              e.jsx('h2', {
+                className: 'text-3xl font-bold text-gray-900 mb-4',
+                children: 'Featured Destinations',
+              }),
+              e.jsx('p', {
+                className: 'text-lg text-gray-600 max-w-2xl mx-auto',
+                children:
+                  'Discover amazing places around the world and find the perfect hotel for your next adventure.',
+              }),
+            ],
+          }),
+          e.jsx('div', {
+            className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8',
+            children: r.map((t) =>
+              e.jsx(
+                'div',
+                {
+                  className:
+                    'group cursor-pointer transform transition-all duration-300 hover:scale-105',
+                  onClick: () => h && h(t),
+                  children: e.jsxs('div', {
+                    className: 'bg-white rounded-xl shadow-lg overflow-hidden',
+                    children: [
+                      e.jsxs('div', {
+                        className: 'relative',
+                        children: [
+                          e.jsx('img', {
+                            src: t.image,
+                            alt: t.name,
+                            className:
+                              'w-full h-48 object-cover group-hover:brightness-110 transition-all duration-300',
+                            loading: 'eager',
+                          }),
+                          e.jsx('div', {
+                            className:
+                              'absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-full px-3 py-1',
+                            children: e.jsxs('span', {
+                              className: 'text-sm font-semibold text-gray-800',
+                              children: ['$', t.averagePrice, '/night'],
+                            }),
+                          }),
+                        ],
+                      }),
+                      e.jsxs('div', {
+                        className: 'p-6',
+                        children: [
+                          e.jsxs('div', {
+                            className: 'flex justify-between items-start mb-3',
+                            children: [
+                              e.jsxs('div', {
+                                children: [
+                                  e.jsx('h3', {
+                                    className:
+                                      'text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors',
+                                    children: t.name,
+                                  }),
+                                  e.jsx('p', { className: 'text-gray-600', children: t.country }),
+                                ],
+                              }),
+                              e.jsx('div', {
+                                className: 'text-right',
+                                children: e.jsxs('div', {
+                                  className: 'text-sm text-gray-500',
+                                  children: [t.hotelCount, ' hotels'],
+                                }),
+                              }),
+                            ],
+                          }),
+                          e.jsx('p', {
+                            className: 'text-gray-700 text-sm mb-4 line-clamp-2',
+                            children: t.description,
+                          }),
+                          e.jsxs('div', {
+                            className: 'space-y-2',
+                            children: [
+                              e.jsx('h4', {
+                                className: 'text-sm font-semibold text-gray-800',
+                                children: 'Popular Attractions:',
+                              }),
+                              e.jsxs('div', {
+                                className: 'flex flex-wrap gap-2',
+                                children: [
+                                  t.popularAttractions
+                                    .slice(0, 2)
+                                    .map((c, i) =>
+                                      e.jsx(
+                                        'span',
+                                        {
+                                          className:
+                                            'px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full',
+                                          children: c,
+                                        },
+                                        i,
+                                      ),
+                                    ),
+                                  t.popularAttractions.length > 2 &&
+                                    e.jsxs('span', {
+                                      className:
+                                        'px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full',
+                                      children: ['+', t.popularAttractions.length - 2, ' more'],
+                                    }),
+                                ],
+                              }),
+                            ],
+                          }),
+                          e.jsx('div', {
+                            className: 'mt-4 pt-4 border-t border-gray-200',
+                            children: e.jsx('button', {
+                              className:
+                                'w-full text-center text-blue-600 font-medium hover:text-blue-800 transition-colors',
+                              children: 'Explore Hotels →',
+                            }),
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                },
+                t.id,
+              ),
+            ),
+          }),
+          e.jsx('div', {
+            className: 'text-center mt-12',
+            children: e.jsx('button', {
+              className:
+                'px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium',
+              children: 'View All Destinations',
+            }),
+          }),
+        ],
+      }),
+    }),
+  X = ({
+    selectedPassions: r = [],
+    onPassionToggle: h,
+    onApplyPassions: l,
+    isVisible: t = !0,
+    className: c = '',
+  }) => {
+    const [i, x] = y.useState(r),
+      p = [
+        {
+          id: 'culinary-excellence',
+          name: 'Culinary Excellence',
+          description: 'Michelin-starred dining, wine tastings, and gourmet experiences',
+          icon: 'utensils',
+          keywords: ['michelin', 'fine-dining', 'sommelier', 'gourmet', 'chef', 'culinary'],
+          color: 'from-amber-600 to-amber-800 text-white',
+          image:
+            'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop',
+        },
+        {
+          id: 'wellness-sanctuary',
+          name: 'Wellness Sanctuary',
+          description: 'World-class spas, meditation retreats, and holistic wellness',
+          icon: 'sparkles',
+          keywords: ['spa', 'wellness', 'meditation', 'yoga', 'holistic', 'retreat'],
+          color: 'from-emerald-600 to-emerald-800 text-white',
+          image: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=800&h=600&fit=crop',
+        },
+        {
+          id: 'cultural-immersion',
+          name: 'Cultural Immersion',
+          description: 'Historic landmarks, world-class museums, and artistic heritage',
+          icon: 'building2',
+          keywords: ['museum', 'culture', 'heritage', 'art', 'history', 'landmarks'],
+          color: 'from-purple-600 to-purple-800 text-white',
+          image: 'https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=800&h=600&fit=crop',
+        },
+        {
+          id: 'adventure-escapes',
+          name: 'Adventure Escapes',
+          description: 'Exclusive outdoor experiences and luxury adventure activities',
+          icon: 'mountain',
+          keywords: ['adventure', 'outdoor', 'exclusive', 'nature', 'activities', 'luxury'],
+          color: 'from-teal-600 to-teal-800 text-white',
+          image:
+            'https://images.unsplash.com/photo-1517021897933-0e0319cfbc28?w=800&h=600&fit=crop',
+        },
+        {
+          id: 'business-elite',
+          name: 'Business Elite',
+          description: 'Executive lounges, conference facilities, and premium business services',
+          icon: 'briefcase',
+          keywords: ['executive', 'business', 'conference', 'premium', 'corporate', 'luxury'],
+          color: 'from-slate-700 to-slate-900 text-white',
+          image:
+            'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop',
+        },
+        {
+          id: 'family-luxury',
+          name: 'Family Luxury',
+          description: 'Premium family suites, kids clubs, and sophisticated family experiences',
+          icon: 'users2',
+          keywords: ['family', 'premium', 'kids-club', 'suites', 'luxury', 'experiences'],
+          color: 'from-orange-600 to-orange-800 text-white',
+          image:
+            'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=800&h=600&fit=crop',
+        },
+        {
+          id: 'romantic-elegance',
+          name: 'Romantic Elegance',
+          description: 'Private villas, couples spa treatments, and intimate luxury settings',
+          icon: 'heart',
+          keywords: ['romantic', 'couples', 'private', 'intimate', 'luxury', 'villas'],
+          color: 'from-rose-600 to-rose-800 text-white',
+          image:
+            'https://images.unsplash.com/photo-1502301103665-0b95cc738daf?w=800&h=600&fit=crop',
+        },
+      ],
+      a = (s) => {
+        const m = i.includes(s) ? i.filter((f) => f !== s) : [...i, s];
+        (x(m), h && h(s));
+      },
+      g = () => {
+        l && l(i);
+      },
+      n = () => {
+        x([]);
+      };
+    return t
+      ? e.jsxs('section', {
+          className: `relative bg-gradient-to-br from-slate-50 via-white to-amber-50/30 py-20 overflow-hidden ${c}`,
+          children: [
+            e.jsxs('div', {
+              className: 'absolute inset-0 opacity-30',
+              children: [
+                e.jsx('div', {
+                  className:
+                    'absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-amber-200/20 to-transparent rounded-full blur-3xl',
+                }),
+                e.jsx('div', {
+                  className:
+                    'absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-slate-200/20 to-transparent rounded-full blur-3xl',
+                }),
+                e.jsx('div', {
+                  className:
+                    'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-amber-100/10 via-transparent to-slate-100/10 rounded-full blur-3xl',
+                }),
+              ],
+            }),
+            e.jsxs('div', {
+              className: 'relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8',
+              children: [
+                e.jsxs('div', {
+                  className: 'text-center mb-12',
+                  children: [
+                    e.jsx('h2', {
+                      className:
+                        'text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-6',
+                      children: 'Discover Your Travel Passion',
+                    }),
+                    e.jsx('p', {
+                      className: 'text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed',
+                      children:
+                        "Experience personalized luxury. Select your travel passions and we'll curate hotels that match your sophisticated preferences.",
+                    }),
+                  ],
+                }),
+                e.jsx('div', {
+                  className:
+                    'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 max-w-7xl mx-auto',
+                  children: p.map((s) => {
+                    const m = i.includes(s.id),
+                      f =
+                        {
+                          utensils: j,
+                          sparkles: R,
+                          building2: L,
+                          mountain: D,
+                          briefcase: A,
+                          users2: B,
+                          heart: P,
+                        }[s.icon] || j;
+                    return e.jsxs(
+                      'div',
+                      {
+                        onClick: () => a(s.id),
+                        className: `
                   relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-500 hover:scale-105 group h-96
-                  ${m?"shadow-luxury-xl transform scale-105 ring-2 ring-amber-300/50":"shadow-luxury hover:shadow-luxury-lg"}
-                `,children:[e.jsx("div",{className:"absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110",style:{backgroundImage:`url(${s.image})`},children:e.jsx("img",{src:s.image,alt:s.name,className:"w-full h-full object-cover opacity-0",onError:b=>{b.target.style.display="none"}})}),e.jsx("div",{className:`absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 ${m?"opacity-90":"opacity-80"} transition-opacity duration-500 group-hover:opacity-70`}),e.jsx("div",{className:`absolute inset-0 bg-gradient-to-br ${s.color} ${m?"opacity-40":"opacity-0"} transition-opacity duration-500`}),e.jsxs("div",{className:"relative p-6 h-full flex flex-col",children:[m&&e.jsx("div",{className:"absolute top-4 right-4 z-10",children:e.jsx("div",{className:"w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center",children:e.jsx("svg",{className:"w-5 h-5 text-white",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z",clipRule:"evenodd"})})})}),e.jsx("div",{className:"flex-1"}),e.jsxs("div",{className:"text-center",children:[e.jsx("div",{className:`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all duration-500 backdrop-blur-md ${m?"bg-white/30 ring-2 ring-white/50":"bg-white/20 group-hover:bg-white/30 ring-2 ring-white/30"}`,children:e.jsx(f,{className:"w-8 h-8 transition-colors duration-500 text-white drop-shadow-lg"})}),e.jsx("h3",{className:"text-xl font-bold mb-3 transition-colors duration-500 text-white drop-shadow-lg px-2",children:s.name}),e.jsx("p",{className:"text-sm leading-relaxed transition-colors duration-500 text-white/95 drop-shadow-md px-2 mb-4",children:s.description}),e.jsx("div",{className:"flex flex-wrap gap-2 justify-center",children:s.keywords.slice(0,3).map((b,o)=>e.jsx("span",{className:`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-500 backdrop-blur-md ${m?"bg-white/30 text-white border border-white/50":"bg-white/20 text-white border border-white/30 group-hover:bg-white/30"}`,children:b},o))})]}),e.jsx("div",{className:"flex-1"})]})]},s.id)})}),e.jsx("div",{className:"bg-gradient-to-r from-white/80 via-white/90 to-white/80 backdrop-blur-sm rounded-3xl p-8 border border-white/50 shadow-luxury-lg",children:e.jsxs("div",{className:"flex flex-col items-center gap-6",children:[e.jsxs("div",{className:"text-center",children:[e.jsxs("div",{className:"flex items-center justify-center gap-3 mb-4",children:[e.jsx("div",{className:`w-3 h-3 rounded-full transition-colors duration-300 ${i.length>0?"bg-slate-600":"bg-slate-300"}`}),e.jsxs("p",{className:"text-xl font-semibold text-slate-800",children:[e.jsx("span",{className:"text-2xl text-slate-700 font-bold",children:i.length})," passion",i.length!==1?"s":""," selected"]}),e.jsx("div",{className:`w-3 h-3 rounded-full transition-colors duration-300 ${i.length>0?"bg-slate-600":"bg-slate-300"}`})]}),i.length>0&&e.jsx("button",{onClick:n,className:"text-slate-500 hover:text-slate-700 transition-colors font-medium underline underline-offset-2 hover:underline-offset-4",children:"Clear all selections"})]}),e.jsx("div",{className:"flex gap-4",children:e.jsx("button",{onClick:g,disabled:i.length===0,className:"px-10 py-4 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 font-bold text-lg shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 disabled:transform-none disabled:hover:shadow-luxury-lg min-w-[280px]",children:e.jsxs("span",{className:"flex items-center justify-center gap-2",children:[e.jsx("svg",{className:"w-5 h-5",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z",clipRule:"evenodd"})}),"Discover Luxury Hotels"]})})})]})}),i.length>0&&e.jsxs("div",{className:"mt-12 p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-luxury-lg border border-slate-200/50",children:[e.jsx("h4",{className:"text-xl font-bold text-slate-900 mb-4 text-center",children:"Your Luxury Travel Preferences"}),e.jsx("div",{className:"flex flex-wrap gap-3 justify-center",children:i.map(s=>{const m=p.find(b=>b.id===s),f=m?{utensils:j,sparkles:R,building2:L,mountain:D,briefcase:A,users2:B,heart:P}[m.icon]||j:j;return m?e.jsxs("span",{className:`inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r ${m.color} shadow-luxury-sm hover:shadow-luxury transition-all duration-300`,children:[e.jsx(f,{className:"w-4 h-4 mr-2"}),m.name,e.jsx("button",{onClick:b=>{b.stopPropagation(),a(s)},className:"ml-3 hover:bg-white/20 rounded-full p-1 transition-colors duration-200",children:e.jsx("svg",{className:"w-3 h-3",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z",clipRule:"evenodd"})})})]},s):null})})]})]})]}):null},Z=({testimonials:r=[{id:"1",name:"Sarah Johnson",location:"New York, USA",avatar:"https://images.unsplash.com/photo-1494790108755-2616b612b93c?w=200&h=200&fit=crop&crop=face",rating:5,review:"Amazing experience! The hotel recommendation was perfect for our honeymoon. The booking process was so smooth and the customer service was exceptional.",hotelStayed:"Grand Palace Resort, Bali",hotelImage:"https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop",dateStayed:"March 2024",verified:!0},{id:"2",name:"Michael Chen",location:"Toronto, Canada",avatar:"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",rating:5,review:"I travel frequently for business and this platform has become my go-to for hotel bookings. Great prices, excellent selection, and reliable service.",hotelStayed:"Business Tower Hotel, Tokyo",hotelImage:"https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=400&h=300&fit=crop",dateStayed:"February 2024",verified:!0},{id:"3",name:"Emma Rodriguez",location:"Madrid, Spain",avatar:"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",rating:4,review:"The passion-based hotel matching feature is brilliant! It found exactly the type of boutique hotel I was looking for in Paris. Highly recommend!",hotelStayed:"Le Petit Boutique, Paris",hotelImage:"https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop",dateStayed:"January 2024",verified:!0},{id:"4",name:"David Kim",location:"Seoul, South Korea",avatar:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",rating:5,review:"Fantastic platform with great user experience. The AI-powered search understood exactly what I was looking for. Will definitely use again!",hotelStayed:"Luxury Suites Dubai",hotelImage:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop",dateStayed:"December 2023",verified:!0},{id:"5",name:"Lisa Thompson",location:"London, UK",avatar:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",rating:5,review:"Best hotel booking experience ever! The personalized recommendations were spot-on, and the whole family loved our vacation resort.",hotelStayed:"Tropical Paradise Resort, Maldives",hotelImage:"https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop",dateStayed:"November 2023",verified:!0}],autoSlide:h=!1,className:l=""})=>{const[t,c]=y.useState(0),i=()=>{c(a=>a===r.length-1?0:a+1)},x=()=>{c(a=>a===0?r.length-1:a-1)},p=a=>[...Array(5)].map((g,n)=>e.jsx("svg",{className:`w-4 h-4 ${n<a?"text-yellow-400":"text-gray-300"}`,fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{d:"M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"})},n));return e.jsx("section",{className:`py-20 bg-gradient-to-b from-white to-gray-50 ${l}`,children:e.jsxs("div",{className:"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",children:[e.jsx("div",{className:"bg-white rounded-2xl shadow-lg p-6 mb-16",children:e.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-4 gap-6 text-center",children:[e.jsxs("div",{children:[e.jsx("div",{className:"text-3xl font-bold text-primary mb-1",children:"4.9/5"}),e.jsx("div",{className:"text-sm text-gray-600",children:"Average Rating"}),e.jsx("div",{className:"text-xs text-gray-500",children:"50,000+ reviews"})]}),e.jsxs("div",{children:[e.jsx("div",{className:"text-3xl font-bold text-accent mb-1",children:"2M+"}),e.jsx("div",{className:"text-sm text-gray-600",children:"Happy Travelers"}),e.jsx("div",{className:"text-xs text-gray-500",children:"Trusted worldwide"})]}),e.jsxs("div",{children:[e.jsx("div",{className:"text-3xl font-bold text-blue-600 mb-1",children:"99.9%"}),e.jsx("div",{className:"text-sm text-gray-600",children:"Booking Success"}),e.jsx("div",{className:"text-xs text-gray-500",children:"Instant confirmation"})]}),e.jsxs("div",{children:[e.jsx("div",{className:"text-3xl font-bold text-green-600 mb-1",children:"$15M+"}),e.jsx("div",{className:"text-sm text-gray-600",children:"Total Savings"}),e.jsx("div",{className:"text-xs text-gray-500",children:"For our customers"})]})]})}),e.jsxs("div",{className:"text-center mb-12",children:[e.jsxs("div",{className:"inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full text-sm font-semibold mb-4",children:[e.jsx("svg",{className:"w-4 h-4",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",clipRule:"evenodd"})}),"Featured Customer Stories"]}),e.jsx("h2",{className:"text-4xl md:text-5xl font-bold text-gray-900 mb-6",children:"Real Stories from Real Travelers"}),e.jsx("p",{className:"text-xl text-gray-600 max-w-3xl mx-auto",children:"See why millions choose Vibe Booking for their perfect hotel experience"})]}),e.jsx("div",{className:"hidden lg:grid lg:grid-cols-3 gap-8",children:r.slice(0,3).map((a,g)=>e.jsx("div",{className:"group",children:e.jsxs("div",{className:"bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden border-2 border-transparent hover:border-primary-200",children:[a.hotelImage&&e.jsxs("div",{className:"relative h-48 -mx-px -mt-px mb-6",children:[e.jsx(S,{src:a.hotelImage,alt:a.hotelStayed,className:"w-full h-full rounded-t-2xl",aspectRatio:"2/1",objectFit:"cover",sizes:"(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",fallbackSrc:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop"}),e.jsx("div",{className:"absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-t-2xl"}),e.jsxs("div",{className:"absolute bottom-4 left-6 right-6 text-white",children:[e.jsx("p",{className:"font-bold text-lg drop-shadow-lg",children:a.hotelStayed}),e.jsx("p",{className:"text-sm opacity-90",children:a.dateStayed})]}),g===0&&e.jsx("div",{className:"absolute top-4 right-4 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold",children:"Featured Story"})]}),e.jsxs("div",{className:"px-8 pb-8",children:[e.jsx("div",{className:"flex items-center justify-center mb-6",children:e.jsxs("div",{className:"flex items-center gap-1 bg-yellow-50 px-4 py-2 rounded-full",children:[p(a.rating),e.jsxs("span",{className:"ml-2 text-lg font-bold text-yellow-600",children:[a.rating,".0"]})]})}),e.jsxs("blockquote",{className:"text-gray-700 mb-6 text-base leading-relaxed text-center italic",children:['"',a.review,'"']}),e.jsxs("div",{className:"flex items-center",children:[e.jsx(S,{src:a.avatar,alt:a.name,className:"w-14 h-14 rounded-full mr-4 ring-2 ring-primary-100",width:56,height:56,objectFit:"cover",priority:!0,fallbackSrc:"https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face"}),e.jsxs("div",{className:"flex-1",children:[e.jsx("h4",{className:"font-bold text-gray-900",children:a.name}),e.jsx("p",{className:"text-sm text-gray-600",children:a.location}),a.verified&&e.jsx("div",{className:"mt-1",children:e.jsxs("span",{className:"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800",children:[e.jsx("svg",{className:"w-3 h-3 mr-1",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",clipRule:"evenodd"})}),"Verified Booking"]})})]})]})]}),e.jsx("div",{className:"absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"})]})},a.id))}),e.jsxs("div",{className:"lg:hidden",children:[e.jsxs("div",{className:"relative",children:[e.jsxs("div",{className:"bg-white rounded-xl shadow-lg overflow-hidden mx-4",children:[r[t].hotelImage&&e.jsxs("div",{className:"relative h-40",children:[e.jsx(S,{src:r[t].hotelImage,alt:r[t].hotelStayed,className:"w-full h-full",aspectRatio:"2/1",objectFit:"cover",priority:!0,fallbackSrc:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop"}),e.jsx("div",{className:"absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"}),e.jsxs("div",{className:"absolute bottom-3 left-4 right-4 text-white",children:[e.jsx("p",{className:"font-bold text-base drop-shadow-lg",children:r[t].hotelStayed}),e.jsx("p",{className:"text-xs opacity-90",children:r[t].dateStayed})]})]}),e.jsxs("div",{className:"p-6",children:[e.jsxs("div",{className:"flex items-center mb-4",children:[e.jsx(S,{src:r[t].avatar,alt:r[t].name,className:"w-12 h-12 rounded-full mr-4",width:48,height:48,objectFit:"cover",priority:!0,fallbackSrc:"https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face"}),e.jsxs("div",{children:[e.jsx("h4",{className:"font-semibold text-gray-900",children:r[t].name}),e.jsx("p",{className:"text-sm text-gray-600",children:r[t].location})]}),r[t].verified&&e.jsx("div",{className:"ml-auto",children:e.jsxs("span",{className:"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800",children:[e.jsx("svg",{className:"w-3 h-3 mr-1",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",clipRule:"evenodd"})}),"Verified"]})})]}),e.jsxs("div",{className:"flex items-center mb-3",children:[p(r[t].rating),e.jsxs("span",{className:"ml-2 text-sm text-gray-600",children:[r[t].rating,".0"]})]}),e.jsxs("blockquote",{className:"text-gray-700 italic",children:['"',r[t].review,'"']})]})]}),e.jsx("button",{onClick:x,className:"absolute left-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50",children:e.jsx("svg",{className:"w-5 h-5 text-gray-600",fill:"none",stroke:"currentColor",viewBox:"0 0 24 24",children:e.jsx("path",{strokeLinecap:"round",strokeLinejoin:"round",strokeWidth:2,d:"M15 19l-7-7 7-7"})})}),e.jsx("button",{onClick:i,className:"absolute right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50",children:e.jsx("svg",{className:"w-5 h-5 text-gray-600",fill:"none",stroke:"currentColor",viewBox:"0 0 24 24",children:e.jsx("path",{strokeLinecap:"round",strokeLinejoin:"round",strokeWidth:2,d:"M9 5l7 7-7 7"})})})]}),e.jsx("div",{className:"flex justify-center mt-6 space-x-2",children:r.map((a,g)=>e.jsx("button",{onClick:()=>c(g),className:`w-2 h-2 rounded-full transition-colors ${g===t?"bg-blue-600":"bg-gray-300"}`},g))})]}),e.jsx("div",{className:"mt-16",children:e.jsxs("div",{className:"bg-gradient-to-r from-primary to-primary-600 rounded-3xl p-8 md:p-12 text-center text-white relative overflow-hidden",children:[e.jsx("div",{className:"absolute inset-0 bg-white/5 opacity-10",children:e.jsx("div",{className:"absolute inset-0 bg-repeat bg-center",style:{backgroundImage:`url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,backgroundSize:"60px 60px"}})}),e.jsxs("div",{className:"relative z-10 max-w-4xl mx-auto",children:[e.jsx("h3",{className:"text-3xl md:text-4xl font-bold mb-4",children:"Ready to Find Your Perfect Hotel?"}),e.jsx("p",{className:"text-xl text-white/90 mb-2",children:"Join 2M+ travelers who saved money and found amazing stays"}),e.jsx("p",{className:"text-white/80 mb-8",children:"• Free cancellation on most bookings • Best price guarantee • Instant confirmation"}),e.jsxs("div",{className:"flex flex-col sm:flex-row gap-4 justify-center items-center",children:[e.jsx("button",{className:"bg-white text-primary font-bold py-4 px-8 rounded-xl hover:bg-gray-50 transition-all transform hover:scale-105 shadow-lg text-lg",children:"Start Booking Now"}),e.jsx("button",{className:"border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl hover:bg-white/10 transition-all",children:"Browse Deals"})]}),e.jsxs("div",{className:"flex flex-wrap justify-center items-center gap-6 mt-8 text-sm text-white/80",children:[e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx("svg",{className:"w-4 h-4",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",clipRule:"evenodd"})}),"SSL Secured"]}),e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx("svg",{className:"w-4 h-4",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",clipRule:"evenodd"})}),"24/7 Support"]}),e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx("svg",{className:"w-4 h-4",fill:"currentColor",viewBox:"0 0 20 20",children:e.jsx("path",{fillRule:"evenodd",d:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",clipRule:"evenodd"})}),"No Hidden Fees"]})]})]})]})})]})})};function re(){return e.jsxs("div",{className:"space-y-0",children:[e.jsx(Q,{}),e.jsx(X,{}),e.jsx(J,{}),e.jsx(Z,{})]})}export{re as HomePage};
+                  ${m ? 'shadow-luxury-xl transform scale-105 ring-2 ring-amber-300/50' : 'shadow-luxury hover:shadow-luxury-lg'}
+                `,
+                        children: [
+                          e.jsx('div', {
+                            className:
+                              'absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110',
+                            style: { backgroundImage: `url(${s.image})` },
+                            children: e.jsx('img', {
+                              src: s.image,
+                              alt: s.name,
+                              className: 'w-full h-full object-cover opacity-0',
+                              onError: (b) => {
+                                b.target.style.display = 'none';
+                              },
+                            }),
+                          }),
+                          e.jsx('div', {
+                            className: `absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 ${m ? 'opacity-90' : 'opacity-80'} transition-opacity duration-500 group-hover:opacity-70`,
+                          }),
+                          e.jsx('div', {
+                            className: `absolute inset-0 bg-gradient-to-br ${s.color} ${m ? 'opacity-40' : 'opacity-0'} transition-opacity duration-500`,
+                          }),
+                          e.jsxs('div', {
+                            className: 'relative p-6 h-full flex flex-col',
+                            children: [
+                              m &&
+                                e.jsx('div', {
+                                  className: 'absolute top-4 right-4 z-10',
+                                  children: e.jsx('div', {
+                                    className:
+                                      'w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center',
+                                    children: e.jsx('svg', {
+                                      className: 'w-5 h-5 text-white',
+                                      fill: 'currentColor',
+                                      viewBox: '0 0 20 20',
+                                      children: e.jsx('path', {
+                                        fillRule: 'evenodd',
+                                        d: 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z',
+                                        clipRule: 'evenodd',
+                                      }),
+                                    }),
+                                  }),
+                                }),
+                              e.jsx('div', { className: 'flex-1' }),
+                              e.jsxs('div', {
+                                className: 'text-center',
+                                children: [
+                                  e.jsx('div', {
+                                    className: `w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all duration-500 backdrop-blur-md ${m ? 'bg-white/30 ring-2 ring-white/50' : 'bg-white/20 group-hover:bg-white/30 ring-2 ring-white/30'}`,
+                                    children: e.jsx(f, {
+                                      className:
+                                        'w-8 h-8 transition-colors duration-500 text-white drop-shadow-lg',
+                                    }),
+                                  }),
+                                  e.jsx('h3', {
+                                    className:
+                                      'text-xl font-bold mb-3 transition-colors duration-500 text-white drop-shadow-lg px-2',
+                                    children: s.name,
+                                  }),
+                                  e.jsx('p', {
+                                    className:
+                                      'text-sm leading-relaxed transition-colors duration-500 text-white/95 drop-shadow-md px-2 mb-4',
+                                    children: s.description,
+                                  }),
+                                  e.jsx('div', {
+                                    className: 'flex flex-wrap gap-2 justify-center',
+                                    children: s.keywords
+                                      .slice(0, 3)
+                                      .map((b, o) =>
+                                        e.jsx(
+                                          'span',
+                                          {
+                                            className: `px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-500 backdrop-blur-md ${m ? 'bg-white/30 text-white border border-white/50' : 'bg-white/20 text-white border border-white/30 group-hover:bg-white/30'}`,
+                                            children: b,
+                                          },
+                                          o,
+                                        ),
+                                      ),
+                                  }),
+                                ],
+                              }),
+                              e.jsx('div', { className: 'flex-1' }),
+                            ],
+                          }),
+                        ],
+                      },
+                      s.id,
+                    );
+                  }),
+                }),
+                e.jsx('div', {
+                  className:
+                    'bg-gradient-to-r from-white/80 via-white/90 to-white/80 backdrop-blur-sm rounded-3xl p-8 border border-white/50 shadow-luxury-lg',
+                  children: e.jsxs('div', {
+                    className: 'flex flex-col items-center gap-6',
+                    children: [
+                      e.jsxs('div', {
+                        className: 'text-center',
+                        children: [
+                          e.jsxs('div', {
+                            className: 'flex items-center justify-center gap-3 mb-4',
+                            children: [
+                              e.jsx('div', {
+                                className: `w-3 h-3 rounded-full transition-colors duration-300 ${i.length > 0 ? 'bg-slate-600' : 'bg-slate-300'}`,
+                              }),
+                              e.jsxs('p', {
+                                className: 'text-xl font-semibold text-slate-800',
+                                children: [
+                                  e.jsx('span', {
+                                    className: 'text-2xl text-slate-700 font-bold',
+                                    children: i.length,
+                                  }),
+                                  ' passion',
+                                  i.length !== 1 ? 's' : '',
+                                  ' selected',
+                                ],
+                              }),
+                              e.jsx('div', {
+                                className: `w-3 h-3 rounded-full transition-colors duration-300 ${i.length > 0 ? 'bg-slate-600' : 'bg-slate-300'}`,
+                              }),
+                            ],
+                          }),
+                          i.length > 0 &&
+                            e.jsx('button', {
+                              onClick: n,
+                              className:
+                                'text-slate-500 hover:text-slate-700 transition-colors font-medium underline underline-offset-2 hover:underline-offset-4',
+                              children: 'Clear all selections',
+                            }),
+                        ],
+                      }),
+                      e.jsx('div', {
+                        className: 'flex gap-4',
+                        children: e.jsx('button', {
+                          onClick: g,
+                          disabled: i.length === 0,
+                          className:
+                            'px-10 py-4 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 font-bold text-lg shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 disabled:transform-none disabled:hover:shadow-luxury-lg min-w-[280px]',
+                          children: e.jsxs('span', {
+                            className: 'flex items-center justify-center gap-2',
+                            children: [
+                              e.jsx('svg', {
+                                className: 'w-5 h-5',
+                                fill: 'currentColor',
+                                viewBox: '0 0 20 20',
+                                children: e.jsx('path', {
+                                  fillRule: 'evenodd',
+                                  d: 'M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z',
+                                  clipRule: 'evenodd',
+                                }),
+                              }),
+                              'Discover Luxury Hotels',
+                            ],
+                          }),
+                        }),
+                      }),
+                    ],
+                  }),
+                }),
+                i.length > 0 &&
+                  e.jsxs('div', {
+                    className:
+                      'mt-12 p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-luxury-lg border border-slate-200/50',
+                    children: [
+                      e.jsx('h4', {
+                        className: 'text-xl font-bold text-slate-900 mb-4 text-center',
+                        children: 'Your Luxury Travel Preferences',
+                      }),
+                      e.jsx('div', {
+                        className: 'flex flex-wrap gap-3 justify-center',
+                        children: i.map((s) => {
+                          const m = p.find((b) => b.id === s),
+                            f = m
+                              ? {
+                                  utensils: j,
+                                  sparkles: R,
+                                  building2: L,
+                                  mountain: D,
+                                  briefcase: A,
+                                  users2: B,
+                                  heart: P,
+                                }[m.icon] || j
+                              : j;
+                          return m
+                            ? e.jsxs(
+                                'span',
+                                {
+                                  className: `inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r ${m.color} shadow-luxury-sm hover:shadow-luxury transition-all duration-300`,
+                                  children: [
+                                    e.jsx(f, { className: 'w-4 h-4 mr-2' }),
+                                    m.name,
+                                    e.jsx('button', {
+                                      onClick: (b) => {
+                                        (b.stopPropagation(), a(s));
+                                      },
+                                      className:
+                                        'ml-3 hover:bg-white/20 rounded-full p-1 transition-colors duration-200',
+                                      children: e.jsx('svg', {
+                                        className: 'w-3 h-3',
+                                        fill: 'currentColor',
+                                        viewBox: '0 0 20 20',
+                                        children: e.jsx('path', {
+                                          fillRule: 'evenodd',
+                                          d: 'M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z',
+                                          clipRule: 'evenodd',
+                                        }),
+                                      }),
+                                    }),
+                                  ],
+                                },
+                                s,
+                              )
+                            : null;
+                        }),
+                      }),
+                    ],
+                  }),
+              ],
+            }),
+          ],
+        })
+      : null;
+  },
+  Z = ({
+    testimonials: r = [
+      {
+        id: '1',
+        name: 'Sarah Johnson',
+        location: 'New York, USA',
+        avatar:
+          'https://images.unsplash.com/photo-1494790108755-2616b612b93c?w=200&h=200&fit=crop&crop=face',
+        rating: 5,
+        review:
+          'Amazing experience! The hotel recommendation was perfect for our honeymoon. The booking process was so smooth and the customer service was exceptional.',
+        hotelStayed: 'Grand Palace Resort, Bali',
+        hotelImage:
+          'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop',
+        dateStayed: 'March 2024',
+        verified: !0,
+      },
+      {
+        id: '2',
+        name: 'Michael Chen',
+        location: 'Toronto, Canada',
+        avatar:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
+        rating: 5,
+        review:
+          'I travel frequently for business and this platform has become my go-to for hotel bookings. Great prices, excellent selection, and reliable service.',
+        hotelStayed: 'Business Tower Hotel, Tokyo',
+        hotelImage:
+          'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=400&h=300&fit=crop',
+        dateStayed: 'February 2024',
+        verified: !0,
+      },
+      {
+        id: '3',
+        name: 'Emma Rodriguez',
+        location: 'Madrid, Spain',
+        avatar:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+        rating: 4,
+        review:
+          'The passion-based hotel matching feature is brilliant! It found exactly the type of boutique hotel I was looking for in Paris. Highly recommend!',
+        hotelStayed: 'Le Petit Boutique, Paris',
+        hotelImage:
+          'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop',
+        dateStayed: 'January 2024',
+        verified: !0,
+      },
+      {
+        id: '4',
+        name: 'David Kim',
+        location: 'Seoul, South Korea',
+        avatar:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+        rating: 5,
+        review:
+          'Fantastic platform with great user experience. The AI-powered search understood exactly what I was looking for. Will definitely use again!',
+        hotelStayed: 'Luxury Suites Dubai',
+        hotelImage:
+          'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
+        dateStayed: 'December 2023',
+        verified: !0,
+      },
+      {
+        id: '5',
+        name: 'Lisa Thompson',
+        location: 'London, UK',
+        avatar:
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face',
+        rating: 5,
+        review:
+          'Best hotel booking experience ever! The personalized recommendations were spot-on, and the whole family loved our vacation resort.',
+        hotelStayed: 'Tropical Paradise Resort, Maldives',
+        hotelImage:
+          'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop',
+        dateStayed: 'November 2023',
+        verified: !0,
+      },
+    ],
+    autoSlide: h = !1,
+    className: l = '',
+  }) => {
+    const [t, c] = y.useState(0),
+      i = () => {
+        c((a) => (a === r.length - 1 ? 0 : a + 1));
+      },
+      x = () => {
+        c((a) => (a === 0 ? r.length - 1 : a - 1));
+      },
+      p = (a) =>
+        [...Array(5)].map((g, n) =>
+          e.jsx(
+            'svg',
+            {
+              className: `w-4 h-4 ${n < a ? 'text-yellow-400' : 'text-gray-300'}`,
+              fill: 'currentColor',
+              viewBox: '0 0 20 20',
+              children: e.jsx('path', {
+                d: 'M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z',
+              }),
+            },
+            n,
+          ),
+        );
+    return e.jsx('section', {
+      className: `py-20 bg-gradient-to-b from-white to-gray-50 ${l}`,
+      children: e.jsxs('div', {
+        className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
+        children: [
+          e.jsx('div', {
+            className: 'bg-white rounded-2xl shadow-lg p-6 mb-16',
+            children: e.jsxs('div', {
+              className: 'grid grid-cols-1 md:grid-cols-4 gap-6 text-center',
+              children: [
+                e.jsxs('div', {
+                  children: [
+                    e.jsx('div', {
+                      className: 'text-3xl font-bold text-primary mb-1',
+                      children: '4.9/5',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-sm text-gray-600',
+                      children: 'Average Rating',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-xs text-gray-500',
+                      children: '50,000+ reviews',
+                    }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  children: [
+                    e.jsx('div', {
+                      className: 'text-3xl font-bold text-accent mb-1',
+                      children: '2M+',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-sm text-gray-600',
+                      children: 'Happy Travelers',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-xs text-gray-500',
+                      children: 'Trusted worldwide',
+                    }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  children: [
+                    e.jsx('div', {
+                      className: 'text-3xl font-bold text-blue-600 mb-1',
+                      children: '99.9%',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-sm text-gray-600',
+                      children: 'Booking Success',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-xs text-gray-500',
+                      children: 'Instant confirmation',
+                    }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  children: [
+                    e.jsx('div', {
+                      className: 'text-3xl font-bold text-green-600 mb-1',
+                      children: '$15M+',
+                    }),
+                    e.jsx('div', { className: 'text-sm text-gray-600', children: 'Total Savings' }),
+                    e.jsx('div', {
+                      className: 'text-xs text-gray-500',
+                      children: 'For our customers',
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          }),
+          e.jsxs('div', {
+            className: 'text-center mb-12',
+            children: [
+              e.jsxs('div', {
+                className:
+                  'inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full text-sm font-semibold mb-4',
+                children: [
+                  e.jsx('svg', {
+                    className: 'w-4 h-4',
+                    fill: 'currentColor',
+                    viewBox: '0 0 20 20',
+                    children: e.jsx('path', {
+                      fillRule: 'evenodd',
+                      d: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z',
+                      clipRule: 'evenodd',
+                    }),
+                  }),
+                  'Featured Customer Stories',
+                ],
+              }),
+              e.jsx('h2', {
+                className: 'text-4xl md:text-5xl font-bold text-gray-900 mb-6',
+                children: 'Real Stories from Real Travelers',
+              }),
+              e.jsx('p', {
+                className: 'text-xl text-gray-600 max-w-3xl mx-auto',
+                children: 'See why millions choose Vibe Booking for their perfect hotel experience',
+              }),
+            ],
+          }),
+          e.jsx('div', {
+            className: 'hidden lg:grid lg:grid-cols-3 gap-8',
+            children: r
+              .slice(0, 3)
+              .map((a, g) =>
+                e.jsx(
+                  'div',
+                  {
+                    className: 'group',
+                    children: e.jsxs('div', {
+                      className:
+                        'bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden border-2 border-transparent hover:border-primary-200',
+                      children: [
+                        a.hotelImage &&
+                          e.jsxs('div', {
+                            className: 'relative h-48 -mx-px -mt-px mb-6',
+                            children: [
+                              e.jsx(S, {
+                                src: a.hotelImage,
+                                alt: a.hotelStayed,
+                                className: 'w-full h-full rounded-t-2xl',
+                                aspectRatio: '2/1',
+                                objectFit: 'cover',
+                                sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
+                                fallbackSrc:
+                                  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
+                              }),
+                              e.jsx('div', {
+                                className:
+                                  'absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-t-2xl',
+                              }),
+                              e.jsxs('div', {
+                                className: 'absolute bottom-4 left-6 right-6 text-white',
+                                children: [
+                                  e.jsx('p', {
+                                    className: 'font-bold text-lg drop-shadow-lg',
+                                    children: a.hotelStayed,
+                                  }),
+                                  e.jsx('p', {
+                                    className: 'text-sm opacity-90',
+                                    children: a.dateStayed,
+                                  }),
+                                ],
+                              }),
+                              g === 0 &&
+                                e.jsx('div', {
+                                  className:
+                                    'absolute top-4 right-4 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold',
+                                  children: 'Featured Story',
+                                }),
+                            ],
+                          }),
+                        e.jsxs('div', {
+                          className: 'px-8 pb-8',
+                          children: [
+                            e.jsx('div', {
+                              className: 'flex items-center justify-center mb-6',
+                              children: e.jsxs('div', {
+                                className:
+                                  'flex items-center gap-1 bg-yellow-50 px-4 py-2 rounded-full',
+                                children: [
+                                  p(a.rating),
+                                  e.jsxs('span', {
+                                    className: 'ml-2 text-lg font-bold text-yellow-600',
+                                    children: [a.rating, '.0'],
+                                  }),
+                                ],
+                              }),
+                            }),
+                            e.jsxs('blockquote', {
+                              className:
+                                'text-gray-700 mb-6 text-base leading-relaxed text-center italic',
+                              children: ['"', a.review, '"'],
+                            }),
+                            e.jsxs('div', {
+                              className: 'flex items-center',
+                              children: [
+                                e.jsx(S, {
+                                  src: a.avatar,
+                                  alt: a.name,
+                                  className: 'w-14 h-14 rounded-full mr-4 ring-2 ring-primary-100',
+                                  width: 56,
+                                  height: 56,
+                                  objectFit: 'cover',
+                                  priority: !0,
+                                  fallbackSrc:
+                                    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face',
+                                }),
+                                e.jsxs('div', {
+                                  className: 'flex-1',
+                                  children: [
+                                    e.jsx('h4', {
+                                      className: 'font-bold text-gray-900',
+                                      children: a.name,
+                                    }),
+                                    e.jsx('p', {
+                                      className: 'text-sm text-gray-600',
+                                      children: a.location,
+                                    }),
+                                    a.verified &&
+                                      e.jsx('div', {
+                                        className: 'mt-1',
+                                        children: e.jsxs('span', {
+                                          className:
+                                            'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800',
+                                          children: [
+                                            e.jsx('svg', {
+                                              className: 'w-3 h-3 mr-1',
+                                              fill: 'currentColor',
+                                              viewBox: '0 0 20 20',
+                                              children: e.jsx('path', {
+                                                fillRule: 'evenodd',
+                                                d: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z',
+                                                clipRule: 'evenodd',
+                                              }),
+                                            }),
+                                            'Verified Booking',
+                                          ],
+                                        }),
+                                      }),
+                                  ],
+                                }),
+                              ],
+                            }),
+                          ],
+                        }),
+                        e.jsx('div', {
+                          className:
+                            'absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none',
+                        }),
+                      ],
+                    }),
+                  },
+                  a.id,
+                ),
+              ),
+          }),
+          e.jsxs('div', {
+            className: 'lg:hidden',
+            children: [
+              e.jsxs('div', {
+                className: 'relative',
+                children: [
+                  e.jsxs('div', {
+                    className: 'bg-white rounded-xl shadow-lg overflow-hidden mx-4',
+                    children: [
+                      r[t].hotelImage &&
+                        e.jsxs('div', {
+                          className: 'relative h-40',
+                          children: [
+                            e.jsx(S, {
+                              src: r[t].hotelImage,
+                              alt: r[t].hotelStayed,
+                              className: 'w-full h-full',
+                              aspectRatio: '2/1',
+                              objectFit: 'cover',
+                              priority: !0,
+                              fallbackSrc:
+                                'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
+                            }),
+                            e.jsx('div', {
+                              className:
+                                'absolute inset-0 bg-gradient-to-t from-black/50 to-transparent',
+                            }),
+                            e.jsxs('div', {
+                              className: 'absolute bottom-3 left-4 right-4 text-white',
+                              children: [
+                                e.jsx('p', {
+                                  className: 'font-bold text-base drop-shadow-lg',
+                                  children: r[t].hotelStayed,
+                                }),
+                                e.jsx('p', {
+                                  className: 'text-xs opacity-90',
+                                  children: r[t].dateStayed,
+                                }),
+                              ],
+                            }),
+                          ],
+                        }),
+                      e.jsxs('div', {
+                        className: 'p-6',
+                        children: [
+                          e.jsxs('div', {
+                            className: 'flex items-center mb-4',
+                            children: [
+                              e.jsx(S, {
+                                src: r[t].avatar,
+                                alt: r[t].name,
+                                className: 'w-12 h-12 rounded-full mr-4',
+                                width: 48,
+                                height: 48,
+                                objectFit: 'cover',
+                                priority: !0,
+                                fallbackSrc:
+                                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face',
+                              }),
+                              e.jsxs('div', {
+                                children: [
+                                  e.jsx('h4', {
+                                    className: 'font-semibold text-gray-900',
+                                    children: r[t].name,
+                                  }),
+                                  e.jsx('p', {
+                                    className: 'text-sm text-gray-600',
+                                    children: r[t].location,
+                                  }),
+                                ],
+                              }),
+                              r[t].verified &&
+                                e.jsx('div', {
+                                  className: 'ml-auto',
+                                  children: e.jsxs('span', {
+                                    className:
+                                      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800',
+                                    children: [
+                                      e.jsx('svg', {
+                                        className: 'w-3 h-3 mr-1',
+                                        fill: 'currentColor',
+                                        viewBox: '0 0 20 20',
+                                        children: e.jsx('path', {
+                                          fillRule: 'evenodd',
+                                          d: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z',
+                                          clipRule: 'evenodd',
+                                        }),
+                                      }),
+                                      'Verified',
+                                    ],
+                                  }),
+                                }),
+                            ],
+                          }),
+                          e.jsxs('div', {
+                            className: 'flex items-center mb-3',
+                            children: [
+                              p(r[t].rating),
+                              e.jsxs('span', {
+                                className: 'ml-2 text-sm text-gray-600',
+                                children: [r[t].rating, '.0'],
+                              }),
+                            ],
+                          }),
+                          e.jsxs('blockquote', {
+                            className: 'text-gray-700 italic',
+                            children: ['"', r[t].review, '"'],
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                  e.jsx('button', {
+                    onClick: x,
+                    className:
+                      'absolute left-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50',
+                    children: e.jsx('svg', {
+                      className: 'w-5 h-5 text-gray-600',
+                      fill: 'none',
+                      stroke: 'currentColor',
+                      viewBox: '0 0 24 24',
+                      children: e.jsx('path', {
+                        strokeLinecap: 'round',
+                        strokeLinejoin: 'round',
+                        strokeWidth: 2,
+                        d: 'M15 19l-7-7 7-7',
+                      }),
+                    }),
+                  }),
+                  e.jsx('button', {
+                    onClick: i,
+                    className:
+                      'absolute right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50',
+                    children: e.jsx('svg', {
+                      className: 'w-5 h-5 text-gray-600',
+                      fill: 'none',
+                      stroke: 'currentColor',
+                      viewBox: '0 0 24 24',
+                      children: e.jsx('path', {
+                        strokeLinecap: 'round',
+                        strokeLinejoin: 'round',
+                        strokeWidth: 2,
+                        d: 'M9 5l7 7-7 7',
+                      }),
+                    }),
+                  }),
+                ],
+              }),
+              e.jsx('div', {
+                className: 'flex justify-center mt-6 space-x-2',
+                children: r.map((a, g) =>
+                  e.jsx(
+                    'button',
+                    {
+                      onClick: () => c(g),
+                      className: `w-2 h-2 rounded-full transition-colors ${g === t ? 'bg-blue-600' : 'bg-gray-300'}`,
+                    },
+                    g,
+                  ),
+                ),
+              }),
+            ],
+          }),
+          e.jsx('div', {
+            className: 'mt-16',
+            children: e.jsxs('div', {
+              className:
+                'bg-gradient-to-r from-primary to-primary-600 rounded-3xl p-8 md:p-12 text-center text-white relative overflow-hidden',
+              children: [
+                e.jsx('div', {
+                  className: 'absolute inset-0 bg-white/5 opacity-10',
+                  children: e.jsx('div', {
+                    className: 'absolute inset-0 bg-repeat bg-center',
+                    style: {
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                      backgroundSize: '60px 60px',
+                    },
+                  }),
+                }),
+                e.jsxs('div', {
+                  className: 'relative z-10 max-w-4xl mx-auto',
+                  children: [
+                    e.jsx('h3', {
+                      className: 'text-3xl md:text-4xl font-bold mb-4',
+                      children: 'Ready to Find Your Perfect Hotel?',
+                    }),
+                    e.jsx('p', {
+                      className: 'text-xl text-white/90 mb-2',
+                      children: 'Join 2M+ travelers who saved money and found amazing stays',
+                    }),
+                    e.jsx('p', {
+                      className: 'text-white/80 mb-8',
+                      children:
+                        '• Free cancellation on most bookings • Best price guarantee • Instant confirmation',
+                    }),
+                    e.jsxs('div', {
+                      className: 'flex flex-col sm:flex-row gap-4 justify-center items-center',
+                      children: [
+                        e.jsx('button', {
+                          className:
+                            'bg-white text-primary font-bold py-4 px-8 rounded-xl hover:bg-gray-50 transition-all transform hover:scale-105 shadow-lg text-lg',
+                          children: 'Start Booking Now',
+                        }),
+                        e.jsx('button', {
+                          className:
+                            'border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl hover:bg-white/10 transition-all',
+                          children: 'Browse Deals',
+                        }),
+                      ],
+                    }),
+                    e.jsxs('div', {
+                      className:
+                        'flex flex-wrap justify-center items-center gap-6 mt-8 text-sm text-white/80',
+                      children: [
+                        e.jsxs('div', {
+                          className: 'flex items-center gap-2',
+                          children: [
+                            e.jsx('svg', {
+                              className: 'w-4 h-4',
+                              fill: 'currentColor',
+                              viewBox: '0 0 20 20',
+                              children: e.jsx('path', {
+                                fillRule: 'evenodd',
+                                d: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z',
+                                clipRule: 'evenodd',
+                              }),
+                            }),
+                            'SSL Secured',
+                          ],
+                        }),
+                        e.jsxs('div', {
+                          className: 'flex items-center gap-2',
+                          children: [
+                            e.jsx('svg', {
+                              className: 'w-4 h-4',
+                              fill: 'currentColor',
+                              viewBox: '0 0 20 20',
+                              children: e.jsx('path', {
+                                fillRule: 'evenodd',
+                                d: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z',
+                                clipRule: 'evenodd',
+                              }),
+                            }),
+                            '24/7 Support',
+                          ],
+                        }),
+                        e.jsxs('div', {
+                          className: 'flex items-center gap-2',
+                          children: [
+                            e.jsx('svg', {
+                              className: 'w-4 h-4',
+                              fill: 'currentColor',
+                              viewBox: '0 0 20 20',
+                              children: e.jsx('path', {
+                                fillRule: 'evenodd',
+                                d: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z',
+                                clipRule: 'evenodd',
+                              }),
+                            }),
+                            'No Hidden Fees',
+                          ],
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          }),
+        ],
+      }),
+    });
+  };
+function re() {
+  return e.jsxs('div', {
+    className: 'space-y-0',
+    children: [e.jsx(Q, {}), e.jsx(X, {}), e.jsx(J, {}), e.jsx(Z, {})],
+  });
+}
+export { re as HomePage };
 //# sourceMappingURL=HomePage-B-Oa9jUO.js.map

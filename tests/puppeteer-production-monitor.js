@@ -17,40 +17,43 @@ async function monitorProductionSite() {
     // Launch browser with detailed logging
     browser = await puppeteer.launch({
       headless: false, // Show browser window
-      devtools: true,  // Open dev tools automatically
+      devtools: true, // Open dev tools automatically
       args: [
         '--disable-web-security', // Allow easier testing
         '--disable-features=VizDisplayCompositor',
         '--enable-logging',
-        '--log-level=0'
-      ]
+        '--log-level=0',
+      ],
     });
 
     const page = await browser.newPage();
-    
+
     // Set up comprehensive monitoring
     const logs = {
       console: [],
       errors: [],
       network: [],
       csp: [],
-      square: []
+      square: [],
     };
 
     // Console monitoring
     page.on('console', (msg) => {
       const text = msg.text();
       logs.console.push(`[${new Date().toISOString()}] [${msg.type()}] ${text}`);
-      
+
       if (msg.type() === 'error') {
         logs.errors.push(text);
       }
-      
-      if (text.toLowerCase().includes('content security policy') || text.toLowerCase().includes('csp')) {
+
+      if (
+        text.toLowerCase().includes('content security policy') ||
+        text.toLowerCase().includes('csp')
+      ) {
         logs.csp.push(text);
         console.log(`🔒 CSP: ${text}`);
       }
-      
+
       if (text.toLowerCase().includes('square')) {
         logs.square.push(text);
         console.log(`🔷 Square: ${text}`);
@@ -65,7 +68,7 @@ async function monitorProductionSite() {
           type: 'request',
           url: url,
           method: request.method(),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         console.log(`📡 Request: ${request.method()} ${url}`);
       }
@@ -78,7 +81,7 @@ async function monitorProductionSite() {
           type: 'response',
           url: url,
           status: response.status(),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         console.log(`📡 Response: ${response.status()} ${url}`);
       }
@@ -86,9 +89,9 @@ async function monitorProductionSite() {
 
     // Navigate to production site
     console.log('🌍 Navigating to production site...');
-    await page.goto('https://vibehotelbookings.com', { 
+    await page.goto('https://vibehotelbookings.com', {
       waitUntil: 'networkidle0',
-      timeout: 30000 
+      timeout: 30000,
     });
 
     console.log('✅ Production site loaded');
@@ -103,7 +106,7 @@ async function monitorProductionSite() {
         available: typeof window.Square !== 'undefined',
         methods: typeof window.Square === 'object' ? Object.keys(window.Square || {}) : [],
         version: window.Square?.version || 'unknown',
-        paymentsFunction: typeof window.Square?.payments === 'function'
+        paymentsFunction: typeof window.Square?.payments === 'function',
       };
     });
 
@@ -119,19 +122,19 @@ async function monitorProductionSite() {
       const bookingLinks = await page.evaluate(() => {
         const links = Array.from(document.querySelectorAll('a, button'));
         return links
-          .filter(el => {
+          .filter((el) => {
             const text = el.textContent?.toLowerCase() || '';
             return text.includes('book') || text.includes('search') || text.includes('payment');
           })
-          .map(el => ({
+          .map((el) => ({
             text: el.textContent?.trim(),
             href: el.getAttribute('href'),
-            tag: el.tagName
+            tag: el.tagName,
           }));
       });
 
       console.log(`Found ${bookingLinks.length} booking-related elements:`);
-      bookingLinks.slice(0, 3).forEach(link => {
+      bookingLinks.slice(0, 3).forEach((link) => {
         console.log(`   ${link.tag}: "${link.text}" → ${link.href || 'javascript action'}`);
       });
 
@@ -155,12 +158,14 @@ async function monitorProductionSite() {
 
     // Test 3: Final CSP and Square verification
     console.log('\n🧪 FINAL VERIFICATION...');
-    
+
     const finalSquareCheck = await page.evaluate(() => {
       return {
         squareGlobal: typeof window.Square !== 'undefined',
         squareScript: !!document.querySelector('script[src*="square"]'),
-        paymentElements: document.querySelectorAll('[class*="payment"], [id*="payment"], [class*="card"]').length
+        paymentElements: document.querySelectorAll(
+          '[class*="payment"], [id*="payment"], [class*="card"]',
+        ).length,
       };
     });
 
@@ -170,11 +175,11 @@ async function monitorProductionSite() {
     console.log(`   Payment Elements: ${finalSquareCheck.paymentElements}`);
 
     // Test 4: Analyze all CSP-related activity
-    const cspErrors = logs.csp.filter(log => 
-      log.includes('blocked') || log.includes('refused') || log.includes('violated')
+    const cspErrors = logs.csp.filter(
+      (log) => log.includes('blocked') || log.includes('refused') || log.includes('violated'),
     );
-    const cspWarnings = logs.csp.filter(log => 
-      log.includes('report-only') || log.includes('warning')
+    const cspWarnings = logs.csp.filter(
+      (log) => log.includes('report-only') || log.includes('warning'),
     );
 
     console.log('\n🔒 CSP ANALYSIS:');
@@ -183,7 +188,7 @@ async function monitorProductionSite() {
 
     if (cspErrors.length > 0) {
       console.log('\n❌ CSP BLOCKING ERRORS:');
-      cspErrors.forEach(error => console.log(`   ${error}`));
+      cspErrors.forEach((error) => console.log(`   ${error}`));
     }
 
     // Final report
@@ -192,7 +197,9 @@ async function monitorProductionSite() {
     console.log(`🌍 Site: vibehotelbookings.com - ${page.url()}`);
     console.log(`🔷 Square SDK: ${finalSquareCheck.squareGlobal ? '✅ WORKING' : '❌ FAILED'}`);
     console.log(`🔒 CSP Blocking: ${cspErrors.length === 0 ? '✅ RESOLVED' : '❌ STILL BLOCKING'}`);
-    console.log(`💳 Payment Elements: ${finalSquareCheck.paymentElements > 0 ? '✅ PRESENT' : '⚠️ LIMITED'}`);
+    console.log(
+      `💳 Payment Elements: ${finalSquareCheck.paymentElements > 0 ? '✅ PRESENT' : '⚠️ LIMITED'}`,
+    );
     console.log(`📊 Total Console Errors: ${logs.errors.length}`);
     console.log(`🌐 Square Network Requests: ${logs.network.length}`);
 
@@ -205,7 +212,6 @@ async function monitorProductionSite() {
     } else {
       console.log('🔧 Additional fixes may be needed - see errors above');
     }
-
   } catch (error) {
     console.error('❌ Production monitoring failed:', error.message);
   } finally {

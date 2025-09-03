@@ -5,10 +5,10 @@ import { liteApiService } from '../services/liteApiService';
 import { aiSearchService } from '../services/aiSearchService';
 import { cacheService } from '../services/cacheService';
 import { logger } from '../utils/logger';
-import { 
-  optimizedCache, 
-  ResponseOptimizer, 
-  ParallelProcessor 
+import {
+  optimizedCache,
+  ResponseOptimizer,
+  ParallelProcessor,
 } from '../utils/apiOptimization';
 import { getDb } from '../database';
 import { hotels, rooms, amenities } from '../database/schema';
@@ -60,7 +60,9 @@ const roomRatesSchema = z.object({
 
 // Passion matching algorithm
 const calculatePassionScore = (hotel: any, passions: string[]): number => {
-  if (!passions || passions.length === 0) return 0;
+  if (!passions || passions.length === 0) {
+return 0;
+}
 
   const passionKeywords: Record<string, string[]> = {
     'gourmet-foodie': ['restaurant', 'dining', 'cuisine', 'chef', 'culinary', 'food', 'bar', 'wine'],
@@ -78,11 +80,11 @@ const calculatePassionScore = (hotel: any, passions: string[]): number => {
   const hotelName = (hotel.name || '').toLowerCase();
   const combined = `${description} ${amenitiesList} ${hotelName}`;
 
-  passions.forEach(passion => {
+  passions.forEach((passion) => {
     const keywords = passionKeywords[passion] || [];
     let passionScore = 0;
 
-    keywords.forEach(keyword => {
+    keywords.forEach((keyword) => {
       const keywordCount = (combined.match(new RegExp(keyword, 'g')) || []).length;
       passionScore += keywordCount * 10;
     });
@@ -113,21 +115,41 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
     if (params.query && !params.destination) {
       try {
         const aiParsed = await aiSearchService.parseNaturalLanguageQuery(params.query);
-        
+
         // Override with AI-parsed values where available
         if (aiParsed.location?.city) {
           searchParams.destination = `${aiParsed.location.city}${aiParsed.location.country ? `, ${aiParsed.location.country}` : ''}`;
         }
-        if (aiParsed.dates?.checkIn) searchParams.checkIn = aiParsed.dates.checkIn;
-        if (aiParsed.dates?.checkOut) searchParams.checkOut = aiParsed.dates.checkOut;
-        if (aiParsed.guests?.adults) searchParams.adults = aiParsed.guests.adults;
-        if (aiParsed.guests?.children) searchParams.children = aiParsed.guests.children;
-        if (aiParsed.guests?.rooms) searchParams.rooms = aiParsed.guests.rooms;
-        if (aiParsed.priceRange?.min) searchParams.priceMin = aiParsed.priceRange.min;
-        if (aiParsed.priceRange?.max) searchParams.priceMax = aiParsed.priceRange.max;
-        if (aiParsed.amenities) searchParams.amenities = aiParsed.amenities;
-        if (aiParsed.starRating) searchParams.starRating = aiParsed.starRating;
-        if (aiParsed.passions) searchParams.passions = aiParsed.passions;
+        if (aiParsed.dates?.checkIn) {
+searchParams.checkIn = aiParsed.dates.checkIn;
+}
+        if (aiParsed.dates?.checkOut) {
+searchParams.checkOut = aiParsed.dates.checkOut;
+}
+        if (aiParsed.guests?.adults) {
+searchParams.adults = aiParsed.guests.adults;
+}
+        if (aiParsed.guests?.children) {
+searchParams.children = aiParsed.guests.children;
+}
+        if (aiParsed.guests?.rooms) {
+searchParams.rooms = aiParsed.guests.rooms;
+}
+        if (aiParsed.priceRange?.min) {
+searchParams.priceMin = aiParsed.priceRange.min;
+}
+        if (aiParsed.priceRange?.max) {
+searchParams.priceMax = aiParsed.priceRange.max;
+}
+        if (aiParsed.amenities) {
+searchParams.amenities = aiParsed.amenities;
+}
+        if (aiParsed.starRating) {
+searchParams.starRating = aiParsed.starRating;
+}
+        if (aiParsed.passions) {
+searchParams.passions = aiParsed.passions;
+}
 
         logger.info('AI parsed query successfully', { original: params.query, parsed: aiParsed });
       } catch (aiError) {
@@ -172,7 +194,7 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
 
     // OPTIMIZATION: Create optimized cache key for search results
     const cacheKey = ResponseOptimizer.createCacheKey('hotel-search', searchParams);
-    
+
     // OPTIMIZATION: Use stale-while-revalidate caching (serve cached results immediately, refresh in background)
     const hotels = await optimizedCache.get(
       cacheKey,
@@ -196,13 +218,13 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
       {
         ttl: 300, // 5 minutes fresh
         staleWhileRevalidate: 1800, // 30 minutes stale-while-revalidate
-        tags: ['hotel-search', `destination:${searchParams.destination}`]
-      }
+        tags: ['hotel-search', `destination:${searchParams.destination}`],
+      },
     );
 
     // OPTIMIZATION: Process hotels in parallel batches for better performance
     let processedHotels = hotels;
-    
+
     if (searchParams.passions && searchParams.passions.length > 0) {
       // OPTIMIZATION: Process passion scoring in parallel for large datasets
       if (hotels.length > 20) {
@@ -213,10 +235,10 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
             passionScore: calculatePassionScore(hotel, searchParams.passions),
             matchedPassions: searchParams.passions,
           }),
-          10 // Process 10 hotels concurrently
+          10, // Process 10 hotels concurrently
         );
       } else {
-        processedHotels = hotels.map(hotel => ({
+        processedHotels = hotels.map((hotel) => ({
           ...hotel,
           passionScore: calculatePassionScore(hotel, searchParams.passions),
           matchedPassions: searchParams.passions,
@@ -231,11 +253,11 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
 
     // OPTIMIZATION: Efficient sorting with pre-computed sort keys
     const sortField = searchParams.sortBy;
-    const sortOrder = searchParams.sortOrder;
+    const {sortOrder} = searchParams;
 
     if (sortField !== 'popularity' || !searchParams.passions) {
       // Pre-compute sort values for better performance
-      const hotelsWithSortKey = processedHotels.map(hotel => {
+      const hotelsWithSortKey = processedHotels.map((hotel) => {
         let sortValue;
         switch (sortField) {
           case 'price':
@@ -253,17 +275,17 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
         return { hotel, sortValue };
       });
 
-      hotelsWithSortKey.sort((a, b) => 
-        sortOrder === 'asc' ? a.sortValue - b.sortValue : b.sortValue - a.sortValue
+      hotelsWithSortKey.sort((a, b) =>
+        sortOrder === 'asc' ? a.sortValue - b.sortValue : b.sortValue - a.sortValue,
       );
-      
-      processedHotels = hotelsWithSortKey.map(item => item.hotel);
+
+      processedHotels = hotelsWithSortKey.map((item) => item.hotel);
     }
 
     // OPTIMIZATION: Apply pagination before expensive AI operations
     const paginatedHotels = processedHotels.slice(
-      searchParams.offset, 
-      searchParams.offset + searchParams.limit
+      searchParams.offset,
+      searchParams.offset + searchParams.limit,
     );
 
     // OPTIMIZATION: Only enhance descriptions for visible hotels (not all results)
@@ -280,7 +302,7 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
     const optimizedResponse = ResponseOptimizer.optimizeSearchResponse(
       finalHotels,
       searchParams.limit,
-      searchParams.offset
+      searchParams.offset,
     );
 
     // Add total count from original result set
@@ -302,8 +324,8 @@ hotelsRouter.post('/search', validateRequest(searchHotelsSchema), async (req, re
         performance: {
           cacheHit: true, // Would track actual cache hits
           processingTime: Date.now() - Date.now(), // Would measure actual time
-          totalHotelsFound: processedHotels.length
-        }
+          totalHotelsFound: processedHotels.length,
+        },
       },
     });
 
@@ -526,11 +548,11 @@ hotelsRouter.post('/compare', async (req, res) => {
           logger.warn('Failed to get hotel details for comparison', { hotelId, error });
           return null;
         }
-      })
+      }),
     );
 
     // Filter out failed requests
-    const validHotels = hotelDetails.filter(hotel => hotel !== null);
+    const validHotels = hotelDetails.filter((hotel) => hotel !== null);
 
     res.json({
       success: true,
@@ -538,16 +560,16 @@ hotelsRouter.post('/compare', async (req, res) => {
         hotels: validHotels,
         comparison: {
           priceRange: {
-            min: Math.min(...validHotels.map(h => h.price?.amount || 0)),
-            max: Math.max(...validHotels.map(h => h.price?.amount || 0)),
+            min: Math.min(...validHotels.map((h) => h.price?.amount || 0)),
+            max: Math.max(...validHotels.map((h) => h.price?.amount || 0)),
           },
           ratingRange: {
-            min: Math.min(...validHotels.map(h => h.starRating || 0)),
-            max: Math.max(...validHotels.map(h => h.starRating || 0)),
+            min: Math.min(...validHotels.map((h) => h.starRating || 0)),
+            max: Math.max(...validHotels.map((h) => h.starRating || 0)),
           },
-          commonAmenities: validHotels.length > 0 
-            ? validHotels[0].amenities?.filter(amenity => 
-                validHotels.every(hotel => hotel.amenities?.includes(amenity))
+          commonAmenities: validHotels.length > 0
+            ? validHotels[0].amenities?.filter((amenity) =>
+                validHotels.every((hotel) => hotel.amenities?.includes(amenity)),
               ) || []
             : [],
         },

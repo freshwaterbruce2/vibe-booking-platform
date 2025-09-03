@@ -9,6 +9,7 @@ This project is **fully deployment-ready** with professional-grade architecture,
 ### Phase 1: Frontend Deployment (10 minutes)
 
 **Netlify Drag-and-Drop Method:**
+
 ```powershell
 # Build frontend
 cd "C:\dev\projects\web-apps\hotelbooking"
@@ -22,6 +23,7 @@ npm run build
 ### Phase 2: Backend Deployment (15 minutes)
 
 **Railway GitHub Integration:**
+
 1. Push code to GitHub repository
 2. Connect GitHub repo to Railway
 3. Set environment variables in Railway dashboard:
@@ -42,6 +44,7 @@ npm run build
 ### Phase 3: Integration (5 minutes)
 
 **Connect Frontend to Backend:**
+
 ```powershell
 # Update frontend environment
 # In .env.production or Netlify environment variables:
@@ -55,6 +58,7 @@ npm run build
 ## 📊 Build Performance
 
 **Production Build Stats:**
+
 - **CSS**: 90.41 kB (13.52 kB gzipped) - Luxury design system
 - **JavaScript**: 277.42 kB (81.99 kB gzipped) - Optimized bundle
 - **Build Time**: ~6 seconds
@@ -63,6 +67,7 @@ npm run build
 ## 🏗️ Architecture Summary
 
 ### Frontend (React + TypeScript + Vite)
+
 - ✅ Professional luxury design system (2025 hospitality standards)
 - ✅ AI-powered search with passion-based hotel matching
 - ✅ Square payment integration with webhook support
@@ -72,6 +77,7 @@ npm run build
 - ✅ Optimized bundle with code splitting
 
 ### Backend (Express.js + TypeScript)
+
 - ✅ Dual database support (SQLite local, PostgreSQL production)
 - ✅ Square payment processing with idempotent booking
 - ✅ Real hotel data integration via LiteAPI
@@ -89,7 +95,7 @@ set LOCAL_SQLITE=true
 npm run db:setup:local
 npm run dev:local
 
-# Frontend (Terminal 2) 
+# Frontend (Terminal 2)
 npm run dev
 # Opens: http://localhost:3009
 ```
@@ -112,7 +118,7 @@ npm run dev
 ✅ **Mobile First**: Responsive design across all devices  
 ✅ **Type Safety**: Full TypeScript coverage  
 ✅ **Testing**: Comprehensive unit + E2E test suites  
-✅ **Documentation**: Complete API and deployment docs  
+✅ **Documentation**: Complete API and deployment docs
 
 ## 📋 Pre-Deployment Checklist
 

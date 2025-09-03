@@ -7,14 +7,15 @@ import { emailService } from '../services/emailService';
 import { notificationScheduler } from '../services/notificationScheduler';
 import { logger } from '../utils/logger';
 import { getDb } from '../database';
-import { 
-  bookings, 
-  bookingStatusHistory, 
-  bookingGuests, 
+import type {
+  NewBooking} from '../database/schema';
+import {
+  bookings,
+  bookingStatusHistory,
+  bookingGuests,
   bookingAddons,
   payments,
-  NewBooking,
-  NewBookingStatusHistory 
+  NewBookingStatusHistory,
 } from '../database/schema';
 import { eq, and, desc, or, ilike } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -100,11 +101,11 @@ const calculateNights = (checkIn: string, checkOut: string): number => {
 };
 
 const addBookingStatusHistory = async (
-  bookingId: string, 
-  newStatus: string, 
-  previousStatus?: string, 
+  bookingId: string,
+  newStatus: string,
+  previousStatus?: string,
   reason?: string,
-  changedBy?: string
+  changedBy?: string,
 ) => {
   const db = getDb();
   await db.insert(bookingStatusHistory).values({
@@ -121,7 +122,7 @@ bookingsRouter.post('/', validateRequest(createBookingSchema), async (req, res) 
   try {
     const bookingData = req.body;
     const userId = req.user?.id; // From authentication middleware
-    
+
     logger.info('Creating new booking', { bookingData, userId });
 
     // Validate dates
@@ -210,7 +211,7 @@ bookingsRouter.post('/', validateRequest(createBookingSchema), async (req, res) 
 
     // Add additional guests if provided
     if (bookingData.additionalGuests && bookingData.additionalGuests.length > 0) {
-      const guestRecords = bookingData.additionalGuests.map(guest => ({
+      const guestRecords = bookingData.additionalGuests.map((guest) => ({
         bookingId: createdBooking.id,
         type: guest.type,
         firstName: guest.firstName,
@@ -224,7 +225,7 @@ bookingsRouter.post('/', validateRequest(createBookingSchema), async (req, res) 
 
     // Add addons if provided
     if (bookingData.addons && bookingData.addons.length > 0) {
-      const addonRecords = bookingData.addons.map(addon => ({
+      const addonRecords = bookingData.addons.map((addon) => ({
         bookingId: createdBooking.id,
         type: addon.type,
         name: addon.name,
@@ -313,18 +314,18 @@ bookingsRouter.post('/', validateRequest(createBookingSchema), async (req, res) 
         guests: { adults: bookingData.adults, children: bookingData.children },
         totalAmount: bookingData.pricing.totalAmount,
         currency: bookingData.pricing.currency,
-        specialRequests: bookingData.specialRequests
+        specialRequests: bookingData.specialRequests,
       });
-      
-      logger.info('Booking confirmation email sent', { 
+
+      logger.info('Booking confirmation email sent', {
         confirmationNumber: createdBooking.confirmationNumber,
-        email: bookingData.guest.email 
+        email: bookingData.guest.email,
       });
     } catch (emailError) {
       // Don't fail booking if email fails - just log the error
-      logger.error('Failed to send booking confirmation email', { 
+      logger.error('Failed to send booking confirmation email', {
         error: emailError,
-        confirmationNumber: createdBooking.confirmationNumber 
+        confirmationNumber: createdBooking.confirmationNumber,
       });
     }
 
@@ -332,7 +333,7 @@ bookingsRouter.post('/', validateRequest(createBookingSchema), async (req, res) 
     try {
       const checkInDate = new Date(bookingData.checkIn);
       const reminderTime = new Date(checkInDate.getTime() - (24 * 60 * 60 * 1000));
-      
+
       // Only schedule reminder if check-in is more than 24 hours away
       if (reminderTime > new Date()) {
         await notificationScheduler.scheduleBookingReminder({
@@ -343,19 +344,19 @@ bookingsRouter.post('/', validateRequest(createBookingSchema), async (req, res) 
           checkIn: bookingData.checkIn,
           confirmationNumber: createdBooking.confirmationNumber,
           sendAt: reminderTime,
-          reminderType: '24h_before_checkin'
+          reminderType: '24h_before_checkin',
         });
-        
-        logger.info('Booking reminder scheduled', { 
+
+        logger.info('Booking reminder scheduled', {
           confirmationNumber: createdBooking.confirmationNumber,
-          scheduledFor: reminderTime
+          scheduledFor: reminderTime,
         });
       }
     } catch (reminderError) {
       // Don't fail booking if reminder scheduling fails - just log the error
-      logger.error('Failed to schedule booking reminder', { 
+      logger.error('Failed to schedule booking reminder', {
         error: reminderError,
-        confirmationNumber: createdBooking.confirmationNumber 
+        confirmationNumber: createdBooking.confirmationNumber,
       });
     }
 
@@ -388,27 +389,27 @@ bookingsRouter.get('/', validateRequest(searchBookingsSchema, 'query'), async (r
 
     // Build where conditions
     const conditions = [];
-    
+
     if (userId) {
       conditions.push(eq(bookings.userId, userId));
     }
-    
+
     if (status) {
       conditions.push(eq(bookings.status, status));
     }
-    
+
     if (email) {
       conditions.push(ilike(bookings.guestEmail, `%${email}%`));
     }
-    
+
     if (confirmationNumber) {
       conditions.push(eq(bookings.confirmationNumber, confirmationNumber));
     }
-    
+
     if (checkIn) {
       conditions.push(eq(bookings.checkIn, new Date(checkIn)));
     }
-    
+
     if (checkOut) {
       conditions.push(eq(bookings.checkOut, new Date(checkOut)));
     }
@@ -458,7 +459,7 @@ bookingsRouter.get('/:bookingId', async (req, res) => {
     const userId = req.user?.id;
 
     const db = getDb();
-    
+
     // Get booking with related data
     const [booking] = await db
       .select()
@@ -527,7 +528,7 @@ bookingsRouter.put('/:bookingId', validateRequest(updateBookingSchema), async (r
     const updates = req.body;
 
     const db = getDb();
-    
+
     // Get existing booking
     const [existingBooking] = await db
       .select()
@@ -581,7 +582,7 @@ bookingsRouter.put('/:bookingId', validateRequest(updateBookingSchema), async (r
         updates.status,
         existingBooking.status,
         'Status updated via API',
-        userId
+        userId,
       );
     }
 
@@ -596,7 +597,7 @@ bookingsRouter.put('/:bookingId', validateRequest(updateBookingSchema), async (r
     if (!updates.administrativeUpdate && updatedBooking.guestEmail) {
       try {
         let modificationType = 'general_update';
-        
+
         if (updates.checkIn || updates.checkOut) {
           modificationType = 'date_change';
         } else if (updates.roomType || updates.roomId) {
@@ -614,28 +615,28 @@ bookingsRouter.put('/:bookingId', validateRequest(updateBookingSchema), async (r
           originalDetails: {
             checkIn: existingBooking.checkIn?.toISOString().split('T')[0] || '',
             checkOut: existingBooking.checkOut?.toISOString().split('T')[0] || '',
-            nights: existingBooking.nights || 1
+            nights: existingBooking.nights || 1,
           },
           newDetails: {
             checkIn: updatedBooking.checkIn?.toISOString().split('T')[0] || '',
             checkOut: updatedBooking.checkOut?.toISOString().split('T')[0] || '',
-            nights: updatedBooking.nights || 1
+            nights: updatedBooking.nights || 1,
           },
           modifiedAt: new Date(),
           modifiedBy: updates.updatedBy || 'guest',
           reason: updates.reason || 'Booking modification requested',
-          priceAdjustment: updates.priceAdjustment || 0
+          priceAdjustment: updates.priceAdjustment || 0,
         });
-        
-        logger.info('Booking modification notification sent', { 
+
+        logger.info('Booking modification notification sent', {
           confirmationNumber: updatedBooking.confirmationNumber,
-          modificationType
+          modificationType,
         });
       } catch (emailError) {
         // Don't fail booking update if email fails - just log the error
-        logger.error('Failed to send booking modification notification', { 
+        logger.error('Failed to send booking modification notification', {
           error: emailError,
-          confirmationNumber: updatedBooking.confirmationNumber 
+          confirmationNumber: updatedBooking.confirmationNumber,
         });
       }
     }
@@ -664,7 +665,7 @@ bookingsRouter.post('/:bookingId/cancel', validateRequest(cancelBookingSchema), 
     const userId = req.user?.id;
 
     const db = getDb();
-    
+
     // Get existing booking
     const [booking] = await db
       .select()
@@ -723,7 +724,7 @@ bookingsRouter.post('/:bookingId/cancel', validateRequest(cancelBookingSchema), 
       try {
         liteApiCancellation = await liteApiService.cancelBooking(
           booking.metadata.liteApiBookingId,
-          reason
+          reason,
         );
       } catch (liteApiError) {
         logger.warn('LiteAPI cancellation failed', { error: liteApiError });
@@ -748,7 +749,7 @@ bookingsRouter.post('/:bookingId/cancel', validateRequest(cancelBookingSchema), 
       'cancelled',
       booking.status,
       reason,
-      userId
+      userId,
     );
 
     // Process refund if requested and booking was paid
@@ -820,10 +821,10 @@ bookingsRouter.get('/user/:userId', async (req, res) => {
     // Order by creation date (newest first)
     const userBookings = await query.orderBy(desc(bookings.createdAt));
 
-    logger.info('Retrieved user bookings', { 
-      userId, 
+    logger.info('Retrieved user bookings', {
+      userId,
       count: userBookings.length,
-      requestedBy: requestingUserId 
+      requestedBy: requestingUserId,
     });
 
     res.json({
@@ -832,10 +833,10 @@ bookingsRouter.get('/user/:userId', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Failed to fetch user bookings', { 
-      error, 
+    logger.error('Failed to fetch user bookings', {
+      error,
       userId: req.params.userId,
-      requestedBy: req.user?.id 
+      requestedBy: req.user?.id,
     });
     res.status(500).json({
       error: 'Fetch Error',
@@ -859,7 +860,7 @@ bookingsRouter.get('/user/:userId/stats', async (req, res) => {
     }
 
     const db = getDb();
-    
+
     // Get all bookings for the user
     const userBookings = await db
       .select()
@@ -869,24 +870,24 @@ bookingsRouter.get('/user/:userId/stats', async (req, res) => {
     // Calculate statistics
     const stats = {
       totalBookings: userBookings.length,
-      upcomingBookings: userBookings.filter(b => 
-        ['confirmed', 'pending'].includes(b.status) && 
-        new Date(b.checkIn) > new Date()
+      upcomingBookings: userBookings.filter((b) =>
+        ['confirmed', 'pending'].includes(b.status) &&
+        new Date(b.checkIn) > new Date(),
       ).length,
-      completedBookings: userBookings.filter(b => 
-        b.status === 'completed' || b.status === 'checked_out'
+      completedBookings: userBookings.filter((b) =>
+        b.status === 'completed' || b.status === 'checked_out',
       ).length,
-      cancelledBookings: userBookings.filter(b => b.status === 'cancelled').length,
+      cancelledBookings: userBookings.filter((b) => b.status === 'cancelled').length,
       totalSpent: userBookings
-        .filter(b => b.paymentStatus === 'completed')
+        .filter((b) => b.paymentStatus === 'completed')
         .reduce((sum, b) => sum + (b.totalAmount || 0), 0),
       currency: userBookings[0]?.currency || 'USD',
     };
 
-    logger.info('Retrieved user booking stats', { 
-      userId, 
+    logger.info('Retrieved user booking stats', {
+      userId,
       stats,
-      requestedBy: requestingUserId 
+      requestedBy: requestingUserId,
     });
 
     res.json({
@@ -895,10 +896,10 @@ bookingsRouter.get('/user/:userId/stats', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Failed to fetch user booking stats', { 
-      error, 
+    logger.error('Failed to fetch user booking stats', {
+      error,
       userId: req.params.userId,
-      requestedBy: req.user?.id 
+      requestedBy: req.user?.id,
     });
     res.status(500).json({
       error: 'Fetch Error',
@@ -913,7 +914,7 @@ bookingsRouter.get('/confirmation/:confirmationNumber', async (req, res) => {
     const { confirmationNumber } = req.params;
 
     const db = getDb();
-    
+
     // Get booking by confirmation number
     const [booking] = await db
       .select()
@@ -928,9 +929,9 @@ bookingsRouter.get('/confirmation/:confirmationNumber', async (req, res) => {
       });
     }
 
-    logger.info('Retrieved booking by confirmation number', { 
+    logger.info('Retrieved booking by confirmation number', {
       confirmationNumber,
-      bookingId: booking.id 
+      bookingId: booking.id,
     });
 
     res.json({
@@ -939,9 +940,9 @@ bookingsRouter.get('/confirmation/:confirmationNumber', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Failed to get booking by confirmation number', { 
-      error, 
-      confirmationNumber: req.params.confirmationNumber 
+    logger.error('Failed to get booking by confirmation number', {
+      error,
+      confirmationNumber: req.params.confirmationNumber,
     });
     res.status(500).json({
       error: 'Fetch Error',
@@ -957,7 +958,7 @@ bookingsRouter.get('/:bookingId/confirmation', async (req, res) => {
     const userId = req.user?.id;
 
     const db = getDb();
-    
+
     // Get booking
     const [booking] = await db
       .select()
@@ -1005,7 +1006,7 @@ bookingsRouter.get('/:bookingId/confirmation', async (req, res) => {
           number: booking.confirmationNumber,
           status: booking.status,
           paymentStatus: booking.paymentStatus,
-          canCancel: booking.isCancellable && 
+          canCancel: booking.isCancellable &&
                      !['cancelled', 'checked_out'].includes(booking.status) &&
                      (!booking.cancellationDeadline || new Date() < booking.cancellationDeadline),
         },

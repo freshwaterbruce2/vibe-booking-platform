@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a modern hotel booking platform with a React/TypeScript frontend and TypeScript backend. The application features AI-powered search, passion-based hotel matching, Square payment integration, and enterprise-grade deployment capabilities. 
+This is a modern hotel booking platform with a React/TypeScript frontend and TypeScript backend. The application features AI-powered search, passion-based hotel matching, Square payment integration, and enterprise-grade deployment capabilities.
 
 **LATEST UPDATE (Aug 2025)**: Complete professional redesign implemented with luxury hotel industry standards, research-backed color psychology, and sophisticated design system matching Marriott/Hilton visual excellence.
 
@@ -15,8 +15,9 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
 **Key Insight**: The local development is production-ready - the issue is deployment strategy complexity, not application quality.
 
 ### 📊 Project Status Analysis
+
 - ✅ **Local Development**: Sophisticated, feature-complete, professional-grade
-- ✅ **Architecture**: Modern React/TypeScript with Express backend  
+- ✅ **Architecture**: Modern React/TypeScript with Express backend
 - ✅ **Features**: AI search, payment integration, luxury design system
 - ✅ **Quality**: Comprehensive testing, type safety, responsive design
 - ❌ **Production Deployment**: Stuck due to over-engineering multiple deployment strategies
@@ -26,6 +27,7 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
 **Follow the "vibe-tech-lovable" 3-hour success pattern**:
 
 1. **Phase 1: Simplify** (30 minutes)
+
    ```powershell
    git checkout -b simple-deploy-recovery
    # Remove complex deployment configs (Docker, K8s, IonOS VPS docs)
@@ -33,6 +35,7 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
    ```
 
 2. **Phase 2: Build & Deploy Frontend** (30 minutes)
+
    ```powershell
    npm run build
    # Drag dist/ folder to Netlify dashboard
@@ -40,6 +43,7 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
    ```
 
 3. **Phase 3: Deploy Backend** (1 hour)
+
    ```powershell
    # Deploy backend to Railway via GitHub integration
    # Configure environment variables in Railway UI
@@ -56,6 +60,7 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
 **Expected Timeline**: 2-3 hours to go from current state to fully deployed application
 
 ### 🔑 Key Success Factors
+
 - **Preserve Local Mastery**: Don't rebuild - deploy what's already working
 - **Single Target Focus**: Netlify for frontend, Railway for backend (no IonOS VPS complexity)
 - **Simple First**: Get basic deployment working before adding infrastructure complexity
@@ -64,6 +69,7 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
 ## Architecture
 
 ### Modern Stack (Primary)
+
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
 - **Backend**: Express.js + TypeScript with Drizzle ORM
 - **Database**: SQLite (local dev) / PostgreSQL (production)
@@ -72,6 +78,7 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
 - **Testing**: Vitest + Playwright for E2E
 
 ### Legacy Stack
+
 - Located in `legacy/vanilla-js-implementation/`
 - Vanilla JavaScript frontend with Express backend
 - Provides fallback API integration
@@ -79,9 +86,11 @@ This is a modern hotel booking platform with a React/TypeScript frontend and Typ
 ## Professional Design System (August 2025)
 
 ### Luxury Color Palette
+
 Based on 2025 hospitality design research and color psychology studies:
 
 **Primary Colors:**
+
 - **Deep Navy** (`#1C2951`): Professional trust color - increases conversion by 32%
 - **Warm Gold** (`#B8860B`): Luxury sophistication - increases perceived value by 40%
 - **Mocha Brown** (`#A47864`): 2025 Pantone Color of the Year - quiet luxury
@@ -89,6 +98,7 @@ Based on 2025 hospitality design research and color psychology studies:
 - **Warm Cream** (`#F7F3E9`): Holds visitor attention 26% longer than stark white
 
 **Implementation:**
+
 ```css
 /* CSS Custom Properties in src/index.css */
 --luxury-navy: 220 27% 18%;
@@ -99,29 +109,50 @@ Based on 2025 hospitality design research and color psychology studies:
 ```
 
 ### Professional Shadow System
+
 ```css
-.shadow-luxury-sm { box-shadow: 0 1px 2px 0 rgba(28, 41, 81, 0.05); }
-.shadow-luxury { box-shadow: 0 4px 6px -1px rgba(28, 41, 81, 0.1), 0 2px 4px -1px rgba(28, 41, 81, 0.06); }
-.shadow-luxury-md { box-shadow: 0 10px 15px -3px rgba(28, 41, 81, 0.1), 0 4px 6px -2px rgba(28, 41, 81, 0.05); }
-.shadow-luxury-lg { box-shadow: 0 20px 25px -5px rgba(28, 41, 81, 0.1), 0 10px 10px -5px rgba(28, 41, 81, 0.04); }
-.shadow-luxury-xl { box-shadow: 0 25px 50px -12px rgba(28, 41, 81, 0.25); }
+.shadow-luxury-sm {
+  box-shadow: 0 1px 2px 0 rgba(28, 41, 81, 0.05);
+}
+.shadow-luxury {
+  box-shadow:
+    0 4px 6px -1px rgba(28, 41, 81, 0.1),
+    0 2px 4px -1px rgba(28, 41, 81, 0.06);
+}
+.shadow-luxury-md {
+  box-shadow:
+    0 10px 15px -3px rgba(28, 41, 81, 0.1),
+    0 4px 6px -2px rgba(28, 41, 81, 0.05);
+}
+.shadow-luxury-lg {
+  box-shadow:
+    0 20px 25px -5px rgba(28, 41, 81, 0.1),
+    0 10px 10px -5px rgba(28, 41, 81, 0.04);
+}
+.shadow-luxury-xl {
+  box-shadow: 0 25px 50px -12px rgba(28, 41, 81, 0.25);
+}
 ```
 
 ### Button System
+
 Standardized button hierarchy with luxury styling:
+
 - **Small** (`sm`): 36px height, 16px padding
-- **Medium** (`md`): 44px height, 24px padding  
+- **Medium** (`md`): 44px height, 24px padding
 - **Large** (`lg`): 56px height, 32px padding
 - **Gradient Backgrounds**: Professional slate/amber combinations
 - **Smooth Animations**: 300ms transitions with hover scale effects
 
 ### Passion Selection Cards
+
 - **Uniform Height**: 320px (80 Tailwind units) for perfect visual consistency
 - **Professional Icons**: Lucide React icons (40px) with luxury backgrounds
 - **Sophisticated Gradients**: Research-based color combinations
 - **Enhanced Interactivity**: 500ms smooth transitions and hover effects
 
 ### Typography Hierarchy
+
 - **Gradient Headlines**: `bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent`
 - **Professional Spacing**: 8pt grid system for consistent layouts
 - **Refined Font Weights**: Strategic use of font-medium, font-semibold, font-bold
@@ -129,6 +160,7 @@ Standardized button hierarchy with luxury styling:
 ## Common Development Commands
 
 ### Quick Start (Local Development)
+
 ```powershell
 # Setup local SQLite environment
 cd backend
@@ -141,6 +173,7 @@ npm run dev               # Start Vite dev server (port 3009)
 ```
 
 ### Frontend Commands
+
 ```powershell
 npm run dev               # Start Vite dev server (port 3009)
 npm run build             # TypeScript check + Vite production build
@@ -154,6 +187,7 @@ npm run analyze           # Bundle analysis
 ```
 
 ### Testing Commands
+
 ```powershell
 # Unit Tests
 npm test                  # Run Vitest unit tests
@@ -180,6 +214,7 @@ npm run test:coverage     # Backend test coverage
 ```
 
 ### Backend Commands
+
 ```powershell
 cd backend
 npm run dev               # Start with tsx watch (PostgreSQL)
@@ -199,6 +234,7 @@ npm run db:seed:local     # Seed local database with test data
 ## High-Level Architecture
 
 ### Frontend Structure (`src/`)
+
 - **Components**: Feature-based organization (booking/, hotels/, search/, payment/, ui/)
 - **State Management**: Zustand stores in `store/` directory
   - `hotelStore.ts` - Hotel data and search results
@@ -213,6 +249,7 @@ npm run db:seed:local     # Seed local database with test data
 - **Type Safety**: All API responses typed in `types/` directory
 
 ### Backend Architecture (`backend/src/`)
+
 - **Database Layer**: Drizzle ORM with dual database support
   - `database/schema/` - PostgreSQL schemas
   - `database/schema/sqlite/` - SQLite schemas for local dev
@@ -231,6 +268,7 @@ npm run db:seed:local     # Seed local database with test data
   - `cacheService.ts` - Redis caching layer
 
 ### Payment Flow Architecture
+
 1. **Square Integration** (Primary):
    - Frontend: Square Web SDK for card tokenization
    - Backend: Payment processing at `/api/payments/create`
@@ -245,6 +283,7 @@ npm run db:seed:local     # Seed local database with test data
 ### Key Configuration
 
 #### Frontend Environment Variables (`.env`)
+
 ```powershell
 VITE_API_URL=http://localhost:3001
 VITE_OPENAI_API_KEY=<key>
@@ -254,6 +293,7 @@ SQUARE_LOCATION_ID=<id>
 ```
 
 #### Backend Environment Variables (`backend/.env`)
+
 ```powershell
 LOCAL_SQLITE=true          # Enable for local development
 DATABASE_URL=<postgresql_url>
@@ -300,11 +340,13 @@ JWT_SECRET=<secret>
 - **Coverage Target**: Maintain >80% code coverage
 
 #### Playwright Test Matrix
+
 The project includes sophisticated cross-device testing with 11 different viewport configurations to ensure luxury design consistency across all platforms. Critical conversion flows are tested separately with `npm run test:e2e:conversion`.
 
 ### Production Deployment
 
 **Current Build Performance (August 2025):**
+
 - **CSS**: 70.67 kB (gzipped: 10.97 kB) - Includes luxury design system
 - **JavaScript**: 95.91 kB (gzipped) - Optimized bundle with code splitting
 - **Build Time**: ~7-8 seconds for complete production build
@@ -314,7 +356,7 @@ The project includes sophisticated cross-device testing with 11 different viewpo
 # Build frontend
 npm run build             # Creates optimized dist/ directory
 
-# Build backend  
+# Build backend
 cd backend; npm run build  # Runtime compilation with tsx
 
 # Deploy to Netlify

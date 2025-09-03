@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { z, ZodSchema } from 'zod';
+import type { Request, Response, NextFunction } from 'express';
+import type { ZodSchema } from 'zod';
+import { z } from 'zod';
 import { logger } from '../utils/logger';
 
 /**
@@ -7,7 +8,7 @@ import { logger } from '../utils/logger';
  */
 export function validateRequest<T>(
   schema: ZodSchema<T>,
-  source: 'body' | 'query' | 'params' = 'body'
+  source: 'body' | 'query' | 'params' = 'body',
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -15,15 +16,15 @@ export function validateRequest<T>(
       const result = schema.safeParse(data);
 
       if (!result.success) {
-        const errors = result.error.errors.map(err => ({
+        const errors = result.error.errors.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code,
         }));
 
         // Check for password validation failure
-        const passwordError = errors.find(err => err.field === 'password' && err.code === 'invalid_string');
-        
+        const passwordError = errors.find((err) => err.field === 'password' && err.code === 'invalid_string');
+
         logger.warn('Request validation failed', {
           source,
           errors,
@@ -83,12 +84,12 @@ export function validateMultiple(validations: {
         const result = validations.body.safeParse(req.body);
         if (!result.success) {
           errors.push(
-            ...result.error.errors.map(err => ({
+            ...result.error.errors.map((err) => ({
               source: 'body',
               field: err.path.join('.'),
               message: err.message,
               code: err.code,
-            }))
+            })),
           );
         } else {
           req.body = result.data;
@@ -100,12 +101,12 @@ export function validateMultiple(validations: {
         const result = validations.query.safeParse(req.query);
         if (!result.success) {
           errors.push(
-            ...result.error.errors.map(err => ({
+            ...result.error.errors.map((err) => ({
               source: 'query',
               field: err.path.join('.'),
               message: err.message,
               code: err.code,
-            }))
+            })),
           );
         } else {
           req.query = result.data;
@@ -117,12 +118,12 @@ export function validateMultiple(validations: {
         const result = validations.params.safeParse(req.params);
         if (!result.success) {
           errors.push(
-            ...result.error.errors.map(err => ({
+            ...result.error.errors.map((err) => ({
               source: 'params',
               field: err.path.join('.'),
               message: err.message,
               code: err.code,
-            }))
+            })),
           );
         } else {
           req.params = result.data;

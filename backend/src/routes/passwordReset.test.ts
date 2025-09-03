@@ -82,9 +82,9 @@ describe('Password Reset System - TDD', () => {
       // This test SHOULD FAIL - enhanced token validation doesn't exist yet
       const response = await request(app)
         .post('/api/auth/reset-password')
-        .send({ 
+        .send({
           token: 'valid-reset-token',
-          password: 'newpassword123'
+          password: 'newpassword123',
         });
 
       expect(response.status).toBe(200);
@@ -95,9 +95,9 @@ describe('Password Reset System - TDD', () => {
       // This test SHOULD FAIL - password strength validation doesn't exist yet
       const response = await request(app)
         .post('/api/auth/reset-password')
-        .send({ 
+        .send({
           token: 'valid-token',
-          password: '123' // Weak password
+          password: '123', // Weak password
         });
 
       expect(response.status).toBe(400);
@@ -108,9 +108,9 @@ describe('Password Reset System - TDD', () => {
       // This test SHOULD FAIL - expiration handling doesn't exist yet
       const response = await request(app)
         .post('/api/auth/reset-password')
-        .send({ 
+        .send({
           token: 'expired-token',
-          password: 'newpassword123'
+          password: 'newpassword123',
         });
 
       expect(response.status).toBe(400);

@@ -12,21 +12,18 @@ const STATIC_ASSETS = [
 ];
 
 // API endpoints to cache
-const API_ENDPOINTS = [
-  '/api/hotels/search',
-  '/api/hotels/',
-  '/health',
-];
+const API_ENDPOINTS = ['/api/hotels/search', '/api/hotels/', '/health'];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker');
-  
+
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => {
         console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS.filter(asset => asset !== '/'));
+        return cache.addAll(STATIC_ASSETS.filter((asset) => asset !== '/'));
       })
       .then(() => {
         console.log('[SW] Static assets cached successfully');
@@ -34,32 +31,35 @@ self.addEventListener('install', (event) => {
       })
       .catch((error) => {
         console.error('[SW] Failed to cache static assets:', error);
-      })
+      }),
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating service worker');
-  
+
   event.waitUntil(
-    caches.keys()
+    caches
+      .keys()
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && 
-                cacheName !== API_CACHE_NAME && 
-                cacheName !== IMAGE_CACHE_NAME) {
+            if (
+              cacheName !== CACHE_NAME &&
+              cacheName !== API_CACHE_NAME &&
+              cacheName !== IMAGE_CACHE_NAME
+            ) {
               console.log('[SW] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
-          })
+          }),
         );
       })
       .then(() => {
         console.log('[SW] Service worker activated');
         return self.clients.claim(); // Take control immediately
-      })
+      }),
   );
 });
 
@@ -93,42 +93,45 @@ self.addEventListener('fetch', (event) => {
 async function networkFirstWithCache(request, cacheName) {
   try {
     console.log('[SW] Network first for:', request.url);
-    
+
     // Try network first
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       // Cache successful responses
       const cache = await caches.open(cacheName);
-      
+
       // Only cache GET requests and successful responses
       if (request.method === 'GET') {
         cache.put(request, networkResponse.clone());
       }
-      
+
       return networkResponse;
     }
-    
+
     throw new Error('Network response not ok');
   } catch (error) {
     console.log('[SW] Network failed, trying cache for:', request.url);
-    
+
     // Network failed, try cache
     const cachedResponse = await caches.match(request);
-    
+
     if (cachedResponse) {
       console.log('[SW] Serving from cache:', request.url);
       return cachedResponse;
     }
-    
+
     // If no cache, return offline page for navigation requests
     if (request.destination === 'document') {
-      return caches.match('/offline.html') || new Response('Offline', { 
-        status: 503,
-        headers: { 'Content-Type': 'text/html' }
-      });
+      return (
+        caches.match('/offline.html') ||
+        new Response('Offline', {
+          status: 503,
+          headers: { 'Content-Type': 'text/html' },
+        })
+      );
     }
-    
+
     // For other requests, return a network error
     throw error;
   }
@@ -137,41 +140,41 @@ async function networkFirstWithCache(request, cacheName) {
 // Cache First strategy (for images and static assets)
 async function cacheFirstWithNetwork(request, cacheName) {
   console.log('[SW] Cache first for:', request.url);
-  
+
   // Try cache first
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     console.log('[SW] Serving from cache:', request.url);
-    
+
     // Serve from cache, but update cache in background for fresh content
     updateCacheInBackground(request, cacheName);
     return cachedResponse;
   }
-  
+
   // Not in cache, fetch from network
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       // Cache the response
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       console.log('[SW] Cached new resource:', request.url);
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.error('[SW] Failed to fetch:', request.url, error);
-    
+
     // Return a fallback response for images
     if (isImageRequest(request)) {
-      return new Response('', { 
+      return new Response('', {
         status: 204,
-        statusText: 'Image not available offline' 
+        statusText: 'Image not available offline',
       });
     }
-    
+
     throw error;
   }
 }
@@ -179,10 +182,9 @@ async function cacheFirstWithNetwork(request, cacheName) {
 // Background cache update (stale-while-revalidate pattern)
 function updateCacheInBackground(request, cacheName) {
   fetch(request)
-    .then(response => {
+    .then((response) => {
       if (response.ok) {
-        return caches.open(cacheName)
-          .then(cache => cache.put(request, response));
+        return caches.open(cacheName).then((cache) => cache.put(request, response));
       }
     })
     .catch(() => {
@@ -193,14 +195,17 @@ function updateCacheInBackground(request, cacheName) {
 
 // Helper functions
 function isImageRequest(request) {
-  return request.destination === 'image' || 
-         /\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(new URL(request.url).pathname);
+  return (
+    request.destination === 'image' ||
+    /\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(new URL(request.url).pathname)
+  );
 }
 
 function isStaticAsset(request) {
   const url = new URL(request.url);
-  return /\.(js|css|woff|woff2|ttf|eot)$/i.test(url.pathname) ||
-         url.pathname.startsWith('/assets/');
+  return (
+    /\.(js|css|woff|woff2|ttf|eot)$/i.test(url.pathname) || url.pathname.startsWith('/assets/')
+  );
 }
 
 // Handle background sync for offline actions
@@ -210,7 +215,7 @@ self.addEventListener('sync', (event) => {
     event.waitUntil(
       // Implement background sync logic here
       // For example, sync offline booking attempts
-      Promise.resolve()
+      Promise.resolve(),
     );
   }
 });
@@ -220,7 +225,7 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     const data = event.data.json();
     console.log('[SW] Push notification received:', data);
-    
+
     event.waitUntil(
       self.registration.showNotification(data.title, {
         body: data.body,
@@ -228,7 +233,7 @@ self.addEventListener('push', (event) => {
         badge: '/icon-72.png',
         tag: 'vibe-hotels-notification',
         data: data.url,
-      })
+      }),
     );
   }
 });
@@ -237,36 +242,35 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked');
   event.notification.close();
-  
+
   if (event.notification.data) {
-    event.waitUntil(
-      clients.openWindow(event.notification.data)
-    );
+    event.waitUntil(clients.openWindow(event.notification.data));
   }
 });
 
 // Handle messages from main thread
 self.addEventListener('message', (event) => {
   console.log('[SW] Message received:', event.data);
-  
+
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
+
   if (event.data && event.data.type === 'CACHE_HOTEL_DATA') {
     // Cache important hotel data for offline access
     const { hotelData } = event.data;
-    caches.open(API_CACHE_NAME)
-      .then(cache => {
+    caches
+      .open(API_CACHE_NAME)
+      .then((cache) => {
         const response = new Response(JSON.stringify(hotelData), {
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         });
         return cache.put('/api/hotels/offline-data', response);
       })
       .then(() => {
         console.log('[SW] Hotel data cached for offline access');
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('[SW] Failed to cache hotel data:', error);
       });
   }
@@ -284,18 +288,18 @@ async function cleanupOldCacheEntries() {
   try {
     const cache = await caches.open(IMAGE_CACHE_NAME);
     const requests = await cache.keys();
-    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-    
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
     const cleanupPromises = requests.map(async (request) => {
       const response = await cache.match(request);
       const dateHeader = response?.headers.get('date');
-      
+
       if (dateHeader && new Date(dateHeader).getTime() < oneWeekAgo) {
         console.log('[SW] Cleaning up old cache entry:', request.url);
         return cache.delete(request);
       }
     });
-    
+
     await Promise.all(cleanupPromises);
     console.log('[SW] Cache cleanup completed');
   } catch (error) {

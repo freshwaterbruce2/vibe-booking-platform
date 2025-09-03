@@ -1,6 +1,6 @@
 /**
  * Database Index Optimization for Email Scheduling
- * 
+ *
  * Creates optimal indexes for high-performance email processing queries.
  * These optimizations improve query performance by 80-95%.
  */
@@ -16,7 +16,7 @@ export class DatabaseOptimizer {
   static async optimizeEmailSchedulingIndexes(): Promise<void> {
     try {
       const db = getDb();
-      
+
       logger.info('Starting database optimization for email scheduling');
 
       // OPTIMIZATION 1: Composite index for email processing query
@@ -52,13 +52,13 @@ export class DatabaseOptimizer {
       `);
 
       logger.info('Database optimization completed successfully');
-      
+
       // Log index usage statistics
       await this.logIndexStatistics();
-      
+
     } catch (error) {
       logger.error('Failed to optimize database indexes', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -70,7 +70,7 @@ export class DatabaseOptimizer {
   private static async logIndexStatistics(): Promise<void> {
     try {
       const db = getDb();
-      
+
       // Check if indexes exist and are being used
       const indexStats = await db.execute(sql`
         SELECT 
@@ -86,13 +86,13 @@ export class DatabaseOptimizer {
 
       logger.info('Email scheduling index statistics', {
         indexCount: indexStats.rows?.length || 0,
-        statistics: indexStats.rows
+        statistics: indexStats.rows,
       });
-      
+
     } catch (error) {
       // Ignore errors for statistics (might be SQLite in development)
       logger.debug('Could not retrieve index statistics', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -103,12 +103,12 @@ export class DatabaseOptimizer {
   static async analyzeQueryPerformance(): Promise<void> {
     try {
       const db = getDb();
-      
+
       logger.info('Analyzing email scheduling query performance');
 
       // Test the main processing query
       const startTime = Date.now();
-      
+
       await db.execute(sql`
         EXPLAIN ANALYZE 
         SELECT id, email_type, recipient_email, email_data, scheduled_for
@@ -117,17 +117,17 @@ export class DatabaseOptimizer {
         ORDER BY scheduled_for 
         LIMIT 50
       `);
-      
+
       const queryTime = Date.now() - startTime;
-      
+
       logger.info('Query performance analysis completed', {
         queryTimeMs: queryTime,
-        performanceLevel: queryTime < 50 ? 'excellent' : queryTime < 200 ? 'good' : 'needs_optimization'
+        performanceLevel: queryTime < 50 ? 'excellent' : queryTime < 200 ? 'good' : 'needs_optimization',
       });
-      
+
     } catch (error) {
       logger.debug('Query performance analysis not available', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -138,29 +138,29 @@ export class DatabaseOptimizer {
   static async cleanupOldEmails(): Promise<{ deletedCount: number }> {
     try {
       const db = getDb();
-      
+
       // Delete emails older than 30 days that are sent or failed
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       const result = await db.execute(sql`
         DELETE FROM scheduled_emails 
         WHERE (status = 'sent' OR status = 'failed') 
         AND created_at < ${thirtyDaysAgo.toISOString()}
       `);
-      
+
       const deletedCount = result.rowCount || 0;
-      
+
       logger.info('Cleaned up old scheduled emails', {
         deletedCount,
-        cutoffDate: thirtyDaysAgo.toISOString()
+        cutoffDate: thirtyDaysAgo.toISOString(),
       });
-      
+
       return { deletedCount };
-      
+
     } catch (error) {
       logger.error('Failed to cleanup old emails', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return { deletedCount: 0 };
     }
@@ -177,7 +177,7 @@ export class DatabaseOptimizer {
   }> {
     try {
       const db = getDb();
-      
+
       // Count total and pending emails
       const emailCounts = await db.execute(sql`
         SELECT 
@@ -185,10 +185,10 @@ export class DatabaseOptimizer {
           COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending
         FROM scheduled_emails
       `);
-      
+
       const totalScheduledEmails = emailCounts.rows?.[0]?.total || 0;
       const pendingEmails = emailCounts.rows?.[0]?.pending || 0;
-      
+
       // Try to get index hit ratio (PostgreSQL specific)
       let indexHitRatio = 0;
       try {
@@ -205,23 +205,23 @@ export class DatabaseOptimizer {
         // Ignore if not PostgreSQL
         indexHitRatio = 100; // Assume optimal for SQLite
       }
-      
+
       return {
         totalScheduledEmails: Number(totalScheduledEmails),
         pendingEmails: Number(pendingEmails),
         indexHitRatio: Number(indexHitRatio),
-        averageQueryTime: 25 // Estimated based on optimizations
+        averageQueryTime: 25, // Estimated based on optimizations
       };
-      
+
     } catch (error) {
       logger.error('Failed to get performance metrics', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return {
         totalScheduledEmails: 0,
         pendingEmails: 0,
         indexHitRatio: 0,
-        averageQueryTime: 0
+        averageQueryTime: 0,
       };
     }
   }
@@ -229,7 +229,7 @@ export class DatabaseOptimizer {
 
 // Auto-optimize on module load in production
 if (process.env.NODE_ENV === 'production') {
-  DatabaseOptimizer.optimizeEmailSchedulingIndexes().catch(error => {
+  DatabaseOptimizer.optimizeEmailSchedulingIndexes().catch((error) => {
     logger.warn('Could not auto-optimize database indexes', { error });
   });
 }

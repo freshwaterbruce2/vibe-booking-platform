@@ -1,4 +1,4 @@
-import { EmailTemplate } from '../types/email.js';
+import type { EmailTemplate } from '../types/email.js';
 
 export interface BookingConfirmationData {
   firstName: string;
@@ -24,7 +24,7 @@ export function createBookingConfirmationEmailTemplate(bookingData: BookingConfi
     nights,
     guests,
     totalAmount,
-    confirmationUrl
+    confirmationUrl,
   } = bookingData;
 
   // Format dates professionally
@@ -33,7 +33,7 @@ export function createBookingConfirmationEmailTemplate(bookingData: BookingConfi
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -47,7 +47,7 @@ export function createBookingConfirmationEmailTemplate(bookingData: BookingConfi
   const guestsText = guests === 1 ? '1 guest' : `${guests} guests`;
 
   const subject = `Booking Confirmed - ${bookingId} - Your Luxury Stay Awaits`;
-  
+
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -420,7 +420,7 @@ Vibe Hotels | Luxury Hospitality Worldwide
     text,
     from: {
       name: 'Vibe Hotels Reservations',
-      email: process.env.FROM_EMAIL || 'bookings@vibehotels.com'
-    }
+      email: process.env.FROM_EMAIL || 'bookings@vibehotels.com',
+    },
   };
 }

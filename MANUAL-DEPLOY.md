@@ -34,10 +34,11 @@ copy ..\backend\package.json api\
 ## Step 3: Create Config Files
 
 **Create `package.json` in ionos-deployment folder:**
+
 ```json
 {
   "name": "vibe-booking",
-  "version": "2.0.0", 
+  "version": "2.0.0",
   "main": "api/server.js",
   "scripts": {
     "start": "node api/server.js"
@@ -49,6 +50,7 @@ copy ..\backend\package.json api\
 ```
 
 **Create `.htaccess` in ionos-deployment folder:**
+
 ```apache
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -65,6 +67,7 @@ Header always set X-XSS-Protection "1; mode=block"
 ```
 
 **Create `.env` in ionos-deployment folder:**
+
 ```bash
 NODE_ENV=production
 PORT=443
@@ -93,6 +96,7 @@ LOG_LEVEL=info
 ## Step 5: Test
 
 Your hotel booking site should be live with:
+
 - ✅ Hotel search working (with fallback data)
 - ✅ Beautiful luxury design
 - ✅ Room photos displaying

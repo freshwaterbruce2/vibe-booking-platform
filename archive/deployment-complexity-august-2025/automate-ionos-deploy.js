@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function deployHotelBookingToIONOS() {
   console.log('🤖 Starting automated IONOS deployment...');
-  
+
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
@@ -18,7 +18,7 @@ async function deployHotelBookingToIONOS() {
     // Navigate to IONOS (user should be logged in)
     console.log('📂 Accessing IONOS Webspace...');
     await page.goto('https://my.ionos.com');
-    
+
     // Wait for user confirmation they're logged in
     console.log('⏳ Please ensure you are logged in to IONOS...');
     await page.waitForTimeout(3000);
@@ -29,7 +29,7 @@ async function deployHotelBookingToIONOS() {
 
     // Upload all asset files
     console.log('📤 Uploading asset files...');
-    
+
     // Navigate to assets folder
     await page.locator('text=assets').click();
     await page.waitForTimeout(1000);
@@ -37,22 +37,22 @@ async function deployHotelBookingToIONOS() {
     // Get all files from ionos-deployment/assets
     const assetsPath = path.join(__dirname, 'ionos-deployment', 'assets');
     const assetFiles = fs.readdirSync(assetsPath);
-    
+
     console.log(`📁 Found ${assetFiles.length} asset files to upload`);
 
     // Upload files in batches to avoid overwhelming the server
     for (let i = 0; i < assetFiles.length; i += 5) {
       const batch = assetFiles.slice(i, i + 5);
-      console.log(`📤 Uploading batch ${Math.floor(i/5) + 1}...`);
-      
+      console.log(`📤 Uploading batch ${Math.floor(i / 5) + 1}...`);
+
       await page.locator('text=Upload').click();
-      
-      const filePaths = batch.map(file => path.join(assetsPath, file));
+
+      const filePaths = batch.map((file) => path.join(assetsPath, file));
       await page.setInputFiles('input[type="file"]', filePaths);
-      
+
       await page.locator('text=Start Upload').click();
       await page.waitForTimeout(3000);
-      
+
       // Wait for upload to complete
       await page.waitForSelector('text=Upload completed', { timeout: 30000 });
       await page.waitForTimeout(1000);
@@ -64,7 +64,7 @@ async function deployHotelBookingToIONOS() {
 
     // Upload backend files
     console.log('🔧 Setting up backend...');
-    
+
     // Create API directory if it doesn't exist
     await page.locator('text=New Folder').click();
     await page.fill('input[placeholder="Folder name"]', 'api');
@@ -179,7 +179,6 @@ RewriteRule ^api/(.*)$ api/server.js [L]
 
     console.log('✅ Deployment complete!');
     console.log('🏨 Your hotel booking site should be live at: https://vibehotelbookings.com');
-    
   } catch (error) {
     console.error('❌ Deployment failed:', error);
   } finally {

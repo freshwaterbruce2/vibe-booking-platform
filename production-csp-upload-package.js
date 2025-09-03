@@ -76,7 +76,7 @@ CRITICAL: These files contain the CSP fixes that resolve Square payment blocking
 📁 STEP 1: FRONTEND FILES (5 minutes)
 1. Navigate to your IONOS File Manager
 2. Upload ALL files from the dist/ folder:
-   ${distExists ? distFiles.map(f => `   - ${f}`).join('\n') : '   ❌ Run npm run build first'}
+   ${distExists ? distFiles.map((f) => `   - ${f}`).join('\n') : '   ❌ Run npm run build first'}
 3. Replace existing files (this updates the frontend with CSP fixes)
 
 🔧 STEP 2: BACKEND SECURITY (3 minutes)  
@@ -115,7 +115,7 @@ fs.writeFileSync('./IONOS-CSP-UPLOAD-INSTRUCTIONS.md', uploadInstructions);
 console.log('✅ Created IONOS-CSP-UPLOAD-INSTRUCTIONS.md');
 console.log('');
 console.log('🎯 NEXT STEPS:');
-console.log('1. Follow instructions in IONOS-CSP-UPLOAD-INSTRUCTIONS.md'); 
+console.log('1. Follow instructions in IONOS-CSP-UPLOAD-INSTRUCTIONS.md');
 console.log('2. Upload dist/ folder contents to IONOS');
 console.log('3. Upload production-security-middleware.js');
 console.log('4. Test live Square payments at vibehotelbookings.com');

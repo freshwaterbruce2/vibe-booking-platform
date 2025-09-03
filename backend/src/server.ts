@@ -1,4 +1,5 @@
-import express, { Express } from 'express';
+import type { Express } from 'express';
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -55,22 +56,24 @@ export class HotelBookingServer {
     this.app.use(cors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or Postman)
-        if (!origin) return callback(null, true);
-        
+        if (!origin) {
+return callback(null, true);
+}
+
         // Allow localhost origins for development
         if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
           return callback(null, true);
         }
-        
+
         // Check against configured origins
-        const allowedOrigins = Array.isArray(this.config.cors.origin) 
-          ? this.config.cors.origin 
+        const allowedOrigins = Array.isArray(this.config.cors.origin)
+          ? this.config.cors.origin
           : [this.config.cors.origin];
-        
+
         if (allowedOrigins.includes(origin)) {
           return callback(null, true);
         }
-        
+
         // Log rejected origin for debugging
         logger.warn(`CORS: Rejected origin ${origin}`);
         callback(new Error('Not allowed by CORS'));
@@ -81,17 +84,17 @@ export class HotelBookingServer {
       exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
       maxAge: 86400, // 24 hours
     }));
-    
+
     // Add middleware to set proper content-type headers
     this.app.use((req, res, next) => {
       // Set X-Content-Type-Options to prevent MIME sniffing
       res.setHeader('X-Content-Type-Options', 'nosniff');
-      
+
       // Ensure JSON responses have correct content-type
       if (req.path.startsWith('/api')) {
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
       }
-      
+
       next();
     });
 

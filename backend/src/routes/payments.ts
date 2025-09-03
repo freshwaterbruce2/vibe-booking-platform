@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import { getDb } from '../database';
 import { payments, refunds, bookings } from '../database/schema';
@@ -14,7 +15,7 @@ import { squarePaymentService } from '../services/squarePaymentService';
 import { paypalService } from '../services/paypalService';
 import { pdfService } from '../services/pdfService.js';
 
-// Validation schemas (Square) 
+// Validation schemas (Square)
 const createPaymentSchema = z.object({
   sourceId: z.string(),
   amount: z.number().positive(),
@@ -65,7 +66,7 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
     // Verify booking exists and belongs to user (or is accessible)
     const db = await getDb();
     const booking = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
-    
+
     if (!booking.length) {
       return res.status(404).json({
         error: 'Booking not found',
@@ -134,15 +135,15 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
               updatedAt: new Date(),
             })
             .where(eq(bookings.id, bookingId));
-          
+
           // Send professional payment receipt email for successful payment
           try {
             await emailService.sendProfessionalPaymentReceipt({
               customerName: `${bookingData.guestFirstName} ${bookingData.guestLastName}`,
               customerEmail: bookingData.guestEmail,
               paymentId: result.paymentId,
-              amount: amount,
-              currency: currency,
+              amount,
+              currency,
               paymentMethod: 'Square Credit Card',
               transactionDate: new Date(),
               billingAddress: billingAddress || {
@@ -151,7 +152,7 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
                 addressLine1: 'N/A',
                 locality: 'N/A',
                 administrativeDistrictLevel1: 'N/A',
-                postalCode: 'N/A'
+                postalCode: 'N/A',
               },
               bookingDetails: {
                 confirmationNumber: bookingData.confirmationNumber,
@@ -159,24 +160,24 @@ paymentsRouter.post('/create', validateRequest(createPaymentSchema), async (req:
                 checkIn: bookingData.checkIn?.toISOString().split('T')[0] || '',
                 checkOut: bookingData.checkOut?.toISOString().split('T')[0] || '',
                 roomType: bookingData.roomType || 'Room',
-                nights: bookingData.nights || 1
+                nights: bookingData.nights || 1,
               },
               receiptFormat: 'professional_html',
               includeInvoicePDF: true,
-              includeTermsAndConditions: true
+              includeTermsAndConditions: true,
             });
-            
-            logger.info('Payment receipt email sent', { 
+
+            logger.info('Payment receipt email sent', {
               paymentId: result.paymentId,
               email: bookingData.guestEmail,
-              bookingId: bookingId
+              bookingId,
             });
           } catch (emailError) {
             // Don't fail payment if email fails - just log the error
-            logger.error('Failed to send payment receipt email', { 
+            logger.error('Failed to send payment receipt email', {
               error: emailError,
               paymentId: result.paymentId,
-              bookingId: bookingId
+              bookingId,
             });
           }
         }
@@ -233,11 +234,11 @@ paymentsRouter.post('/paypal/capture', validateRequest(capturePayPalOrderSchema)
   try {
     const { orderId, bookingId, customerEmail, customerName, amount } = req.body;
     const result = await paypalService.captureOrder(orderId);
-    
-    if (!result.success) { 
-      return res.status(400).json(result); 
+
+    if (!result.success) {
+      return res.status(400).json(result);
     }
-    
+
     // If capture was successful, send professional payment receipt email
     if (result.success && bookingId && customerEmail) {
       try {
@@ -248,11 +249,11 @@ paymentsRouter.post('/paypal/capture', validateRequest(capturePayPalOrderSchema)
           .from(bookings)
           .where(eq(bookings.id, bookingId))
           .limit(1);
-        
+
         if (booking) {
           await emailService.sendProfessionalPaymentReceipt({
             customerName: customerName || 'Customer',
-            customerEmail: customerEmail,
+            customerEmail,
             paymentId: orderId,
             amount: amount || 0,
             currency: 'USD',
@@ -264,7 +265,7 @@ paymentsRouter.post('/paypal/capture', validateRequest(capturePayPalOrderSchema)
               addressLine1: 'N/A',
               locality: 'N/A',
               administrativeDistrictLevel1: 'N/A',
-              postalCode: 'N/A'
+              postalCode: 'N/A',
             },
             bookingDetails: {
               confirmationNumber: booking.confirmationNumber,
@@ -272,29 +273,29 @@ paymentsRouter.post('/paypal/capture', validateRequest(capturePayPalOrderSchema)
               checkIn: booking.checkIn?.toISOString().split('T')[0] || '',
               checkOut: booking.checkOut?.toISOString().split('T')[0] || '',
               roomType: booking.roomType || 'Room',
-              nights: booking.nights || 1
+              nights: booking.nights || 1,
             },
             receiptFormat: 'professional_html',
             includeInvoicePDF: true,
-            includeTermsAndConditions: true
+            includeTermsAndConditions: true,
           });
         }
-        
-        logger.info('PayPal payment receipt email sent', { 
-          orderId: orderId,
+
+        logger.info('PayPal payment receipt email sent', {
+          orderId,
           email: customerEmail,
-          bookingId: bookingId
+          bookingId,
         });
       } catch (emailError) {
         // Don't fail payment if email fails - just log the error
-        logger.error('Failed to send PayPal payment receipt email', { 
+        logger.error('Failed to send PayPal payment receipt email', {
           error: emailError,
-          orderId: orderId,
-          bookingId: bookingId
+          orderId,
+          bookingId,
         });
       }
     }
-    
+
     return res.json(result);
   } catch (e) {
     return res.status(500).json({ success: false, error: 'Failed to capture PayPal order' });
@@ -313,7 +314,7 @@ paymentsRouter.get('/booking/:bookingId', async (req: Request, res: Response) =>
     // Verify booking access
   const db = await getDb();
   const booking = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
-    
+
     if (!booking.length) {
       return res.status(404).json({
         error: 'Booking not found',
@@ -350,13 +351,13 @@ paymentsRouter.get('/booking/:bookingId', async (req: Request, res: Response) =>
         refunds: bookingRefunds,
         summary: {
           totalPaid: bookingPayments
-            .filter(p => p.status === 'succeeded')
+            .filter((p) => p.status === 'succeeded')
             .reduce((sum, p) => sum + parseFloat(p.amount), 0),
           totalRefunded: bookingRefunds
-            .filter(r => r.status === 'succeeded')
+            .filter((r) => r.status === 'succeeded')
             .reduce((sum, r) => sum + parseFloat(r.amount), 0),
-          pendingPayments: bookingPayments.filter(p => p.status === 'pending').length,
-          pendingRefunds: bookingRefunds.filter(r => r.status === 'pending').length,
+          pendingPayments: bookingPayments.filter((p) => p.status === 'pending').length,
+          pendingRefunds: bookingRefunds.filter((r) => r.status === 'pending').length,
         },
       },
     });
@@ -468,15 +469,15 @@ paymentsRouter.get('/history', async (req: Request, res: Response) => {
 
     // Build query conditions
     let conditions = eq(payments.userId, userId!);
-    
+
     if (status) {
       conditions = and(conditions, eq(payments.status, status as string))!;
     }
-    
+
     if (startDate) {
       conditions = and(conditions, gte(payments.createdAt, new Date(startDate as string)))!;
     }
-    
+
     if (endDate) {
       conditions = and(conditions, lte(payments.createdAt, new Date(endDate as string)))!;
     }
@@ -608,11 +609,11 @@ paymentsRouter.get('/stats', async (req: Request, res: Response) => {
 
     // Total succeeded revenue
     const allPayments = await db.select().from(payments).where(eq(payments.status, 'succeeded'));
-    const userFiltered = userId ? allPayments.filter(p => p.userId === userId) : allPayments;
+    const userFiltered = userId ? allPayments.filter((p) => p.userId === userId) : allPayments;
     const totalRevenue = userFiltered.reduce((s, p) => s + parseFloat(p.amount), 0);
 
     const last30Revenue = userFiltered
-      .filter(p => p.createdAt && p.createdAt >= last30)
+      .filter((p) => p.createdAt && p.createdAt >= last30)
       .reduce((s, p) => s + parseFloat(p.amount), 0);
 
     const orderCount = userFiltered.length;

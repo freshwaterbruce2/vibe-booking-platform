@@ -320,7 +320,7 @@ aiRouter.get('/health', async (req, res) => {
     // Test AI service with a simple query
     const testQuery = 'hotels in Paris';
     const startTime = Date.now();
-    
+
     try {
       await aiSearchService.parseNaturalLanguageQuery(testQuery);
       const responseTime = Date.now() - startTime;

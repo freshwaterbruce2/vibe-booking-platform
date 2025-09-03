@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 
 async function testPerformanceWithLighthouse() {
   console.log('🚀 Starting automated performance testing...');
-  
+
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
@@ -20,7 +20,7 @@ async function testPerformanceWithLighthouse() {
         const observer = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           const vitals = {};
-          
+
           entries.forEach((entry) => {
             switch (entry.entryType) {
               case 'paint':
@@ -43,8 +43,9 @@ async function testPerformanceWithLighthouse() {
           // Get navigation timing
           const navigation = performance.getEntriesByType('navigation')[0];
           vitals.loadTime = navigation.loadEventEnd - navigation.loadEventStart;
-          vitals.domContentLoaded = navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart;
-          
+          vitals.domContentLoaded =
+            navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart;
+
           setTimeout(() => resolve(vitals), 2000);
         });
 
@@ -61,15 +62,15 @@ async function testPerformanceWithLighthouse() {
 
     // Test search functionality to check for dynamic content CLS
     console.log('\n🔍 Testing search functionality for CLS...');
-    
+
     // Fill in search form
     await page.fill('input[placeholder*="City, hotel"]', 'Paris');
     await page.click('text=Search Hotels');
-    
+
     // Wait for search results to load
     await page.waitForSelector('.animate-pulse', { timeout: 5000 });
     console.log('✅ Loading skeleton appeared (preventing CLS)');
-    
+
     // Wait for actual results
     await page.waitForSelector('text=hotels found', { timeout: 15000 });
     console.log('✅ Search results loaded');
@@ -78,7 +79,7 @@ async function testPerformanceWithLighthouse() {
     const searchMetrics = await page.evaluate(() => {
       const entries = performance.getEntriesByType('layout-shift');
       let totalCLS = 0;
-      entries.forEach(entry => {
+      entries.forEach((entry) => {
         if (!entry.hadRecentInput) {
           totalCLS += entry.value;
         }
@@ -95,7 +96,6 @@ async function testPerformanceWithLighthouse() {
     // Take a screenshot
     await page.screenshot({ path: 'performance-test-screenshot.png', fullPage: true });
     console.log('📸 Screenshot saved as performance-test-screenshot.png');
-
   } catch (error) {
     console.error('❌ Error during performance testing:', error);
   } finally {
@@ -115,7 +115,7 @@ function assessPerformance(metrics, searchMetrics) {
     feedback += '✅ FCP is excellent\n';
   }
 
-  // LCP Assessment  
+  // LCP Assessment
   if (metrics.LCP > 2500) {
     score -= 25;
     feedback += '⚠️  LCP needs improvement (target: <2.5s)\n';

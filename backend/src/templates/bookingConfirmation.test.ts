@@ -21,7 +21,7 @@ describe('Booking Confirmation Email Template - TDD', () => {
         nights: 3,
         guests: 2,
         totalAmount: 750,
-        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001234'
+        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001234',
       };
 
       const template = createBookingConfirmationEmailTemplate(bookingData);
@@ -51,7 +51,7 @@ describe('Booking Confirmation Email Template - TDD', () => {
         nights: 2,
         guests: 1,
         totalAmount: 400,
-        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001235'
+        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001235',
       };
 
       const template = createBookingConfirmationEmailTemplate(bookingData);
@@ -75,7 +75,7 @@ describe('Booking Confirmation Email Template - TDD', () => {
         nights: 3,
         guests: 4,
         totalAmount: 1200,
-        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001236'
+        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001236',
       };
 
       const template = createBookingConfirmationEmailTemplate(bookingData);
@@ -99,7 +99,7 @@ describe('Booking Confirmation Email Template - TDD', () => {
         nights: 3,
         guests: 2,
         totalAmount: 900,
-        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001237'
+        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001237',
       };
 
       const template = createBookingConfirmationEmailTemplate(bookingData);
@@ -124,7 +124,7 @@ describe('Booking Confirmation Email Template - TDD', () => {
         nights: 2,
         guests: 1,
         totalAmount: 500,
-        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001238'
+        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001238',
       };
 
       const template = createBookingConfirmationEmailTemplate(bookingData);
@@ -132,10 +132,10 @@ describe('Booking Confirmation Email Template - TDD', () => {
       // Should format dates as "December 1, 2024" not "2024-12-01"
       expect(template.html).toContain('December 1, 2024');
       expect(template.html).toContain('December 3, 2024');
-      
+
       // Should format currency as "$500.00" not "500"
       expect(template.html).toContain('$500.00');
-      
+
       // Should include proper pluralization
       expect(template.html).toContain('2 nights');
       expect(template.html).toContain('1 guest');
@@ -153,7 +153,7 @@ describe('Booking Confirmation Email Template - TDD', () => {
         nights: 4,
         guests: 3,
         totalAmount: 1600,
-        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001239'
+        confirmationUrl: 'https://vibe-booking.netlify.app/booking/VB-2024-001239',
       };
 
       const template = createBookingConfirmationEmailTemplate(bookingData);
