@@ -237,7 +237,6 @@ class BookingService {
           const booking = await this.getBooking(id);
           if (booking && booking.userId) {
             await notificationService.sendBookingCancellation(
-              booking.userId,
               booking.id,
               booking.hotelName,
               booking.totalAmount // Assume full refund for demo

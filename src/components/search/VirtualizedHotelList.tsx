@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import { FixedSizeList as List } from 'react-window';
+// import { FixedSizeList as List } from 'react-window';
 import { useNavigate } from 'react-router-dom';
 import { Star, MapPin, Heart, Share2, Sparkles, Camera, Wifi, Car, Coffee } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -285,17 +285,13 @@ const VirtualizedHotelList = memo<VirtualizedHotelListProps>(({
 
   return (
     <div className={className}>
-      <List
-        height={height}
-        width="100%"
-        itemCount={hotels.length}
-        itemSize={itemHeight}
-        itemData={hotels}
-        overscanCount={2}
-        className="scrollbar-thin scrollbar-thumb-luxury-mocha/20 scrollbar-track-transparent"
-      >
-        {HotelItem}
-      </List>
+      <div style={{ height: `${height}px`, overflow: 'auto' }}>
+        {hotels.map((hotel, index) => (
+          <div key={hotel.id} style={{ height: `${itemHeight}px` }}>
+            <HotelItem index={index} style={{}} data={hotels} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 });
