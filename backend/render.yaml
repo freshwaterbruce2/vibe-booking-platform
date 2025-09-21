@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: vibe-booking-api
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm run start:simple
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: https://vibe-booking-platform.netlify.app,http://localhost:3009,http://localhost:5174
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_RESET_SECRET
+        generateValue: true
+    autoDeploy: true
+    rootDir: backend
