@@ -129,7 +129,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   quality = 85,
   webpSupport = true,
   retries = 2,
-  placeholder,
+  placeholder: _placeholder,
   cacheStrategy = 'normal'
 }) => {
   const [imageSrc, setImageSrc] = useState<string>('');

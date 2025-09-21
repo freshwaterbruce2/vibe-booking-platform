@@ -162,7 +162,7 @@ export default function TurnstileProtection({
 }
 
 // Hook for easier integration
-export function useTurnstile(siteKey: string) {
+export function useTurnstile(_siteKey: string) {
   const [token, setToken] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
