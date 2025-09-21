@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import 'jest-axe/extend-expect';
 import { vi, beforeEach, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import React from 'react';
 
 // Auto cleanup after each test
 afterEach(() => {
@@ -73,16 +74,46 @@ Object.defineProperty(window, 'sessionStorage', {
 // Mock fetch
 global.fetch = vi.fn();
 
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() },
+      },
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    })),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn() },
+      response: { use: vi.fn() },
+    },
+  },
+}));
+
 
 // Mock React Router
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useNavigate: () => vi.fn(),
-    useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
-    useParams: () => ({}),
-    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    useNavigate: vi.fn(() => vi.fn()),
+    useLocation: vi.fn(() => ({ pathname: '/', search: '', hash: '', state: null })),
+    useParams: vi.fn(() => ({})),
+    useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
+    BrowserRouter: ({ children }: any) => children,
+    MemoryRouter: ({ children }: any) => children,
+    Routes: ({ children }: any) => children,
+    Route: ({ children }: any) => children,
+    Link: ({ children, ...props }: any) => React.createElement('a', props, children),
+    NavLink: ({ children, ...props }: any) => React.createElement('a', props, children),
   };
 });
 

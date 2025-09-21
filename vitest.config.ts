@@ -15,6 +15,9 @@ export default defineConfig({
       '**/tests/e2e/**',
       '**/*.spec.ts',
     ],
+    deps: {
+      inline: ['react-router-dom'],
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -1,7 +1,6 @@
 Dockerfile
 docker-compose.yml
 .dockerignore
-backend/
 src/
 tests/
 legacy/
