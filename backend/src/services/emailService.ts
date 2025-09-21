@@ -1,7 +1,7 @@
 import sgMail from '@sendgrid/mail';
 import nodemailer from 'nodemailer';
-import { config } from '../config/index.js';
-import { logger } from '../utils/logger.js';
+import { config } from '../config/index';
+import { logger } from '../utils/logger';
 
 interface EmailTemplate {
   subject: string;
@@ -45,7 +45,7 @@ class EmailService {
         },
       };
 
-      this.transporter = nodemailer.createTransporter(emailConfig);
+      this.transporter = nodemailer.createTransport(emailConfig);
       this.verifyConnection();
     }
   }

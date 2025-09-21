@@ -11,7 +11,7 @@ export const paymentsRouter = Router();
 // Square payment service (primary provider)
 import { squarePaymentService } from '../services/squarePaymentService';
 import { paypalService } from '../services/paypalService';
-import { pdfService } from '../services/pdfService.js';
+import { pdfService } from '../services/pdfService';
 
 // Validation schemas (Square) 
 const createPaymentSchema = z.object({

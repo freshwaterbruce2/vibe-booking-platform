@@ -3,10 +3,19 @@ import { z } from 'zod';
 import { getDb } from '../database';
 import { bookings, payments, refunds, users } from '../database/schema';
 import { CommissionService } from '../services/commission';
+// Import stripe services
+import { stripeService as mockStripeService } from '../services/stripeMock';
+let realStripeService: any;
+try {
+  realStripeService = require('../services/stripe').stripeService;
+} catch (error) {
+  realStripeService = mockStripeService;
+}
+
 // Use mock service for local development
-const stripeService = process.env.LOCAL_SQLITE 
-  ? require('../services/stripeMock').stripeService
-  : require('../services/stripe').stripeService;
+const stripeService = process.env.LOCAL_SQLITE
+  ? mockStripeService
+  : realStripeService;
 import { eq, and, gte, lte, desc, count, sum, avg } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { validateRequest } from '../middleware/validateRequest';

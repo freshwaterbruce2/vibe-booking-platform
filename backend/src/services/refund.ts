@@ -12,7 +12,7 @@ import { getDb } from '../database';
 import { bookings, payments, refunds, refundRequests, users } from '../database/schema';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { emailService } from './emailService.js';
+import { emailService } from './emailService';
 
 export interface RefundRequest {
   bookingId: string;

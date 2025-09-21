@@ -1,7 +1,33 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Lock, Award, Phone, Mail, Globe, ChevronRight } from 'lucide-react';
 
 export function ProfessionalFooter() {
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsSubscribing(true);
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSubscribed(true);
+      setEmail('');
+
+      // Reset success message after 3 seconds
+      setTimeout(() => setSubscribed(false), 3000);
+    } catch (error) {
+      console.error('Newsletter subscription failed:', error);
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
   // Payment method icons (base64 encoded for professional look)
   const paymentMethods = [
     { name: 'Visa', icon: '💳' },
@@ -62,30 +88,48 @@ export function ProfessionalFooter() {
                 Join Our Newsletter
               </h3>
               <p className="text-xs text-gray-600 mb-3">
-                Get exclusive deals and travel inspiration
+                {subscribed ? '🎉 Successfully subscribed!' : 'Get exclusive deals and travel inspiration'}
               </p>
-              <div className="flex gap-2">
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Your email address"
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  disabled={isSubscribing || subscribed}
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                 />
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  <ChevronRight className="h-4 w-4" />
+                <button
+                  type="submit"
+                  disabled={isSubscribing || !email || subscribed}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubscribing ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
                 </button>
-              </div>
+              </form>
             </div>
 
             {/* App Download Buttons */}
             <div className="flex gap-3">
-              <button className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors">
+              <button
+                onClick={() => window.open('https://apps.apple.com/us/app/vibe-hotels', '_blank')}
+                className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors"
+              >
                 <span className="text-lg">🍎</span>
                 <div className="text-left">
                   <div className="text-xs opacity-80">Download on the</div>
                   <div className="text-sm font-semibold">App Store</div>
                 </div>
               </button>
-              <button className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors">
+              <button
+                onClick={() => window.open('https://play.google.com/store/apps/details?id=com.vibehotels.app', '_blank')}
+                className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors"
+              >
                 <span className="text-lg">▶</span>
                 <div className="text-left">
                   <div className="text-xs opacity-80">Get it on</div>

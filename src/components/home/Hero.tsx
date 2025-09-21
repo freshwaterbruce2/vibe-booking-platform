@@ -186,6 +186,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="secondary"
+              onClick={() => window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank')}
               className="text-white bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20"
             >
               <Play className="mr-2 h-5 w-5" />
@@ -194,6 +195,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="outline"
+              onClick={() => navigate('/destinations')}
               className="border-white/30 text-white hover:bg-white/10"
             >
               Browse Destinations

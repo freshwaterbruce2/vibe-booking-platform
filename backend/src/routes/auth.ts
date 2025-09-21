@@ -8,7 +8,7 @@ import { getDb } from '../database';
 import { users, NewUser } from '../database/schema';
 import { eq } from 'drizzle-orm';
 import { config } from '../config';
-import { emailService } from '../services/emailService.js';
+import { emailService } from '../services/emailService';
 
 export const authRouter = Router();
 

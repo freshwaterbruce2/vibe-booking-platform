@@ -198,10 +198,7 @@ export class HotelBookingServer {
 }
 
 // Start server if this file is run directly
-// For ES modules, we need to check if this is the main module differently
-const isMainModule = import.meta.url === `file://${process.argv[1]}`;
-
-if (isMainModule) {
+if (require.main === module) {
   (async () => {
     try {
       const config = await loadConfig();
