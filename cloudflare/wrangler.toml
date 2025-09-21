@@ -1,0 +1,85 @@
+# Cloudflare Workers Configuration
+name = "vibe-booking-api"
+main = "workers/api-gateway.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "KV_CACHE"
+id = "your-kv-cache-id"
+preview_id = "your-kv-cache-preview-id"
+
+[[kv_namespaces]]
+binding = "KV_SESSION"
+id = "your-kv-session-id"
+preview_id = "your-kv-session-preview-id"
+
+# D1 Database
+[[d1_databases]]
+binding = "D1_DB"
+database_name = "vibe-booking"
+database_id = "your-d1-database-id"
+
+# R2 Buckets
+[[r2_buckets]]
+binding = "R2_IMAGES"
+bucket_name = "vibe-hotel-images"
+
+# Durable Objects (for global rate limiting)
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+script_name = "workers/rate-limiter-durable"
+
+# Environment Variables
+[vars]
+FRONTEND_URL = "https://vibe-booking.pages.dev"
+BACKEND_URL = "https://vibe-booking-backend.up.railway.app"
+COMMISSION_RATE = "0.05"
+CF_ZONE = "auto"
+
+# Secrets (set via wrangler secret)
+# JWT_SECRET
+# SQUARE_ACCESS_TOKEN
+# SQUARE_WEBHOOK_SIGNATURE_KEY
+# OPENAI_API_KEY
+# LITEAPI_KEY
+
+# Routes
+[[routes]]
+pattern = "api.vibebooking.com/*"
+zone_name = "vibebooking.com"
+
+# Service bindings for Turnstile
+[[services]]
+binding = "TURNSTILE"
+service = "turnstile"
+
+# Custom domains
+[[custom_domains]]
+pattern = "api.vibebooking.com"
+zone_name = "vibebooking.com"
+
+# Triggers
+[[triggers.crons]]
+cron = "0 * * * *"
+handler = "cleanupExpiredCache"
+
+[[triggers.crons]]
+cron = "0 0 * * *"
+handler = "generateDailyReports"
+
+# Development settings
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Observability
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# Limits
+[limits]
+cpu_milliseconds = 50
+memory_megabytes = 128

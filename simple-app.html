@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIBE Hotels - Luxury Hotel Booking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vibe-purple': '#8B5CF6',
+                        'vibe-gold': '#F59E0B',
+                        'vibe-navy': '#1E293B'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .vibe-gradient {
+            background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="vibe-gradient text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">VIBE Hotels</h1>
+                    <p class="text-blue-100">Luxury stays, AI-powered booking</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm">📞 1-800-LUXURY</p>
+                    <p class="text-sm">✉️ hello@vibehotels.com</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-white py-12">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <h2 class="text-4xl font-bold text-vibe-navy mb-4">Find Your Perfect Hotel Stay</h2>
+            <p class="text-xl text-gray-600 mb-8">AI-powered search • Luxury accommodations • Instant booking</p>
+
+            <!-- Search Form -->
+            <div class="bg-gray-50 rounded-xl p-6 max-w-4xl mx-auto shadow-lg">
+                <div class="grid md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-left font-semibold text-gray-700 mb-2">Destination</label>
+                        <input id="destination" type="text" placeholder="Where to?"
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-vibe-purple">
+                    </div>
+                    <div>
+                        <label class="block text-left font-semibold text-gray-700 mb-2">Check-in</label>
+                        <input id="checkin" type="date"
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-vibe-purple">
+                    </div>
+                    <div>
+                        <label class="block text-left font-semibold text-gray-700 mb-2">Check-out</label>
+                        <input id="checkout" type="date"
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-vibe-purple">
+                    </div>
+                    <div>
+                        <label class="block text-left font-semibold text-gray-700 mb-2">Guests</label>
+                        <select id="guests" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-vibe-purple">
+                            <option>1 Guest</option>
+                            <option>2 Guests</option>
+                            <option>3 Guests</option>
+                            <option>4+ Guests</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="searchHotels()"
+                        class="w-full mt-6 vibe-gradient text-white font-bold py-4 px-8 rounded-lg hover:opacity-90 transition-opacity">
+                    🔍 Search Luxury Hotels
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results" class="py-12 hidden">
+        <div class="max-w-6xl mx-auto px-4">
+            <h3 class="text-2xl font-bold text-vibe-navy mb-6">Available Hotels</h3>
+            <div id="hotel-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+    </section>
+
+    <!-- Early Access CTA -->
+    <section class="bg-vibe-navy text-white py-16">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h3 class="text-3xl font-bold mb-4">🚀 Join Our VIP Early Access</h3>
+            <p class="text-xl mb-6">Be the first to access our premium hotel booking platform</p>
+            <p class="text-lg mb-8">✨ <strong>Get 25% off your first booking</strong> + VIP customer support</p>
+
+            <form id="earlyAccessForm" class="max-w-md mx-auto">
+                <div class="flex gap-3">
+                    <input id="email" type="email" placeholder="Enter your email" required
+                           class="flex-1 p-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-vibe-purple">
+                    <button type="submit"
+                            class="bg-vibe-gold hover:bg-yellow-500 text-black font-bold px-6 py-3 rounded-lg transition-colors">
+                        Join VIP
+                    </button>
+                </div>
+            </form>
+
+            <div id="emailStatus" class="mt-4 hidden"></div>
+            <p class="text-sm text-gray-300 mt-4">🔒 Your email is safe with us. Unsubscribe anytime.</p>
+        </div>
+    </section>
+
+    <!-- Services -->
+    <section class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-4">
+            <h3 class="text-3xl font-bold text-center text-vibe-navy mb-12">Why Choose VIBE Hotels?</h3>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center p-6">
+                    <div class="text-4xl mb-4">🤖</div>
+                    <h4 class="text-xl font-bold mb-3">AI-Powered Search</h4>
+                    <p class="text-gray-600">Smart recommendations based on your preferences and travel style</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="text-4xl mb-4">🏨</div>
+                    <h4 class="text-xl font-bold mb-3">Luxury Properties</h4>
+                    <p class="text-gray-600">Curated selection of premium hotels and exclusive resorts worldwide</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="text-4xl mb-4">💳</div>
+                    <h4 class="text-xl font-bold mb-3">Instant Booking</h4>
+                    <p class="text-gray-600">Secure payments and immediate confirmation for peace of mind</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Consultation CTA -->
+    <section class="bg-gray-100 py-16">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h3 class="text-3xl font-bold text-vibe-navy mb-4">Need Personalized Help?</h3>
+            <p class="text-xl text-gray-600 mb-8">Our luxury travel experts can create a custom itinerary just for you</p>
+
+            <div class="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h4 class="text-xl font-bold text-vibe-navy mb-3">💬 Free Consultation</h4>
+                    <p class="text-gray-600 mb-4">15-minute call to discuss your travel needs</p>
+                    <button onclick="bookConsultation('free')"
+                            class="w-full bg-vibe-purple text-white py-3 rounded-lg hover:bg-purple-600 transition-colors">
+                        Book Free Call
+                    </button>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h4 class="text-xl font-bold text-vibe-navy mb-3">✨ Premium Planning</h4>
+                    <p class="text-gray-600 mb-4">Full itinerary planning service - $199</p>
+                    <button onclick="bookConsultation('premium')"
+                            class="w-full bg-vibe-gold text-black font-bold py-3 rounded-lg hover:bg-yellow-500 transition-colors">
+                        Start Planning
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-vibe-navy text-white py-8">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <p>&copy; 2025 VIBE Hotels. Luxury travel made simple.</p>
+            <p class="mt-2 text-gray-300">Contact: hello@vibehotels.com | 1-800-LUXURY (1-800-589-8799)</p>
+            <div class="mt-4 space-x-4">
+                <span class="text-sm">💼 Business Travel</span>
+                <span class="text-sm">🌍 Global Coverage</span>
+                <span class="text-sm">🔒 Secure Booking</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mock hotel data
+        const mockHotels = [
+            {
+                name: "Grand Luxury Resort",
+                location: "Maldives",
+                price: "$899/night",
+                rating: "5.0",
+                image: "🏝️",
+                features: ["Ocean View", "Spa", "Private Pool"]
+            },
+            {
+                name: "Urban Elite Hotel",
+                location: "New York City",
+                price: "$299/night",
+                rating: "4.8",
+                image: "🏙️",
+                features: ["City View", "Rooftop Bar", "Gym"]
+            },
+            {
+                name: "Mountain Vista Lodge",
+                location: "Swiss Alps",
+                price: "$459/night",
+                rating: "4.9",
+                image: "🏔️",
+                features: ["Mountain View", "Ski Access", "Fireplace"]
+            }
+        ];
+
+        // Email storage
+        let emailList = JSON.parse(localStorage.getItem('vibeEmailList') || '[]');
+
+        // Search function
+        function searchHotels() {
+            const destination = document.getElementById('destination').value;
+            const checkin = document.getElementById('checkin').value;
+            const checkout = document.getElementById('checkout').value;
+
+            if (!destination) {
+                alert('Please enter a destination');
+                return;
+            }
+
+            // Show results section
+            document.getElementById('results').classList.remove('hidden');
+
+            // Generate hotel cards
+            const hotelList = document.getElementById('hotel-list');
+            hotelList.innerHTML = mockHotels.map(hotel => `
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    <div class="text-6xl text-center py-8 bg-gray-50">${hotel.image}</div>
+                    <div class="p-6">
+                        <h4 class="text-xl font-bold text-vibe-navy mb-2">${hotel.name}</h4>
+                        <p class="text-gray-600 mb-2">📍 ${hotel.location}</p>
+                        <div class="flex items-center mb-3">
+                            <span class="text-yellow-500">⭐⭐⭐⭐⭐</span>
+                            <span class="ml-2 text-sm text-gray-600">${hotel.rating}</span>
+                        </div>
+                        <div class="mb-4">
+                            ${hotel.features.map(feature => `<span class="inline-block bg-gray-100 text-xs px-2 py-1 rounded mr-2 mb-1">${feature}</span>`).join('')}
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-vibe-purple">${hotel.price}</span>
+                            <button onclick="bookHotel('${hotel.name}')"
+                                    class="bg-vibe-gold text-black font-bold px-4 py-2 rounded-lg hover:bg-yellow-500 transition-colors">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Email form submission
+        document.getElementById('earlyAccessForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+
+            if (email) {
+                // Store email locally
+                emailList.push({
+                    email: email,
+                    timestamp: new Date().toISOString(),
+                    source: 'early_access'
+                });
+                localStorage.setItem('vibeEmailList', JSON.stringify(emailList));
+
+                // Generate discount code
+                const discountCode = 'VIBE' + Math.random().toString(36).substr(2, 6).toUpperCase();
+
+                // Show success message
+                document.getElementById('emailStatus').innerHTML = `
+                    <div class="bg-green-500 text-white p-4 rounded-lg">
+                        🎉 Welcome to VIP access! Your 25% discount code: <strong>${discountCode}</strong>
+                        <br><small>Check your email for booking instructions</small>
+                    </div>
+                `;
+                document.getElementById('emailStatus').classList.remove('hidden');
+
+                // Clear form
+                document.getElementById('email').value = '';
+
+                console.log('New email collected:', email, 'Total emails:', emailList.length);
+            }
+        });
+
+        // Hotel booking function
+        function bookHotel(hotelName) {
+            const email = prompt('Enter your email to proceed with booking:');
+            if (email) {
+                // Store lead
+                emailList.push({
+                    email: email,
+                    timestamp: new Date().toISOString(),
+                    source: 'hotel_booking',
+                    hotel: hotelName
+                });
+                localStorage.setItem('vibeEmailList', JSON.stringify(emailList));
+
+                // Show payment options
+                const paymentChoice = confirm(`Book ${hotelName}?\n\nClick OK for instant PayPal payment\nClick Cancel for manual booking process`);
+
+                if (paymentChoice) {
+                    // Direct PayPal payment
+                    const paypalUrl = `https://www.paypal.com/paypalme/vibehotels/299?message=${encodeURIComponent('Hotel booking: ' + hotelName + ' - Email: ' + email)}`;
+                    window.open(paypalUrl, '_blank');
+                    alert(`Payment window opened! After payment, we'll send confirmation to ${email} within 1 hour.`);
+                } else {
+                    // Manual booking process
+                    alert(`Thank you! We'll send booking details for ${hotelName} to ${email} within 24 hours. A booking specialist will contact you to complete your reservation.`);
+                }
+            }
+        }
+
+        // Consultation booking
+        function bookConsultation(type) {
+            if (type === 'free') {
+                const email = prompt('Enter your email to schedule your free consultation:');
+                if (email) {
+                    emailList.push({
+                        email: email,
+                        timestamp: new Date().toISOString(),
+                        source: 'free_consultation'
+                    });
+                    localStorage.setItem('vibeEmailList', JSON.stringify(emailList));
+                    alert(`Great! We'll send calendar scheduling options to ${email}. Check your inbox in the next few minutes.`);
+                }
+            } else {
+                // Premium consultation - direct to payment
+                window.open('https://www.paypal.com/paypalme/vibehotels/199', '_blank');
+            }
+        }
+
+        // Set default dates
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayAfter = new Date(today);
+        dayAfter.setDate(dayAfter.getDate() + 2);
+
+        document.getElementById('checkin').value = tomorrow.toISOString().split('T')[0];
+        document.getElementById('checkout').value = dayAfter.toISOString().split('T')[0];
+
+        // Admin function to view collected emails
+        function showEmailList() {
+            console.log('Collected emails:', emailList);
+            alert(`Total emails collected: ${emailList.length}\nCheck console for details`);
+        }
+
+        // Secret admin access - type "admin" in console
+        window.admin = showEmailList;
+    </script>
+</body>
+</html>

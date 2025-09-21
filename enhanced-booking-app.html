@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIBE Hotels - Luxury Hotel Booking Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'luxury-navy': '#1C2951',
+                        'luxury-gold': '#B8860B',
+                        'luxury-mocha': '#A47864',
+                        'luxury-forest': '#355E3B',
+                        'luxury-cream': '#F7F3E9',
+                        'luxury-rose-gold': '#C5A572'
+                    },
+                    fontFamily: {
+                        'serif': ['Playfair Display', 'Georgia', 'serif'],
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out',
+                        'slide-in-right': 'slideInRight 0.5s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    boxShadow: {
+                        'luxury-sm': '0 1px 2px 0 rgba(28, 41, 81, 0.05)',
+                        'luxury': '0 4px 6px -1px rgba(28, 41, 81, 0.1), 0 2px 4px -1px rgba(28, 41, 81, 0.06)',
+                        'luxury-md': '0 10px 15px -3px rgba(28, 41, 81, 0.1), 0 4px 6px -2px rgba(28, 41, 81, 0.05)',
+                        'luxury-lg': '0 20px 25px -5px rgba(28, 41, 81, 0.1), 0 10px 10px -5px rgba(28, 41, 81, 0.04)',
+                        'luxury-xl': '0 25px 50px -12px rgba(28, 41, 81, 0.25)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .glassmorphic {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #1C2951 0%, #355E3B 50%, #B8860B 100%);
+        }
+
+        .passion-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+
+        .passion-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(28, 41, 81, 0.25);
+        }
+
+        .hotel-card {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hotel-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 35px 60px -12px rgba(28, 41, 81, 0.3);
+        }
+
+        .stagger-animation > * {
+            animation: fadeInUp 0.6s ease-out both;
+        }
+
+        .stagger-animation > *:nth-child(1) { animation-delay: 0ms; }
+        .stagger-animation > *:nth-child(2) { animation-delay: 150ms; }
+        .stagger-animation > *:nth-child(3) { animation-delay: 300ms; }
+        .stagger-animation > *:nth-child(4) { animation-delay: 450ms; }
+        .stagger-animation > *:nth-child(5) { animation-delay: 600ms; }
+        .stagger-animation > *:nth-child(6) { animation-delay: 750ms; }
+        .stagger-animation > *:nth-child(7) { animation-delay: 900ms; }
+
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(184, 134, 11, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(184, 134, 11, 0.6); }
+        }
+    </style>
+</head>
+
+<body class="bg-luxury-cream font-sans">
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <!-- Animated Background -->
+        <div class="absolute inset-0">
+            <div class="absolute inset-0 hero-gradient"></div>
+            <div class="absolute inset-0 bg-black/30"></div>
+            <!-- Floating Elements -->
+            <div class="absolute top-20 left-10 w-32 h-32 bg-luxury-gold/20 rounded-full blur-xl animate-float"></div>
+            <div class="absolute bottom-20 right-10 w-48 h-48 bg-luxury-forest/20 rounded-full blur-xl animate-float" style="animation-delay: -2s;"></div>
+            <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-luxury-mocha/20 rounded-full blur-xl animate-float" style="animation-delay: -4s;"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="relative z-10 container mx-auto px-4 text-center text-white">
+            <div class="max-w-6xl mx-auto space-y-8">
+                <!-- Trust Badges -->
+                <div class="flex justify-center items-center gap-8 text-sm text-white/90 mb-8 animate-fade-in-up">
+                    <div class="flex items-center gap-2 glassmorphic px-4 py-2 rounded-full">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-7-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Secure Booking</span>
+                    </div>
+                    <div class="flex items-center gap-2 glassmorphic px-4 py-2 rounded-full">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span>Best Price Guarantee</span>
+                    </div>
+                    <div class="flex items-center gap-2 glassmorphic px-4 py-2 rounded-full">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Instant Confirmation</span>
+                    </div>
+                </div>
+
+                <!-- Headlines -->
+                <div class="space-y-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <h1 class="font-serif text-6xl md:text-8xl lg:text-9xl font-bold leading-tight tracking-tight">
+                        <span class="block">Book Your</span>
+                        <span class="block">Dream Stay</span>
+                        <span class="block bg-gradient-to-r from-luxury-gold to-yellow-400 bg-clip-text text-transparent text-4xl md:text-6xl lg:text-7xl mt-4">
+                            Save 5% on Every Booking
+                        </span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto font-medium">
+                        AI-powered hotel matching • Passion-based discovery • Instant confirmation • Best prices guaranteed
+                    </p>
+                </div>
+
+                <!-- Booking Widget -->
+                <div class="max-w-5xl mx-auto animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="glassmorphic rounded-3xl p-6 md:p-8 shadow-luxury-xl">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-white/90">Where to?</label>
+                                <input id="destination" type="text" placeholder="City, hotel, landmark..."
+                                       class="w-full p-4 border-0 rounded-xl focus:ring-2 focus:ring-luxury-gold text-luxury-navy text-lg shadow-luxury-sm font-medium"
+                                       style="background: rgba(255, 255, 255, 0.95);">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-white/90">Check-in</label>
+                                <input id="checkin" type="date"
+                                       class="w-full p-4 border-0 rounded-xl focus:ring-2 focus:ring-luxury-gold text-luxury-navy text-lg shadow-luxury-sm"
+                                       style="background: rgba(255, 255, 255, 0.95);">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-white/90">Check-out</label>
+                                <input id="checkout" type="date"
+                                       class="w-full p-4 border-0 rounded-xl focus:ring-2 focus:ring-luxury-gold text-luxury-navy text-lg shadow-luxury-sm"
+                                       style="background: rgba(255, 255, 255, 0.95);">
+                            </div>
+                            <button onclick="searchHotels()"
+                                    class="w-full bg-gradient-to-r from-luxury-gold to-yellow-500 hover:from-yellow-500 hover:to-luxury-gold text-white font-bold py-4 px-8 rounded-xl text-xl shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 transition-all duration-300 pulse-glow">
+                                Search Hotels
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-8 border-t border-white/20 animate-fade-in-up" style="animation-delay: 0.6s;">
+                    <div class="text-center">
+                        <div class="flex items-center justify-center mb-3">
+                            <svg class="w-8 h-8 text-luxury-gold mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <span class="text-5xl font-bold">4.9</span>
+                        </div>
+                        <p class="text-white/90 font-semibold text-lg">Customer Rating</p>
+                        <p class="text-white/70">From 50,000+ reviews</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center mb-3">
+                            <svg class="w-8 h-8 text-luxury-gold mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                            </svg>
+                            <span class="text-5xl font-bold">2M+</span>
+                        </div>
+                        <p class="text-white/90 font-semibold text-lg">Happy Travelers</p>
+                        <p class="text-white/70">Saved $15M+ total</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center mb-3">
+                            <svg class="w-8 h-8 text-luxury-gold mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-5xl font-bold">50K+</span>
+                        </div>
+                        <p class="text-white/90 font-semibold text-lg">Hotels Worldwide</p>
+                        <p class="text-white/70">In 195 countries</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/70 animate-bounce">
+            <div class="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+                <div class="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Passion Selection Section -->
+    <section id="passions" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="font-serif text-5xl md:text-6xl font-bold text-luxury-navy mb-6">
+                    What's Your <span class="text-luxury-gold">Passion</span>?
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Tell us what inspires you, and we'll match you with hotels that perfectly align with your interests
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 stagger-animation" id="passion-grid">
+                <!-- Passion cards will be inserted here -->
+            </div>
+
+            <div class="text-center mt-12">
+                <button onclick="findMatchingHotels()"
+                        class="bg-gradient-to-r from-luxury-gold to-yellow-500 hover:from-yellow-500 hover:to-luxury-gold text-white font-bold py-4 px-12 rounded-xl text-xl shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 transition-all duration-300">
+                    Find My Perfect Hotels
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results" class="py-20 bg-luxury-cream hidden">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h3 class="font-serif text-4xl md:text-5xl font-bold text-luxury-navy mb-4">
+                    Perfect Matches for You
+                </h3>
+                <p class="text-xl text-gray-600">Curated hotels based on your passions and preferences</p>
+            </div>
+            <div id="hotel-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 stagger-animation"></div>
+        </div>
+    </section>
+
+    <!-- VIP Early Access CTA -->
+    <section class="py-20 bg-gradient-to-br from-luxury-navy via-luxury-forest to-luxury-mocha text-white relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute top-10 right-10 w-32 h-32 bg-luxury-gold/20 rounded-full blur-xl animate-float"></div>
+            <div class="absolute bottom-10 left-10 w-48 h-48 bg-luxury-rose-gold/20 rounded-full blur-xl animate-float" style="animation-delay: -3s;"></div>
+        </div>
+
+        <div class="relative max-w-5xl mx-auto px-4 text-center">
+            <h3 class="font-serif text-4xl md:text-6xl font-bold mb-6">
+                Join Our <span class="text-luxury-gold">VIP</span> Early Access
+            </h3>
+            <p class="text-xl md:text-2xl mb-4">Be the first to access our premium hotel booking platform</p>
+            <p class="text-lg md:text-xl mb-12 text-luxury-gold font-semibold">
+                Get 25% off your first booking + VIP customer support
+            </p>
+
+            <form id="earlyAccessForm" class="max-w-xl mx-auto glassmorphic rounded-2xl p-8">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input id="email" type="email" placeholder="Enter your email" required
+                           class="flex-1 p-4 rounded-xl text-luxury-navy text-lg font-medium border-0 focus:ring-2 focus:ring-luxury-gold shadow-luxury-sm"
+                           style="background: rgba(255, 255, 255, 0.95);">
+                    <button type="submit"
+                            class="bg-gradient-to-r from-luxury-gold to-yellow-500 hover:from-yellow-500 hover:to-luxury-gold text-white font-bold px-8 py-4 rounded-xl text-lg shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 transition-all duration-300 whitespace-nowrap">
+                        Join VIP
+                    </button>
+                </div>
+            </form>
+
+            <div id="emailStatus" class="mt-6 hidden"></div>
+            <p class="text-sm text-white/70 mt-6">🔒 Your email is safe with us. Unsubscribe anytime.</p>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <h3 class="font-serif text-4xl md:text-5xl font-bold text-center text-luxury-navy mb-16">
+                Why Choose <span class="text-luxury-gold">VIBE Hotels</span>?
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 stagger-animation">
+                <div class="text-center p-8 rounded-2xl hover:bg-luxury-cream transition-all duration-300 group">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-luxury-gold to-yellow-500 rounded-2xl flex items-center justify-center text-white text-3xl group-hover:scale-110 transition-transform duration-300">
+                        🤖
+                    </div>
+                    <h4 class="text-2xl font-bold mb-4 text-luxury-navy">AI-Powered Matching</h4>
+                    <p class="text-gray-600 text-lg">Smart recommendations based on your passions, preferences, and travel style</p>
+                </div>
+                <div class="text-center p-8 rounded-2xl hover:bg-luxury-cream transition-all duration-300 group">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-luxury-forest to-green-600 rounded-2xl flex items-center justify-center text-white text-3xl group-hover:scale-110 transition-transform duration-300">
+                        🏨
+                    </div>
+                    <h4 class="text-2xl font-bold mb-4 text-luxury-navy">Curated Luxury</h4>
+                    <p class="text-gray-600 text-lg">Hand-picked selection of premium hotels and exclusive resorts worldwide</p>
+                </div>
+                <div class="text-center p-8 rounded-2xl hover:bg-luxury-cream transition-all duration-300 group">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-luxury-mocha to-amber-600 rounded-2xl flex items-center justify-center text-white text-3xl group-hover:scale-110 transition-transform duration-300">
+                        💳
+                    </div>
+                    <h4 class="text-2xl font-bold mb-4 text-luxury-navy">Instant Booking</h4>
+                    <p class="text-gray-600 text-lg">Secure payments and immediate confirmation for complete peace of mind</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Consultation CTA -->
+    <section class="py-20 bg-luxury-cream">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <h3 class="font-serif text-4xl md:text-5xl font-bold text-luxury-navy mb-6">
+                Need <span class="text-luxury-gold">Personalized</span> Help?
+            </h3>
+            <p class="text-xl text-gray-600 mb-12">Our luxury travel experts can create a custom itinerary just for you</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto stagger-animation">
+                <div class="bg-white p-8 rounded-2xl shadow-luxury-lg hover:shadow-luxury-xl transition-all duration-300 group">
+                    <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-luxury-navy to-blue-700 rounded-2xl flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform duration-300">
+                        💬
+                    </div>
+                    <h4 class="text-2xl font-bold text-luxury-navy mb-4">Free Consultation</h4>
+                    <p class="text-gray-600 mb-6 text-lg">15-minute call to discuss your travel needs and preferences</p>
+                    <button onclick="bookConsultation('free')"
+                            class="w-full bg-luxury-navy hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-luxury-sm hover:shadow-luxury-md transform hover:scale-105 transition-all duration-300">
+                        Book Free Call
+                    </button>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-luxury-lg hover:shadow-luxury-xl transition-all duration-300 group border-2 border-luxury-gold">
+                    <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-luxury-gold to-yellow-500 rounded-2xl flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform duration-300">
+                        ✨
+                    </div>
+                    <h4 class="text-2xl font-bold text-luxury-navy mb-4">Premium Planning</h4>
+                    <p class="text-gray-600 mb-6 text-lg">Complete itinerary planning service with exclusive access</p>
+                    <div class="text-3xl font-bold text-luxury-gold mb-4">$199</div>
+                    <button onclick="bookConsultation('premium')"
+                            class="w-full bg-gradient-to-r from-luxury-gold to-yellow-500 hover:from-yellow-500 hover:to-luxury-gold text-white font-bold py-4 rounded-xl text-lg shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-105 transition-all duration-300">
+                        Start Planning
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-navy text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="mb-8">
+                <h5 class="font-serif text-3xl font-bold mb-2">VIBE Hotels</h5>
+                <p class="text-luxury-gold">Luxury travel made simple.</p>
+            </div>
+            <p class="text-white/80 mb-4">Contact: hello@vibehotels.com | 1-800-LUXURY (1-800-589-8799)</p>
+            <div class="flex justify-center gap-8 text-sm text-white/70">
+                <span class="flex items-center gap-2">💼 Business Travel</span>
+                <span class="flex items-center gap-2">🌍 Global Coverage</span>
+                <span class="flex items-center gap-2">🔒 Secure Booking</span>
+            </div>
+            <div class="mt-8 pt-8 border-t border-white/20">
+                <p class="text-white/60">&copy; 2025 VIBE Hotels. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Enhanced hotel data with passion matching
+        const luxuryHotels = [
+            {
+                id: 1,
+                name: "Four Seasons Resort Maldives",
+                location: "Maldives",
+                country: "Maldives",
+                price: "$1,299",
+                originalPrice: "$1,599",
+                rating: "5.0",
+                reviews: "2,847",
+                image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=600&fit=crop&auto=format",
+                features: ["Ocean Villa", "Private Pool", "Spa", "Michelin Dining"],
+                passions: ["wellness-sanctuary", "romantic-elegance", "culinary-excellence"],
+                description: "Overwater villas with private pools and world-class spa treatments",
+                savings: "Save $300",
+                badge: "Most Popular"
+            },
+            {
+                id: 2,
+                name: "The Plaza New York",
+                location: "New York City",
+                country: "USA",
+                price: "$899",
+                originalPrice: "$1,199",
+                rating: "4.8",
+                reviews: "5,234",
+                image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop&auto=format",
+                features: ["Central Park View", "Luxury Suite", "Fine Dining", "Business Center"],
+                passions: ["business-elite", "cultural-immersion", "culinary-excellence"],
+                description: "Iconic luxury hotel in the heart of Manhattan",
+                savings: "Save $200",
+                badge: "Best Value"
+            },
+            {
+                id: 3,
+                name: "Hotel de Glace Quebec",
+                location: "Quebec City",
+                country: "Canada",
+                price: "$449",
+                originalPrice: "$599",
+                rating: "4.9",
+                reviews: "1,892",
+                image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop&auto=format",
+                features: ["Ice Architecture", "Aurora Views", "Adventure Tours", "Unique Experience"],
+                passions: ["adventure-escapes", "cultural-immersion", "romantic-elegance"],
+                description: "Unique ice hotel with unforgettable winter experiences",
+                savings: "Save $150",
+                badge: "Unique"
+            },
+            {
+                id: 4,
+                name: "Atlantis The Palm Dubai",
+                location: "Dubai",
+                country: "UAE",
+                price: "$699",
+                originalPrice: "$899",
+                rating: "4.7",
+                reviews: "8,456",
+                image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop&auto=format",
+                features: ["Waterpark", "Aquarium", "Kids Club", "Multiple Restaurants"],
+                passions: ["family-luxury", "adventure-escapes", "culinary-excellence"],
+                description: "Ultimate family resort with endless entertainment",
+                savings: "Save $200",
+                badge: "Family Favorite"
+            },
+            {
+                id: 5,
+                name: "Aman Tokyo",
+                location: "Tokyo",
+                country: "Japan",
+                price: "$1,199",
+                originalPrice: "$1,499",
+                rating: "4.9",
+                reviews: "3,567",
+                image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=600&fit=crop&auto=format",
+                features: ["Zen Spa", "Traditional Gardens", "Cultural Tours", "Meditation"],
+                passions: ["wellness-sanctuary", "cultural-immersion", "business-elite"],
+                description: "Serene urban oasis blending traditional and modern luxury",
+                savings: "Save $300",
+                badge: "Wellness Focused"
+            },
+            {
+                id: 6,
+                name: "Château Marmont",
+                location: "Los Angeles",
+                country: "USA",
+                price: "$799",
+                originalPrice: "$999",
+                rating: "4.6",
+                reviews: "2,123",
+                image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop&auto=format",
+                features: ["Hollywood Views", "Private Terraces", "Celebrity Spotting", "Exclusive Access"],
+                passions: ["romantic-elegance", "cultural-immersion", "business-elite"],
+                description: "Legendary hotel in the heart of West Hollywood",
+                savings: "Save $200",
+                badge: "Celebrity Hotspot"
+            }
+        ];
+
+        // Passion data
+        const passions = [
+            {
+                id: 'culinary-excellence',
+                name: 'Culinary Excellence',
+                description: 'Michelin-starred dining, wine tastings, and gourmet experiences',
+                icon: '🍽️',
+                color: 'from-amber-500 to-orange-600',
+                image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop&auto=format'
+            },
+            {
+                id: 'wellness-sanctuary',
+                name: 'Wellness Sanctuary',
+                description: 'World-class spas, meditation retreats, and holistic wellness',
+                icon: '🧘',
+                color: 'from-emerald-500 to-teal-600',
+                image: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=800&h=600&fit=crop&auto=format'
+            },
+            {
+                id: 'cultural-immersion',
+                name: 'Cultural Immersion',
+                description: 'Historic landmarks, world-class museums, and artistic heritage',
+                icon: '🏛️',
+                color: 'from-purple-500 to-indigo-600',
+                image: 'https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=800&h=600&fit=crop&auto=format'
+            },
+            {
+                id: 'adventure-escapes',
+                name: 'Adventure Escapes',
+                description: 'Exclusive outdoor experiences and luxury adventure activities',
+                icon: '🏔️',
+                color: 'from-teal-500 to-cyan-600',
+                image: 'https://images.unsplash.com/photo-1517021897933-0e0319cfbc28?w=800&h=600&fit=crop&auto=format'
+            },
+            {
+                id: 'business-elite',
+                name: 'Business Elite',
+                description: 'Executive lounges, conference facilities, and premium business services',
+                icon: '💼',
+                color: 'from-slate-600 to-gray-700',
+                image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop&auto=format'
+            },
+            {
+                id: 'family-luxury',
+                name: 'Family Luxury',
+                description: 'Premium family suites, kids clubs, and sophisticated family experiences',
+                icon: '👨‍👩‍👧‍👦',
+                color: 'from-orange-500 to-red-600',
+                image: 'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=800&h=600&fit=crop&auto=format'
+            },
+            {
+                id: 'romantic-elegance',
+                name: 'Romantic Elegance',
+                description: 'Private villas, couples spa treatments, and intimate luxury settings',
+                icon: '💕',
+                color: 'from-rose-500 to-pink-600',
+                image: 'https://images.unsplash.com/photo-1502301103665-0b95cc738daf?w=800&h=600&fit=crop&auto=format'
+            }
+        ];
+
+        // Email storage
+        let emailList = JSON.parse(localStorage.getItem('vibeEmailList') || '[]');
+        let selectedPassions = JSON.parse(localStorage.getItem('selectedPassions') || '[]');
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPassions();
+            setDefaultDates();
+            setupEventListeners();
+        });
+
+        function renderPassions() {
+            const grid = document.getElementById('passion-grid');
+            grid.innerHTML = passions.map(passion => `
+                <div class="passion-card cursor-pointer p-6 rounded-2xl shadow-luxury-md hover:shadow-luxury-xl transition-all duration-500 bg-white border-2 ${selectedPassions.includes(passion.id) ? 'border-luxury-gold ring-4 ring-luxury-gold/20' : 'border-transparent hover:border-luxury-gold/30'}"
+                     onclick="togglePassion('${passion.id}')" id="passion-${passion.id}">
+                    <div class="relative overflow-hidden rounded-xl mb-4 h-32">
+                        <img src="${passion.image}" alt="${passion.name}"
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t ${passion.color} opacity-80"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-4xl">${passion.icon}</span>
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-xl text-luxury-navy mb-2">${passion.name}</h4>
+                    <p class="text-gray-600 text-sm">${passion.description}</p>
+                    ${selectedPassions.includes(passion.id) ?
+                        '<div class="mt-3 flex items-center text-luxury-gold font-semibold text-sm"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Selected</div>'
+                        : ''
+                    }
+                </div>
+            `).join('');
+        }
+
+        function togglePassion(passionId) {
+            if (selectedPassions.includes(passionId)) {
+                selectedPassions = selectedPassions.filter(id => id !== passionId);
+            } else {
+                selectedPassions.push(passionId);
+            }
+            localStorage.setItem('selectedPassions', JSON.stringify(selectedPassions));
+            renderPassions();
+        }
+
+        function findMatchingHotels() {
+            if (selectedPassions.length === 0) {
+                showToast('Please select at least one passion to find matching hotels', 'warning');
+                return;
+            }
+
+            const matchedHotels = luxuryHotels.filter(hotel =>
+                hotel.passions.some(passion => selectedPassions.includes(passion))
+            ).sort((a, b) => {
+                const aMatches = a.passions.filter(p => selectedPassions.includes(p)).length;
+                const bMatches = b.passions.filter(p => selectedPassions.includes(p)).length;
+                return bMatches - aMatches;
+            });
+
+            displayHotels(matchedHotels);
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+            showToast(`Found ${matchedHotels.length} perfect matches for your passions!`, 'success');
+        }
+
+        function searchHotels() {
+            const destination = document.getElementById('destination').value;
+            if (!destination.trim()) {
+                showToast('Please enter a destination', 'warning');
+                return;
+            }
+
+            // Filter hotels by destination or show all with passion matches
+            let filteredHotels = luxuryHotels;
+            if (selectedPassions.length > 0) {
+                filteredHotels = filteredHotels.filter(hotel =>
+                    hotel.passions.some(passion => selectedPassions.includes(passion))
+                );
+            }
+
+            displayHotels(filteredHotels);
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+            showToast(`Found ${filteredHotels.length} luxury hotels for "${destination}"`, 'success');
+        }
+
+        function displayHotels(hotels) {
+            const hotelList = document.getElementById('hotel-list');
+            hotelList.innerHTML = hotels.map(hotel => `
+                <div class="hotel-card bg-white rounded-2xl shadow-luxury-lg overflow-hidden">
+                    <div class="relative">
+                        <img src="${hotel.image}" alt="${hotel.name}" class="w-full h-64 object-cover">
+                        <div class="absolute top-4 left-4">
+                            <span class="bg-luxury-gold text-white px-3 py-1 rounded-full text-sm font-semibold">${hotel.badge}</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">${hotel.savings}</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h4 class="font-bold text-xl text-luxury-navy mb-1">${hotel.name}</h4>
+                                <p class="text-gray-600 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    ${hotel.location}, ${hotel.country}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex items-center text-yellow-400 mb-1">
+                                    ${'★'.repeat(5)}
+                                    <span class="ml-2 text-sm text-gray-600">${hotel.rating} (${hotel.reviews})</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-gray-600 mb-4">${hotel.description}</p>
+
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            ${hotel.features.map(feature =>
+                                `<span class="bg-luxury-cream text-luxury-navy px-3 py-1 rounded-full text-xs font-medium">${feature}</span>`
+                            ).join('')}
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="text-left">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl font-bold text-luxury-navy">${hotel.price}</span>
+                                    <span class="text-lg text-gray-400 line-through">${hotel.originalPrice}</span>
+                                </div>
+                                <span class="text-sm text-gray-600">per night</span>
+                            </div>
+                            <button onclick="bookHotel('${hotel.name}', '${hotel.price}')"
+                                    class="bg-gradient-to-r from-luxury-gold to-yellow-500 hover:from-yellow-500 hover:to-luxury-gold text-white font-bold px-6 py-3 rounded-xl shadow-luxury-sm hover:shadow-luxury-md transform hover:scale-105 transition-all duration-300">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Email form submission
+        function setupEventListeners() {
+            document.getElementById('earlyAccessForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+
+                if (email) {
+                    emailList.push({
+                        email: email,
+                        timestamp: new Date().toISOString(),
+                        source: 'early_access'
+                    });
+                    localStorage.setItem('vibeEmailList', JSON.stringify(emailList));
+
+                    const discountCode = 'VIBE' + Math.random().toString(36).substr(2, 6).toUpperCase();
+
+                    document.getElementById('emailStatus').innerHTML = `
+                        <div class="glassmorphic rounded-xl p-6 text-center">
+                            <div class="text-4xl mb-3">🎉</div>
+                            <h4 class="text-xl font-bold text-white mb-2">Welcome to VIP Access!</h4>
+                            <div class="bg-luxury-gold text-white px-4 py-2 rounded-lg font-bold text-lg mb-2">
+                                Discount Code: ${discountCode}
+                            </div>
+                            <p class="text-white/80 text-sm">Check your email for booking instructions</p>
+                        </div>
+                    `;
+                    document.getElementById('emailStatus').classList.remove('hidden');
+                    document.getElementById('email').value = '';
+
+                    showToast('Welcome to VIP access! Check your email for exclusive offers.', 'success');
+                }
+            });
+        }
+
+        function bookHotel(hotelName, price) {
+            const email = prompt('Enter your email to proceed with booking:');
+            if (email) {
+                emailList.push({
+                    email: email,
+                    timestamp: new Date().toISOString(),
+                    source: 'hotel_booking',
+                    hotel: hotelName,
+                    price: price
+                });
+                localStorage.setItem('vibeEmailList', JSON.stringify(emailList));
+
+                const paymentChoice = confirm(`Book ${hotelName}?\n\nClick OK for instant PayPal payment (${price})\nClick Cancel for manual booking process`);
+
+                if (paymentChoice) {
+                    const amount = price.replace('$', '').replace(',', '');
+                    const paypalUrl = `https://www.paypal.com/paypalme/vibehotels/${amount}?message=${encodeURIComponent('Hotel booking: ' + hotelName + ' - Email: ' + email)}`;
+                    window.open(paypalUrl, '_blank');
+                    showToast(`Payment window opened! Confirmation will be sent to ${email}`, 'success');
+                } else {
+                    showToast(`Thank you! Booking details for ${hotelName} will be sent to ${email} within 24 hours.`, 'info');
+                }
+            }
+        }
+
+        function bookConsultation(type) {
+            if (type === 'free') {
+                const email = prompt('Enter your email to schedule your free consultation:');
+                if (email) {
+                    emailList.push({
+                        email: email,
+                        timestamp: new Date().toISOString(),
+                        source: 'free_consultation'
+                    });
+                    localStorage.setItem('vibeEmailList', JSON.stringify(emailList));
+                    showToast(`Calendar scheduling options sent to ${email}. Check your inbox!`, 'success');
+                }
+            } else {
+                window.open('https://www.paypal.com/paypalme/vibehotels/199', '_blank');
+                showToast('Premium planning payment window opened!', 'info');
+            }
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const dayAfter = new Date(today);
+            dayAfter.setDate(dayAfter.getDate() + 2);
+
+            document.getElementById('checkin').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('checkout').value = dayAfter.toISOString().split('T')[0];
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                warning: 'bg-yellow-500',
+                error: 'bg-red-500',
+                info: 'bg-luxury-navy'
+            };
+
+            toast.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-xl shadow-luxury-lg z-50 transform translate-x-full transition-transform duration-300`;
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+
+            setTimeout(() => {
+                toast.style.transform = 'translateX(full)';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 4000);
+        }
+
+        // Admin function to view collected emails
+        function showEmailList() {
+            console.log('Collected emails:', emailList);
+            showToast(`Total emails collected: ${emailList.length}. Check console for details.`, 'info');
+        }
+
+        // Secret admin access
+        window.admin = showEmailList;
+
+        // Smooth scrolling for internal links
+        document.addEventListener('click', function(e) {
+            if (e.target.getAttribute('href') && e.target.getAttribute('href').startsWith('#')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

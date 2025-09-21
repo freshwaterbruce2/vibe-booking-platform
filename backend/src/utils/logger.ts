@@ -59,15 +59,15 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Add Sentry transport in production
-if (config.monitoring.sentryDsn && config.environment === 'production') {
+// Add Sentry transport in production (if configured via environment)
+if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
   const Sentry = require('winston-transport-sentry-node').default;
-  
+
   logger.add(
     new Sentry({
       sentry: {
-        dsn: config.monitoring.sentryDsn,
-        environment: config.environment,
+        dsn: process.env.SENTRY_DSN,
+        environment: process.env.NODE_ENV,
       },
       level: 'error',
     })

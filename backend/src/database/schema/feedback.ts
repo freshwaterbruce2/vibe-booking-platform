@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid, integer, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
-import { users } from './users.js';
+import { users } from './users';
 import { relations } from 'drizzle-orm';
 
 export const aiFeedback = pgTable(

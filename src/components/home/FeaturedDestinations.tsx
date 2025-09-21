@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Destination {
   id: string;
@@ -83,6 +84,7 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
   onDestinationSelect,
   className = '',
 }) => {
+  const navigate = useNavigate();
   return (
     <section className={`py-12 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -172,7 +174,10 @@ const FeaturedDestinations: React.FC<FeaturedDestinationsProps> = ({
         </div>
 
         <div className="text-center mt-12">
-          <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+          <button
+            onClick={() => navigate('/destinations')}
+            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
             View All Destinations
           </button>
         </div>

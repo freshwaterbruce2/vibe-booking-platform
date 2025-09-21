@@ -24,6 +24,16 @@ import {
   LazyRewardsPage,
 } from '@/routes/LazyRoutes';
 
+// Import new pages directly for now
+import { BusinessTravelPage } from '@/pages/BusinessTravelPage';
+import { ConciergePage } from '@/pages/ConciergePage';
+import { SupportPage } from '@/pages/SupportPage';
+import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage';
+import { TermsOfServicePage } from '@/pages/TermsOfServicePage';
+import { AccessibilityPage } from '@/pages/AccessibilityPage';
+import { SignInPage } from '@/pages/auth/SignInPage';
+import { SignUpPage } from '@/pages/auth/SignUpPage';
+
 function App() {
   useEffect(() => {
     // Setup global error handling
@@ -54,6 +64,18 @@ function App() {
             <Route path="/confirmation/:bookingId" element={<LazyBookingConfirmationPage />} />
             <Route path="/my-bookings" element={<LazyBookingHistoryPage />} />
             <Route path="/profile" element={<LazyUserProfilePage />} />
+
+            {/* New pages */}
+            <Route path="/business" element={<BusinessTravelPage />} />
+            <Route path="/concierge" element={<ConciergePage />} />
+            <Route path="/support" element={<SupportPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsOfServicePage />} />
+            <Route path="/accessibility" element={<AccessibilityPage />} />
+
+            {/* Authentication pages */}
+            <Route path="/auth/signin" element={<SignInPage />} />
+            <Route path="/auth/signup" element={<SignUpPage />} />
           </Routes>
         </Layout>
         <Toaster

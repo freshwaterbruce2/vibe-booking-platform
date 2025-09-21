@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { OptimizedImage } from '../ui/OptimizedImage';
 
 interface Testimonial {
@@ -86,6 +87,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
   autoSlide: _autoSlide = false,
   className = '',
 }) => {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextTestimonial = () => {
@@ -367,10 +369,16 @@ const Testimonials: React.FC<TestimonialsProps> = ({
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button className="bg-white text-primary font-bold py-4 px-8 rounded-xl hover:bg-gray-50 transition-all transform hover:scale-105 shadow-lg text-lg">
+                <button
+                  onClick={() => navigate('/search')}
+                  className="bg-white text-primary font-bold py-4 px-8 rounded-xl hover:bg-gray-50 transition-all transform hover:scale-105 shadow-lg text-lg"
+                >
                   Start Booking Now
                 </button>
-                <button className="border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl hover:bg-white/10 transition-all">
+                <button
+                  onClick={() => navigate('/deals')}
+                  className="border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl hover:bg-white/10 transition-all"
+                >
                   Browse Deals
                 </button>
               </div>

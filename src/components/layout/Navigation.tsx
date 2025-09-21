@@ -7,10 +7,10 @@ interface NavigationProps {
 }
 
 const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/search', label: 'Search' },
-  { href: '/destinations', label: 'Destinations' },
-  { href: '/deals', label: 'Deals' },
+  { href: '/destinations', label: 'DESTINATIONS' },
+  { href: '/deals', label: 'OFFERS' },
+  { href: '/experiences', label: 'EXPERIENCES' },
+  { href: '/rewards', label: 'REWARDS' },
 ];
 
 export function Navigation({ className }: NavigationProps) {

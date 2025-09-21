@@ -45,6 +45,31 @@ export class SquarePaymentService {
     errorMessage?: string;
   }> {
     try {
+      // Validate payment source ID format
+      if (!params.sourceId || typeof params.sourceId !== 'string') {
+        return {
+          success: false,
+          errorMessage: 'Invalid payment source provided',
+        };
+      }
+
+      // Basic validation for Square source IDs (they typically start with specific prefixes)
+      const validSourcePrefixes = ['cnon_', 'ccof_', 'sq0idb_', 'sq0ids_'];
+      const isValidSourceFormat = validSourcePrefixes.some(prefix =>
+        params.sourceId.startsWith(prefix)
+      );
+
+      if (!isValidSourceFormat) {
+        logger.warn('Invalid Square source ID format', {
+          sourceIdPrefix: params.sourceId.substring(0, 10),
+          bookingId: params.bookingId,
+        });
+        return {
+          success: false,
+          errorMessage: 'Invalid payment method format',
+        };
+      }
+
       const idempotencyKey = randomUUID();
       const amountMoney = {
         amount: BigInt(Math.round(params.amount * 100)), // Convert to cents

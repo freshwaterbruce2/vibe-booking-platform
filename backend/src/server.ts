@@ -56,8 +56,8 @@ export class HotelBookingServer {
         // Allow requests with no origin (like mobile apps or Postman)
         if (!origin) return callback(null, true);
         
-        // Allow localhost origins for development
-        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        // Allow localhost origins for development only
+        if (this.config.environment === 'development' && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
           return callback(null, true);
         }
         
@@ -113,6 +113,9 @@ export class HotelBookingServer {
     // Custom middleware
     this.app.use(requestLogger);
     this.app.use(rateLimiter);
+
+    // Rate limit health check endpoint to prevent abuse
+    this.app.use('/health', rateLimiter);
 
     // Health check
     this.app.get('/health', (_req, res) => {
@@ -198,10 +201,7 @@ export class HotelBookingServer {
 }
 
 // Start server if this file is run directly
-// For ES modules, we need to check if this is the main module differently
-const isMainModule = import.meta.url === `file://${process.argv[1]}`;
-
-if (isMainModule) {
+if (require.main === module) {
   (async () => {
     try {
       const config = await loadConfig();

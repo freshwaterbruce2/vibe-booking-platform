@@ -11,7 +11,7 @@ export const paymentsRouter = Router();
 // Square payment service (primary provider)
 import { squarePaymentService } from '../services/squarePaymentService';
 import { paypalService } from '../services/paypalService';
-import { pdfService } from '../services/pdfService.js';
+import { pdfService } from '../services/pdfService';
 
 // Validation schemas (Square) 
 const createPaymentSchema = z.object({
@@ -499,16 +499,31 @@ paymentsRouter.get('/stats', async (req: Request, res: Response) => {
     const now = new Date();
     const last30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Total succeeded revenue
-    const allPayments = await db.select().from(payments).where(eq(payments.status, 'succeeded'));
-    const userFiltered = userId ? allPayments.filter(p => p.userId === userId) : allPayments;
-    const totalRevenue = userFiltered.reduce((s, p) => s + parseFloat(p.amount), 0);
+    // Total succeeded revenue - use proper SQL filtering to prevent injection
+    let paymentsQuery = db.select().from(payments).where(eq(payments.status, 'succeeded'));
 
-    const last30Revenue = userFiltered
-      .filter(p => p.createdAt && p.createdAt >= last30)
-      .reduce((s, p) => s + parseFloat(p.amount), 0);
+    if (userId) {
+      paymentsQuery = paymentsQuery.where(eq(payments.userId, userId));
+    }
 
-    const orderCount = userFiltered.length;
+    const allPayments = await paymentsQuery;
+    const totalRevenue = allPayments.reduce((s, p) => s + parseFloat(p.amount), 0);
+
+    // Get last 30 days revenue with proper SQL filtering
+    let last30Query = db.select().from(payments)
+      .where(and(
+        eq(payments.status, 'succeeded'),
+        gte(payments.createdAt, last30)
+      ));
+
+    if (userId) {
+      last30Query = last30Query.where(eq(payments.userId, userId));
+    }
+
+    const last30Payments = await last30Query;
+    const last30Revenue = last30Payments.reduce((s, p) => s + parseFloat(p.amount), 0);
+
+    const orderCount = allPayments.length;
     const avgOrderValue = orderCount ? totalRevenue / orderCount : 0;
 
     res.json({

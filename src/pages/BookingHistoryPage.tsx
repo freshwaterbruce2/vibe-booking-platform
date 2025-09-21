@@ -1,7 +1,9 @@
 
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function BookingHistoryPage() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
@@ -31,7 +33,10 @@ export default function BookingHistoryPage() {
           <p className="text-gray-500 mb-6">
             You haven't made any bookings yet. Start exploring our hotels!
           </p>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+          <button
+            onClick={() => navigate('/search')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+          >
             Browse Hotels
           </button>
         </div>
