@@ -221,3 +221,4 @@ The application is optimized for static hosting platforms with:
 ## License
 
 MIT License - see LICENSE file for details
+# Cloudflare Deployment Force Trigger
