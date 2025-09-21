@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 import { logger } from '../../utils/logger';
 
@@ -17,6 +17,98 @@ interface OptimizedImageProps {
   srcSet?: string;
   aspectRatio?: string;
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  quality?: number;
+  webpSupport?: boolean;
+  retries?: number;
+  placeholder?: string;
+  cacheStrategy?: 'aggressive' | 'normal' | 'minimal';
+}
+
+// Performance-optimized image cache
+const imageCache = new Map<string, { blob: Blob; timestamp: number; url: string }>();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const MAX_CACHE_SIZE = 100;
+
+// WebP support detection
+const supportsWebP = (() => {
+  if (typeof window === 'undefined') return false;
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+})();
+
+// Preload cache
+const preloadPromises = new Map<string, Promise<void>>();
+
+function getCachedImageUrl(src: string): string | null {
+  const cached = imageCache.get(src);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.url;
+  }
+  if (cached) {
+    URL.revokeObjectURL(cached.url);
+    imageCache.delete(src);
+  }
+  return null;
+}
+
+async function cacheImage(src: string): Promise<string> {
+  try {
+    const response = await fetch(src);
+    if (!response.ok) throw new Error('Network response was not ok');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Manage cache size
+    if (imageCache.size >= MAX_CACHE_SIZE) {
+      const oldestEntry = imageCache.entries().next().value;
+      if (oldestEntry) {
+        URL.revokeObjectURL(oldestEntry[1].url);
+        imageCache.delete(oldestEntry[0]);
+      }
+    }
+
+    imageCache.set(src, { blob, timestamp: Date.now(), url });
+    return url;
+  } catch (error) {
+    throw error;
+  }
+}
+
+function generateOptimizedSrc(
+  src: string,
+  width?: number,
+  height?: number,
+  quality: number = 85,
+  webpSupport: boolean = true
+): string {
+  if (!src) return src;
+
+  // Return cached version if available
+  const cached = getCachedImageUrl(src);
+  if (cached) return cached;
+
+  const params = new URLSearchParams();
+
+  // High-DPI support
+  const dpr = window.devicePixelRatio || 1;
+  if (width) params.append('w', Math.ceil(width * dpr).toString());
+  if (height) params.append('h', Math.ceil(height * dpr).toString());
+
+  params.append('q', quality.toString());
+  params.append('fm', webpSupport && supportsWebP ? 'webp' : 'jpg');
+  params.append('fit', 'crop');
+  params.append('auto', 'enhance,compress');
+
+  // For Unsplash and similar services
+  if (src.includes('unsplash.com') || src.includes('images.')) {
+    const separator = src.includes('?') ? '&' : '?';
+    return `${src}${separator}${params.toString()}`;
+  }
+
+  return src;
 }
 
 export const OptimizedImage: React.FC<OptimizedImageProps> = ({
@@ -34,64 +126,129 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   srcSet,
   aspectRatio,
   objectFit = 'cover',
+  quality = 85,
+  webpSupport = true,
+  retries = 2,
+  placeholder,
+  cacheStrategy = 'normal'
 }) => {
-  const [imageSrc, setImageSrc] = useState<string>(priority ? src : '');
+  const [imageSrc, setImageSrc] = useState<string>('');
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [loadStartTime, setLoadStartTime] = useState<number>(0);
+  const [cachedUrl, setCachedUrl] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use intersection observer for lazy loading
+  // Enhanced intersection observer for lazy loading
   const { isIntersecting } = useIntersectionObserver(imgRef, {
-    threshold: 0.1,
-    rootMargin: '50px',
+    threshold: 0.01,
+    rootMargin: priority ? '0px' : '200px', // Larger margin for better UX
   });
+
+  // Generate optimized source
+  const optimizedSrc = React.useMemo(() => {
+    return generateOptimizedSrc(src, width, height, quality, webpSupport);
+  }, [src, width, height, quality, webpSupport]);
+
+  // Aggressive caching for performance
+  useEffect(() => {
+    if (cacheStrategy === 'aggressive' && optimizedSrc && !getCachedImageUrl(optimizedSrc)) {
+      cacheImage(optimizedSrc)
+        .then(url => setCachedUrl(url))
+        .catch(() => {/* Silent fail */});
+    }
+  }, [optimizedSrc, cacheStrategy]);
+
+  // Preload critical images
+  useEffect(() => {
+    if (priority && optimizedSrc && !preloadPromises.has(optimizedSrc)) {
+      const preloadPromise = new Promise<void>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = optimizedSrc;
+      });
+      preloadPromises.set(optimizedSrc, preloadPromise);
+    }
+  }, [priority, optimizedSrc]);
 
   // Start loading image when it becomes visible or if priority is set
   useEffect(() => {
     if ((isIntersecting || priority) && !imageSrc && !imageError) {
       setLoadStartTime(Date.now());
-      setImageSrc(src);
-      logger.debug('Image loading started', { 
-        component: 'OptimizedImage', 
-        src, 
+      const sourceToUse = cachedUrl || optimizedSrc;
+      setImageSrc(sourceToUse);
+
+      logger.debug('Image loading started', {
+        component: 'OptimizedImage',
+        src: sourceToUse,
         priority,
-        isIntersecting 
+        isIntersecting,
+        cached: !!cachedUrl,
+        webpSupport: webpSupport && supportsWebP
       });
     }
-  }, [isIntersecting, priority, src, imageSrc, imageError]);
+  }, [isIntersecting, priority, optimizedSrc, cachedUrl, imageSrc, imageError]);
 
-  const handleLoad = (_event: React.SyntheticEvent<HTMLImageElement>) => {
+  const handleLoad = useCallback((_event: React.SyntheticEvent<HTMLImageElement>) => {
     setImageLoaded(true);
     const loadTime = Date.now() - loadStartTime;
-    
-    logger.debug('Image loaded successfully', { 
-      component: 'OptimizedImage', 
+
+    logger.debug('Image loaded successfully', {
+      component: 'OptimizedImage',
       src: imageSrc,
-      loadTime: `${loadTime}ms`
+      loadTime: `${loadTime}ms`,
+      retryCount,
+      webpUsed: webpSupport && supportsWebP
     });
-    
+
     onLoad?.();
-  };
+  }, [imageSrc, loadStartTime, retryCount, webpSupport, onLoad]);
 
-  const handleError = (_event: React.SyntheticEvent<HTMLImageElement>) => {
-    setImageError(true);
+  const handleError = useCallback((_event: React.SyntheticEvent<HTMLImageElement>) => {
     const loadTime = Date.now() - loadStartTime;
-    
-    logger.warn('Image failed to load, using fallback', { 
-      component: 'OptimizedImage', 
-      originalSrc: src,
-      fallbackSrc,
-      loadTime: `${loadTime}ms`
-    });
 
-    if (imageSrc !== fallbackSrc && fallbackSrc) {
-      setImageSrc(fallbackSrc);
-      setImageError(false);
+    if (retryCount < retries) {
+      // Exponential backoff retry
+      const delay = Math.pow(2, retryCount) * 500;
+      setRetryCount(prev => prev + 1);
+
+      logger.warn('Image failed to load, retrying...', {
+        component: 'OptimizedImage',
+        src: imageSrc,
+        attempt: retryCount + 1,
+        maxRetries: retries,
+        loadTime: `${loadTime}ms`
+      });
+
+      retryTimeoutRef.current = setTimeout(() => {
+        setImageLoaded(false);
+        // Force reload with cache-busting parameter
+        const retryUrl = `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount + 1}`;
+        setImageSrc(retryUrl);
+      }, delay);
+    } else {
+      // All retries exhausted, try fallback
+      logger.warn('Image failed to load after retries, using fallback', {
+        component: 'OptimizedImage',
+        originalSrc: src,
+        fallbackSrc,
+        loadTime: `${loadTime}ms`,
+        totalRetries: retryCount
+      });
+
+      if (imageSrc !== fallbackSrc && fallbackSrc) {
+        setImageSrc(fallbackSrc);
+        setRetryCount(0);
+      } else {
+        setImageError(true);
+      }
     }
-    
+
     onError?.(_event.nativeEvent);
-  };
+  }, [imageSrc, loadStartTime, retryCount, retries, optimizedSrc, src, fallbackSrc, onError]);
 
   const containerStyle: React.CSSProperties = {
     aspectRatio: aspectRatio || (width && height ? `${width}/${height}` : undefined),
@@ -171,5 +328,40 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     </div>
   );
 };
+
+// Utility functions for cache management
+export const clearImageCache = () => {
+  imageCache.forEach(({ url }) => URL.revokeObjectURL(url));
+  imageCache.clear();
+  preloadPromises.clear();
+  logger.info('Image cache cleared');
+};
+
+export const getImageCacheStats = () => {
+  const totalSize = Array.from(imageCache.values())
+    .reduce((total, { blob }) => total + blob.size, 0);
+
+  return {
+    cacheSize: imageCache.size,
+    preloadCount: preloadPromises.size,
+    totalMemoryUsage: totalSize,
+    supportsWebP,
+    cacheKeys: Array.from(imageCache.keys())
+  };
+};
+
+// Auto-cleanup on memory pressure (browser support required)
+if (typeof window !== 'undefined' && 'memory' in performance) {
+  const checkMemoryPressure = () => {
+    const memInfo = (performance as any).memory;
+    if (memInfo && memInfo.usedJSHeapSize > memInfo.totalJSHeapSize * 0.85) {
+      logger.warn('Memory pressure detected, clearing image cache');
+      clearImageCache();
+    }
+  };
+
+  // Check every minute
+  setInterval(checkMemoryPressure, 60000);
+}
 
 export default OptimizedImage;
