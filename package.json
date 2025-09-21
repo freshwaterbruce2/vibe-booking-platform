@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write src/**/*.{ts,tsx,css,md}",
     "test": "vitest",
+    "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
@@ -44,6 +45,7 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
@@ -56,6 +58,8 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
+    "jest-axe": "^9.0.0",
+    "jsdom": "^26.1.0",
     "playwright": "^1.40.0",
     "postcss": "^8.4.31",
     "prettier": "^3.1.0",
