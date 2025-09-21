@@ -114,6 +114,16 @@ export class HotelBookingServer {
     this.app.use(requestLogger);
     this.app.use(rateLimiter);
 
+    // Root endpoint for testing
+    this.app.get('/', (_req, res) => {
+      res.json({
+        message: 'Vibe Booking Backend API',
+        version: '1.0.0',
+        status: 'running',
+        timestamp: new Date().toISOString()
+      });
+    });
+
     // Health check
     this.app.get('/health', (_req, res) => {
       res.json({
