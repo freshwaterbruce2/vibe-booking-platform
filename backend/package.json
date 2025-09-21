@@ -9,7 +9,7 @@
     "dev:local": "set LOCAL_SQLITE=true && tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
     "build:production": "tsc --skipLibCheck --noImplicitAny false && tsc-alias",
-    "start": "node dist/server.js",
+    "start": "npx tsx src/server.ts",
     "start:local": "LOCAL_SQLITE=true node dist/server.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
