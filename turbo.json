@@ -1,0 +1,66 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": ["src/**", "index.html", "vite.config.ts", "public/**"],
+      "cache": true
+    },
+    "test": {
+      "outputs": [],
+      "inputs": ["src/**/*.test.ts", "src/**/*.test.tsx", "vitest.config.ts"],
+      "cache": true
+    },
+    "test:run": {
+      "outputs": [],
+      "inputs": ["src/**/*.test.ts", "src/**/*.test.tsx", "vitest.config.ts"],
+      "cache": true
+    },
+    "test:coverage": {
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**/*.test.ts", "src/**/*.test.tsx", "vitest.config.ts"],
+      "cache": true
+    },
+    "test:e2e": {
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "inputs": ["tests/**", "playwright.config.ts", "src/**"],
+      "cache": true
+    },
+    "lint": {
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "eslint.config.js"],
+      "cache": true
+    },
+    "lint:fix": {
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "eslint.config.js"],
+      "cache": false
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "tsconfig.json"],
+      "cache": true
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "preview": {
+      "cache": false,
+      "persistent": true
+    }
+  },
+  "globalDependencies": [
+    "package.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "eslint.config.js"
+  ],
+  "globalEnv": [
+    "NODE_ENV"
+  ]
+}

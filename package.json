@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "Vibe Hotels - Modern hotel booking platform with AI-powered search and luxury design",
   "type": "module",
+  "packageManager": "npm@9.0.0",
   "scripts": {
     "dev": "vite --port 3009",
     "build": "tsc && vite build",
@@ -21,7 +22,13 @@
     "test:visual": "playwright test --config=playwright-visual.config.ts",
     "test:visual:update": "playwright test --config=playwright-visual.config.ts --update-snapshots",
     "analyze": "npx vite-bundle-analyzer",
-    "start:payment": "node simple-payment-server.cjs"
+    "start:payment": "node simple-payment-server.cjs",
+    "turbo:build": "turbo run build",
+    "turbo:test": "turbo run test:run",
+    "turbo:test:e2e": "turbo run test:e2e",
+    "turbo:lint": "turbo run lint",
+    "turbo:typecheck": "turbo run typecheck",
+    "turbo:quality": "turbo run lint typecheck test:run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
@@ -64,6 +71,7 @@
     "postcss": "^8.4.31",
     "prettier": "^3.1.0",
     "tailwindcss": "^3.3.5",
+    "turbo": "^2.5.8",
     "typescript": "^5.2.2",
     "vite": "^4.5.0",
     "vitest": "^3.2.4"
